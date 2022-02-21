@@ -1,4 +1,3 @@
-
 #include "SKNeuron.h"
 
 /* ----- Standard Constructor ----- */
