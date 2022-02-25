@@ -15,21 +15,23 @@ public:
  /* ----- Standard Destructor ----- */
  ~SKNeuron();
 
+ /* ----- Public Method Input ----- */
+  void Input(float input){
+
+    fInput = fInput + input;
+
+  };
+
+
 /* ----- Public Method Output ----- */
  float Output();
 
- /* ----- Public Method Input ----- */
- void Input(double input) {
-
-   fInput = input ;
-
- }
 
 
 private:
 
   string sActivationFunction;
-  double fInput;
+  float fInput;
 
  };
 

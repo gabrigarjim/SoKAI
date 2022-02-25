@@ -1,7 +1,8 @@
 #include "SKNeuron.h"
 
 /* ----- Standard Constructor ----- */
-SKNeuron::SKNeuron(string activation) {
+SKNeuron::SKNeuron(string activation) :
+  fInput(0.0) {
 
  sActivationFunction = activation;
 

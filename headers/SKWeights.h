@@ -27,6 +27,8 @@ public:
   int fColumns;
   vector<vector<double>> mWeightMatrix;
 
+ friend class SKPropagator;
+
  };
 
  #endif
