@@ -33,3 +33,14 @@ void SKLayer::Print(){
 
   cout<<endl;
 }
+
+
+/* ----- Public Method Clear ----- */
+void SKLayer::Clear(){
+
+  for ( int n = 0 ; n < vNeurons.size() ; n++ )
+    vNeurons.at(n).Clear();
+
+  vLayerOutput.clear();
+
+}

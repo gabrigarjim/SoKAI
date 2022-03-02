@@ -24,6 +24,10 @@ class SKLayer {
   /* ----- Public Method Print ----- */
   void Print();
 
+  /* ----- Public Method Clear ----- */
+  void Clear();
+
+
 
 
  private:
@@ -33,6 +37,7 @@ class SKLayer {
   vector<double> vLayerOutput;
 
   friend class SKPropagator;
+  friend class SKBackProp;
 
 
 };

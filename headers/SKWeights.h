@@ -28,7 +28,7 @@ public:
   vector<vector<double>> mWeightMatrix;
 
  friend class SKPropagator;
-
+ friend class SKBackProp;
  };
 
  #endif

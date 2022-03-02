@@ -27,6 +27,11 @@ public:
  float Output();
 
 
+ /* ----- Public Method Clear ----- */
+ void Clear(){fInput=0.0;};
+
+
+
 
 private:
 
