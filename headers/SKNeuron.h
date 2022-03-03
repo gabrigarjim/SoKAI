@@ -38,6 +38,9 @@ private:
   string sActivationFunction;
   float fInput;
 
- };
+friend class SKBackProp;
+
+
+};
 
  #endif
