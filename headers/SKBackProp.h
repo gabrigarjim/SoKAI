@@ -19,7 +19,14 @@ class SKBackProp {
   ~SKBackProp();
 
   /* ----- Method Set Loss ----- */
-  void SetLoss(string loss){ sLoss = loss;};
+  void SetLoss(string loss){
+
+    if((loss != "Quadratic") && (loss != "Abs"))
+     LOG(FATAL)<<"Loss function '"<<loss<<"'"<<" not defined";
+
+    sLoss = loss;
+
+  };
 
   /* ----- Method Get Loss ----- */
   float Loss(SKLayer *outputLayer, vector<float> *targetVector);

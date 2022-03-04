@@ -20,8 +20,7 @@ void SKWeights::Init(int seed) {
 
 
   // GG - As recommended in many sources, weights should be initialize
-  // with values around a gaussian distribution with mean = 0 and
-  // sigma = 1
+  // with values around a gaussian distribution with mean = 0
 
   for(int i = 0 ; i < fRows ; i++) {
    for(int j = 0 ; j < fColumns ; j++){

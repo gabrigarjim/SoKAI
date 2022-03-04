@@ -6,11 +6,15 @@
 
 int main () {
 
-  cout<<"##############################################################"<<endl;
-  cout<<"# Welcome to SoKAI (Some Kind of Artificial Intelligence) !! #"<<endl;
-  cout<<"##############################################################"<<endl;
+  FLAGS_alsologtostderr = 1;
+  google::InitGoogleLogging("SoKAI");
+
+  LOG(INFO)<<"#============================================================#";
+  LOG(INFO)<<"# Welcome to SoKAI (Some Kind of Artificial Intelligence) !! #";
+  LOG(INFO)<<"#============================================================#";
 
   int seed = 2021;
+
 
   std::vector<float> v;
   v.push_back(0.3);
@@ -18,7 +22,6 @@ int main () {
 
   std::vector<float> targetVector;
   targetVector.push_back(1.0);
-
 
 
   SKWeights *input_layer_weights = new SKWeights(2,1);
@@ -37,7 +40,7 @@ int main () {
   weights_12->Init(seed);
 
 
-  for(int n = 0 ; n < 10000 ; n++) {
+  for(int n = 0 ; n < 10 ; n++) {
    prop_i1->Feed(&v,layer_1,input_layer_weights);
    prop_12->Propagate(layer_1,layer_2,weights_12);
 

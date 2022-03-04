@@ -7,3 +7,4 @@
 #include <stdlib.h>
 #include "TH1.h"
 #include "TRandom3.h"
+#include <glog/logging.h>

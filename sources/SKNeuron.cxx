@@ -6,6 +6,9 @@ SKNeuron::SKNeuron(string activation) :
 
  sActivationFunction = activation;
 
+ if((activation != "Sigmoid") && (activation != "Tanh") && (activation != "Linear") && (activation != "ReLU") && (activation != "LeakyReLU"))
+  LOG(FATAL)<<"Activation function '"<<activation<<"'"<<" not defined";
+
 }
 
 /* ----- Standard Destructor ----- */
