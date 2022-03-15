@@ -10,7 +10,6 @@ SKLayer::SKLayer(int size, string activation) {
   for ( int i = 0; i < fSize ; i++)
     vNeurons.push_back(neuron);
 
-  LOG(INFO)<<"Initializing Layer with size "<<fSize<<". Activation Function : "<<activation;
 
 }
 

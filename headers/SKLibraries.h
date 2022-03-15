@@ -8,3 +8,6 @@
 #include "TH1.h"
 #include "TRandom3.h"
 #include <glog/logging.h>
+#include <fstream>
+#include "TCanvas.h"
+#include "TApplication.h"

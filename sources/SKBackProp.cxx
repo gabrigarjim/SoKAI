@@ -36,22 +36,22 @@ float SKBackProp::Loss(SKLayer *outputLayer, vector<float> *targetVector){
 
 void SKBackProp::CalculateGradients(SKWeights *weights, SKLayer *prevLayer , SKLayer *nextLayer,vector<float> *targetVector){
 
-    float weight_gradient_11,weight_gradient_21;
-
-    weight_gradient_11 = (nextLayer->vLayerOutput.at(0) - targetVector->at(0))
-    * SigmoidDer(nextLayer->vNeurons.at(0).fInput) * prevLayer->vLayerOutput.at(0);
-
-    weight_gradient_21 = (nextLayer->vLayerOutput.at(0) - targetVector->at(0))
-    * SigmoidDer(nextLayer->vNeurons.at(0).fInput) * prevLayer->vLayerOutput.at(1);
-
-    cout<<" Old Value for Weight 11 : "<<weights->mWeightMatrix[0][0]<<" W_11 Gradient : "
-    <<weight_gradient_11<<" New Value for Weight 11 :  "<<weights->mWeightMatrix[0][0] - 0.01*weight_gradient_11<<endl;
-
-    cout<<" Old Value for Weight 21 : "<<weights->mWeightMatrix[1][0]<<" W_21 Gradient : "
-    <<weight_gradient_21<<" New Value for Weight 21 :  "<<weights->mWeightMatrix[1][0] - 0.01*weight_gradient_21<<endl;
-
-    weights->mWeightMatrix[0][0] = weights->mWeightMatrix[0][0] - 0.1*weight_gradient_11;
-    weights->mWeightMatrix[1][0] = weights->mWeightMatrix[1][0] - 0.1*weight_gradient_21;
+    // float weight_gradient_11,weight_gradient_21;
+    //
+    // weight_gradient_11 = (nextLayer->vLayerOutput.at(0) - targetVector->at(0))
+    // * SigmoidDer(nextLayer->vNeurons.at(0).fInput) * prevLayer->vLayerOutput.at(0);
+    //
+    // weight_gradient_21 = (nextLayer->vLayerOutput.at(0) - targetVector->at(0))
+    // * SigmoidDer(nextLayer->vNeurons.at(0).fInput) * prevLayer->vLayerOutput.at(1);
+    //
+    // cout<<" Old Value for Weight 11 : "<<weights->mWeightMatrix[0][0]<<" W_11 Gradient : "
+    // <<weight_gradient_11<<" New Value for Weight 11 :  "<<weights->mWeightMatrix[0][0] - 0.01*weight_gradient_11<<endl;
+    //
+    // cout<<" Old Value for Weight 21 : "<<weights->mWeightMatrix[1][0]<<" W_21 Gradient : "
+    // <<weight_gradient_21<<" New Value for Weight 21 :  "<<weights->mWeightMatrix[1][0] - 0.01*weight_gradient_21<<endl;
+    //
+    // weights->mWeightMatrix[0][0] = weights->mWeightMatrix[0][0] - 0.1*weight_gradient_11;
+    // weights->mWeightMatrix[1][0] = weights->mWeightMatrix[1][0] - 0.1*weight_gradient_21;
 
 
 }

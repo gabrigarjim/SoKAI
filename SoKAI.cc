@@ -3,11 +3,14 @@
 #include "SKWeights.h"
 #include "SKPropagator.h"
 #include "SKBackProp.h"
+#include "SKModel.h"
 
 int main () {
 
   FLAGS_alsologtostderr = 1;
   google::InitGoogleLogging("SoKAI");
+
+  TApplication* theApp = new TApplication("SoKAI", 0, 0);
 
   LOG(INFO)<<"#============================================================#";
   LOG(INFO)<<"# Welcome to SoKAI (Some Kind of Artificial Intelligence) !! #";
@@ -15,20 +18,64 @@ int main () {
 
   int seed = 2021;
 
+  ifstream *iris_data = new ifstream("/home/gabri/CODE/SoKAI/data/iris.csv");
 
-  std::vector<float> v;
-  v.push_back(0.3);
-  v.push_back(0.7);
-
-  std::vector<float> targetVector;
-  targetVector.push_back(1.0);
+  if(!iris_data->is_open())
+   LOG(ERROR)<<"File not opened!!!";
 
 
-  SKWeights *input_layer_weights = new SKWeights(2,1);
-  SKLayer   *layer_1 = new SKLayer(2,"Sigmoid");
-  SKWeights *weights_12 = new SKWeights(2,1);
+  vector<vector<float>> data_sample;
+  vector<float> data_instance;
 
-  SKLayer   *layer_2 = new SKLayer(1,"Sigmoid");
+  float feature_1,feature_2,feature_3,feature_4,label;
+
+
+  LOG(INFO)<<"Filling input vector.....";
+
+  TH1F *feature_1_histo = new TH1F("feature_1_histo","Feature 1 ",40,0,10);
+  TH1F *feature_2_histo = new TH1F("feature_2_histo","Feature 2 ",40,0,6);
+  TH1F *feature_3_histo = new TH1F("feature_3_histo","Feature 3 ",40,0,8);
+  TH1F *feature_4_histo = new TH1F("feature_4_histo","Feature 4 ",40,0,6);
+
+  while(*iris_data>>feature_1>>feature_2>>feature_3>>feature_4>>label){
+
+      data_instance.push_back(feature_1);
+      data_instance.push_back(feature_2);
+      data_instance.push_back(feature_3);
+      data_instance.push_back(feature_4);
+      data_instance.push_back(label);
+
+      feature_1_histo->Fill(feature_1);
+      feature_2_histo->Fill(feature_2);
+      feature_3_histo->Fill(feature_3);
+      feature_4_histo->Fill(feature_4);
+
+      data_sample.push_back(data_instance);
+
+      data_instance.clear();
+
+    }
+
+  TCanvas *canvas = new TCanvas("canvas","canvas");
+  canvas->Divide(2,2);
+
+  canvas->cd(1);
+  feature_1_histo->Draw();
+
+  canvas->cd(2);
+  feature_2_histo->Draw();
+
+  canvas->cd(3);
+  feature_3_histo->Draw();
+
+  canvas->cd(4);
+  feature_4_histo->Draw();
+
+  SKWeights *input_layer_weights = new SKWeights(4,1);
+  SKLayer   *layer_1 = new SKLayer(4,"Sigmoid");
+  SKWeights *weights_12 = new SKWeights(4,3);
+
+  SKLayer   *layer_2 = new SKLayer(4,"Sigmoid");
 
   SKPropagator * prop_i1 = new SKPropagator();
   SKPropagator * prop_12 = new SKPropagator();
@@ -39,19 +86,21 @@ int main () {
   input_layer_weights->Init(seed);
   weights_12->Init(seed);
 
+  SKModel *model = new SKModel();
 
-  for(int n = 0 ; n < 10 ; n++) {
-   prop_i1->Feed(&v,layer_1,input_layer_weights);
-   prop_12->Propagate(layer_1,layer_2,weights_12);
+  model->AddWeights(input_layer_weights);
+  model->AddLayer(layer_1);
+  model->AddWeights(weights_12);
+  model->AddLayer(layer_2);
 
-  cout<<"=========== Loss : " <<backPropagator->Loss(layer_2,&targetVector)<<endl;
+  model->Init();
 
-  backPropagator->CalculateGradients(weights_12,layer_1,layer_2,&targetVector);
+  theApp->Run();
 
-  layer_2->Print();
-
-  layer_1->Clear();
-  layer_2->Clear();
-}
   return 0;
+
+
+
+
+
 }
