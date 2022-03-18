@@ -20,7 +20,7 @@ class SKPropagator {
   void Propagate(SKLayer *previousLayer, SKLayer *nextLayer, SKWeights *weights);
 
   /* ----- Public Method Feed ----- */
-  void Feed(vector<float> *inputVector , SKLayer *firstLayer, SKWeights *weights);
+  void Feed(vector<float> *inputVector , SKLayer *firstLayer);
 
 
   /* ----- Standard Destructor ----- */

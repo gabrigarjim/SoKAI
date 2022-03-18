@@ -27,7 +27,14 @@ int main () {
   vector<vector<float>> data_sample;
   vector<float> data_instance;
 
+  vector<float> input_labels;
+
   float feature_1,feature_2,feature_3,feature_4,label;
+
+  double max_feature_1=0.0;
+  double max_feature_2=0.0;
+  double max_feature_3=0.0;
+  double max_feature_4=0.0;
 
 
   LOG(INFO)<<"Filling input vector.....";
@@ -43,18 +50,48 @@ int main () {
       data_instance.push_back(feature_2);
       data_instance.push_back(feature_3);
       data_instance.push_back(feature_4);
-      data_instance.push_back(label);
 
       feature_1_histo->Fill(feature_1);
       feature_2_histo->Fill(feature_2);
       feature_3_histo->Fill(feature_3);
       feature_4_histo->Fill(feature_4);
 
+      if(feature_1 > max_feature_1)
+       max_feature_1 = feature_1;
+
+      if(feature_2 > max_feature_2)
+       max_feature_2 = feature_2;
+
+      if(feature_3 > max_feature_3)
+       max_feature_3 = feature_3;
+
+      if(feature_4 > max_feature_4)
+       max_feature_4=feature_4;
+
+
       data_sample.push_back(data_instance);
 
       data_instance.clear();
 
     }
+
+
+    cout<<"Max value feature 1 : "<<max_feature_1<<endl;
+    cout<<"Max value feature 2 : "<<max_feature_2<<endl;
+    cout<<"Max value feature 3 : "<<max_feature_3<<endl;
+    cout<<"Max value feature 4 : "<<max_feature_4<<endl;
+
+
+    for (int i = 0 ; i < data_sample.size() ; i++){
+
+        data_sample[i][0]=data_sample[i][0]/max_feature_1;
+        data_sample[i][1]=data_sample[i][1]/max_feature_2;
+        data_sample[i][2]=data_sample[i][2]/max_feature_3;
+        data_sample[i][3]=data_sample[i][3]/max_feature_4;
+
+
+    }
+
 
   TCanvas *canvas = new TCanvas("canvas","canvas");
   canvas->Divide(2,2);
@@ -71,29 +108,35 @@ int main () {
   canvas->cd(4);
   feature_4_histo->Draw();
 
-  SKWeights *input_layer_weights = new SKWeights(4,1);
   SKLayer   *layer_1 = new SKLayer(4,"Sigmoid");
-  SKWeights *weights_12 = new SKWeights(4,3);
+  SKWeights *weights_12 = new SKWeights(4,16);
 
-  SKLayer   *layer_2 = new SKLayer(4,"Sigmoid");
+  SKLayer   *layer_2 = new SKLayer(16,"Sigmoid");
+  SKWeights *weights_23 = new SKWeights(16,4);
 
-  SKPropagator * prop_i1 = new SKPropagator();
-  SKPropagator * prop_12 = new SKPropagator();
+  SKLayer   *layer_3 = new SKLayer(3,"Sigmoid");
 
-  SKBackProp *backPropagator = new SKBackProp();
-  backPropagator->SetLoss("Quadratic");
-
-  input_layer_weights->Init(seed);
   weights_12->Init(seed);
+  weights_23->Init(seed);
 
   SKModel *model = new SKModel();
 
-  model->AddWeights(input_layer_weights);
   model->AddLayer(layer_1);
   model->AddWeights(weights_12);
+
   model->AddLayer(layer_2);
+  model->AddWeights(weights_23);
+
+  model->AddLayer(layer_3);
+
+  model->SetInputSample(&data_sample);
+  model->SetInputLabels(&input_labels);
 
   model->Init();
+
+  /* ---------- Pass Data Through Model ----------*/
+  model->Propagate();
+
 
   theApp->Run();
 

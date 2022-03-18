@@ -32,7 +32,7 @@ void SKLayer::Print(){
   for ( int i = 0 ; i < vLayerOutput.size() ; i++ )
     cout<<vLayerOutput.at(i)<<" ";
 
-  cout<<endl;
+   cout<<endl;
 }
 
 

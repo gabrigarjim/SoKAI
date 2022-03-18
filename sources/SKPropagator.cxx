@@ -26,12 +26,12 @@ void SKPropagator::Propagate(SKLayer *previousLayer, SKLayer *nextLayer, SKWeigh
 }
 
 
- void SKPropagator::Feed(vector<float> *inputVector , SKLayer *firstLayer, SKWeights *weights) {
+ void SKPropagator::Feed(vector<float> *inputVector , SKLayer *firstLayer) {
 
 
    for( int n = 0 ; n < firstLayer->fSize ; n++){
 
-         firstLayer->vNeurons.at(n).Input(inputVector->at(n)*weights->mWeightMatrix[n][0]);
+         firstLayer->vNeurons.at(n).Input(inputVector->at(n));
 
 
    }
