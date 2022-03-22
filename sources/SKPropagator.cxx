@@ -26,7 +26,7 @@ void SKPropagator::Propagate(SKLayer *previousLayer, SKLayer *nextLayer, SKWeigh
 }
 
 
- void SKPropagator::Feed(vector<float> *inputVector , SKLayer *firstLayer) {
+ void SKPropagator::Feed(vector<double> *inputVector , SKLayer *firstLayer) {
 
 
    for( int n = 0 ; n < firstLayer->fSize ; n++){

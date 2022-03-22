@@ -29,35 +29,53 @@ public:
 
 
  /* ----- Public Set Input Sample ----- */
- void SetInputSample(vector<vector<float>> *input);
+ void SetInputSample(vector<vector<double>> *input);
 
  /* ----- Public Set Input Label ----- */
- void SetInputLabels(vector<float> *labels);
+ void SetInputLabels(vector<vector<double>> *labels);
 
 
  /* ----- Public Method Propagate ----- */
- void Propagate();
+ void Propagate(int n);
 
 
  /* ----- Public Method Clear ----- */
  void Clear();
+
+ /* ----- Public Method Quadratic Loss ----- */
+ void QuadraticLoss(vector<double> *outputVector, vector<double> *targetVector);
+
+ /* ----- Public Method Backpropagate -----*/
+ void Backpropagate();
+
+ float Accuracy();
 
 private:
 
  vector<SKLayer*> vModelLayers;
  vector<SKWeights*> vModelWeights;
 
- vector<float> *vInputLabels;
- vector<vector<float>> *mInputSample;
- vector<float> *vInput;
+ vector<vector<double>> *mInputLabels;
+ vector<vector<double>> *mInputSample;
 
- SKPropagator * propagator;
+ /* ----- Aux Vectors -----*/
+ vector<double> *vInput;
+ vector<double> *vLabel;
+
+
+ vector<double> vLossVector;
+ SKPropagator *propagator;
 
  int nDataSize;
  int nDataNRows;
  int nDataNColumns;
  int nTotalWeights;
  int nLayers;
+ int nIterations;
+ float nAccuracy;
+
+ double SigmoidDer(double arg);
+
 
 
 };

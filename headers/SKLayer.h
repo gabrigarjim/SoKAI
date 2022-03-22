@@ -38,6 +38,7 @@ class SKLayer {
 
   friend class SKPropagator;
   friend class SKBackProp;
+  friend class SKModel;
 
 
 };

@@ -24,16 +24,16 @@ void SKModel::AddWeights(SKWeights *weights){
 }
 
 /* ----- Public Method Set Input ----- */
-void SKModel::SetInputSample(vector<vector<float>> *input){
+void SKModel::SetInputSample(vector<vector<double>> *input){
 
    mInputSample = input;
 
 }
 
 /* ----- Public Method Set Input Label ----- */
-void SKModel::SetInputLabels(vector<float> *labels){
+void SKModel::SetInputLabels(vector<vector<double>> *labels){
 
- vInputLabels = labels;
+   mInputLabels = labels;
 
 }
 
@@ -52,7 +52,7 @@ void SKModel::Init(){
   for(int i = 0 ; i < vModelWeights.size() ; i++)
    nTotalWeights = nTotalWeights + (vModelWeights.at(i)->fRows)*(vModelWeights.at(i)->fColumns);
 
-  LOG(INFO)<<"Initializing Model ----------";
+  LOG(INFO)<<"Initializing Model .......";
   LOG(INFO)<<"Feed forward model with "<<nLayers<<" layers";
   LOG(INFO)<<"Number of trainable parameters : "<<nTotalWeights;
   LOG(INFO)<<"Data Size : "<<nDataSize<<" Input Samples";
@@ -67,12 +67,11 @@ void SKModel::Init(){
 
 
 
- void SKModel::Propagate(){
-
-
-  for (int n = 0 ; n < nDataSize ; n++){
+ void SKModel::Propagate(int n){
 
    vInput = &mInputSample->at(n);
+   vLabel = &mInputLabels->at(n);
+
 
    propagator->Feed(vInput,vModelLayers.at(0));
 
@@ -80,11 +79,13 @@ void SKModel::Init(){
      propagator->Propagate(vModelLayers.at(i-1),vModelLayers.at(i),vModelWeights.at(i-1));
 
 
-     vModelLayers.at(nLayers-1)->Print();
+     QuadraticLoss(&(vModelLayers.at(nLayers-1)->vLayerOutput),vLabel);
 
-     Clear();
+     //cout<<"Loss : "<<vLossVector.at(0)<<" "<<vLossVector.at(1)<<" "<<vLossVector.at(2)<<endl;
 
-   }
+
+
+     nIterations++;
 
 
 
@@ -97,5 +98,109 @@ void SKModel::Clear(){
    for (int i = 0 ; i < nLayers ; i++)
      vModelLayers.at(i)->Clear();
 
+     vLossVector.clear();
+ }
+
+
+void SKModel::QuadraticLoss(vector<double> *outputVector, vector<double> *targetVector) {
+
+     for(int i = 0 ; i < outputVector->size() ; i++){
+
+       vLossVector.push_back((1.0/outputVector->size())*pow(outputVector->at(i) - targetVector->at(i),2));
+
+     }
+
+}
+
+
+void SKModel::Backpropagate(){
+
+
+ /* Now the mother of the lamb .....*/
+
+
+ /* Second weight matrix */
+
+ int nWeightsRows,nWeightsColumns;
+ nWeightsRows = vModelWeights.at(1)->fRows;
+ nWeightsColumns = vModelWeights.at(1)->fColumns;
+ double mWeightsGradients[nWeightsRows][nWeightsColumns]={{0.0}};
+
+ for (int i = 0 ; i < nWeightsRows ; i++){
+  for(int j = 0 ; j < nWeightsColumns ; j++){
+
+    mWeightsGradients[i][j] = (1.0/vModelLayers.at(nLayers-1)->fSize)*(vModelLayers.at(nLayers-1)->vLayerOutput.at(j)- vLabel->at(j))
+                              *SigmoidDer(vModelLayers.at(nLayers-1)->vNeurons.at(j).fInput)*(vModelLayers.at(nLayers-2)->vLayerOutput.at(i));
+  }
+}
+
+for (int i = 0 ; i < nWeightsRows ; i++){
+ for(int j = 0 ; j < nWeightsColumns ; j++){
+
+   vModelWeights.at(1)->mWeightMatrix[i][j] = vModelWeights.at(1)->mWeightMatrix[i][j] - 0.01*mWeightsGradients[i][j];
 
  }
+}
+
+
+
+
+
+}
+
+float SKModel::Accuracy(){
+
+
+float counter = 0.0;
+
+
+for (int i = 0 ; i < mInputSample->size() ; i++){
+
+  vInput = &mInputSample->at(i);
+  vLabel = &mInputLabels->at(i);
+
+  float maxLabel=0.0,maxOutput=0.0;
+
+  maxLabel =  std::distance(vLabel->begin(),std::max_element(vLabel->begin(), vLabel->end()));
+
+  propagator->Feed(vInput,vModelLayers.at(0));
+
+  for(int i = 1 ; i < nLayers ; i++)
+    propagator->Propagate(vModelLayers.at(i-1),vModelLayers.at(i),vModelWeights.at(i-1));
+
+
+  vector<double> layerOut = vModelLayers.at(nLayers-1)->vLayerOutput;
+  maxOutput = std::distance(layerOut.begin(),std::max_element(layerOut.begin(), layerOut.end()));
+
+
+
+  if(maxOutput==maxLabel)
+  counter++;
+
+  Clear();
+
+  }
+
+
+  return 100*counter/mInputSample->size();
+
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+double SKModel::SigmoidDer(double arg) {
+
+     return (1.0/(1.0 + exp(-1.0*arg)))*(1.0-1.0/(1.0 + exp(-1.0*arg)));
+
+}

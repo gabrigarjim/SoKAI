@@ -39,6 +39,7 @@ private:
   float fInput;
 
 friend class SKBackProp;
+friend class SKModel;
 
 
 };
