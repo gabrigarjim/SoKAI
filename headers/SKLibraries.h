@@ -11,3 +11,4 @@
 #include <fstream>
 #include "TCanvas.h"
 #include "TApplication.h"
+#include "TGraph.h"

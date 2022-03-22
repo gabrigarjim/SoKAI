@@ -50,6 +50,8 @@ public:
 
  float Accuracy();
 
+ void SetLearningRate(float learningRate){nLearningRate=learningRate;};
+
 private:
 
  vector<SKLayer*> vModelLayers;
@@ -73,6 +75,7 @@ private:
  int nLayers;
  int nIterations;
  float nAccuracy;
+ float nLearningRate;
 
  double SigmoidDer(double arg);
 

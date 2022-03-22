@@ -122,8 +122,11 @@ void SKModel::Backpropagate(){
  /* Second weight matrix */
 
  int nWeightsRows,nWeightsColumns;
+ int nWeightsRowsFirst,nWeightsColumnsFirst;
+
  nWeightsRows = vModelWeights.at(1)->fRows;
  nWeightsColumns = vModelWeights.at(1)->fColumns;
+
  double mWeightsGradients[nWeightsRows][nWeightsColumns]={{0.0}};
 
  for (int i = 0 ; i < nWeightsRows ; i++){
@@ -134,16 +137,55 @@ void SKModel::Backpropagate(){
   }
 }
 
-for (int i = 0 ; i < nWeightsRows ; i++){
- for(int j = 0 ; j < nWeightsColumns ; j++){
 
-   vModelWeights.at(1)->mWeightMatrix[i][j] = vModelWeights.at(1)->mWeightMatrix[i][j] - 0.01*mWeightsGradients[i][j];
 
- }
+/* First Weight Matrix*/
+
+nWeightsRowsFirst = vModelWeights.at(0)->fRows;
+nWeightsColumnsFirst = vModelWeights.at(0)->fColumns;
+
+double mFirstWeightsGradients[nWeightsRowsFirst][nWeightsColumnsFirst]={{0.0}};
+
+double firstStepSum=0.0;
+
+for (int i = 0 ; i < nWeightsRowsFirst ; i++){
+ for(int j = 0 ; j < nWeightsColumnsFirst ; j++){
+
+   for(int k = 0 ; k < vModelLayers.at(nLayers-1)->fSize ; k++){
+
+    firstStepSum = firstStepSum + (1.0/vModelLayers.at(nLayers-1)->fSize)*
+                   (vModelLayers.at(nLayers-1)->vLayerOutput.at(k)- vLabel->at(k))*
+                   SigmoidDer(vModelLayers.at(nLayers-1)->vNeurons.at(k).fInput)*
+                   vModelWeights.at(1)->mWeightMatrix[j][k];
+
+    }
+
+   mFirstWeightsGradients[i][j] = SigmoidDer(vModelLayers.at(nLayers-2)->vNeurons.at(j).fInput)*
+                                  vModelLayers.at(0)->vLayerOutput.at(i)*firstStepSum;
+  }
+
+
 }
 
 
 
+
+/* ------ Updating Weights ------*/
+for (int i = 0 ; i < nWeightsRows ; i++){
+ for(int j = 0 ; j < nWeightsColumns ; j++){
+
+   vModelWeights.at(1)->mWeightMatrix[i][j] = vModelWeights.at(1)->mWeightMatrix[i][j] - nLearningRate*mWeightsGradients[i][j];
+
+ }
+}
+
+for (int i = 0 ; i < nWeightsRowsFirst ; i++){
+ for(int j = 0 ; j < nWeightsColumnsFirst ; j++){
+
+   vModelWeights.at(0)->mWeightMatrix[i][j] = vModelWeights.at(0)->mWeightMatrix[i][j] - nLearningRate*mFirstWeightsGradients[i][j];
+
+ }
+}
 
 
 }

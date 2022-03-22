@@ -12,12 +12,14 @@ int main () {
 
   TApplication* theApp = new TApplication("SoKAI", 0, 0);
 
+  clock_t start, end;
+
   LOG(INFO)<<"#============================================================#";
   LOG(INFO)<<"# Welcome to SoKAI (Some Kind of Artificial Intelligence) !! #";
   LOG(INFO)<<"#============================================================#";
 
   int seed = 2022;
-  int epochs = 1000;
+  int epochs = 3000;
 
   ifstream *iris_data = new ifstream("/home/gabri/CODE/SoKAI/data/iris.csv");
 
@@ -27,6 +29,9 @@ int main () {
 
   vector<vector<double>> data_sample;
   vector<double> data_instance;
+  vector<double> accuracy_vec;
+  vector<double> epoch_vec;
+  double accuracy;
 
   vector<vector<double>> input_labels;
 
@@ -141,9 +146,12 @@ int main () {
   model->SetInputLabels(&input_labels);
 
   model->Init();
+  model->SetLearningRate(0.001);
 
   /* ---------- Pass Data Through Model ----------*/
 for (int j = 0 ; j < epochs ; j++){
+
+ start = clock();
 
  for (int i = 0 ; i < data_sample.size() ; i++){
 
@@ -155,14 +163,26 @@ for (int j = 0 ; j < epochs ; j++){
 
  }
 
-if(j%10==0){
+if(j%100==0){
 
   LOG(INFO)<<"Epoch : "<<j;
-  LOG(INFO)<<"Model Accuracy : "<<model->Accuracy();
+  accuracy = model->Accuracy();
+  LOG(INFO)<<"Model Accuracy : "<<accuracy<<" %";
+  accuracy_vec.push_back(accuracy);
+  epoch_vec.push_back(j);
 
  }
 
+ end = clock();
+ LOG(INFO)<<"Time per 100 epochs : "<<1000*((float) end - start)/CLOCKS_PER_SEC<<" ms";
 }
+
+TGraph *myGraph = new TGraph(epoch_vec.size(),&epoch_vec[0],&accuracy_vec[0]);
+myGraph->Draw("AC*");
+myGraph->SetTitle("Model Accuracy");
+myGraph->GetXaxis()->SetTitle("Epochs");
+myGraph->GetYaxis()->SetTitle("Accuracy %");
+
 
 theApp->Run();
 
