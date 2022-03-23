@@ -19,7 +19,7 @@ int main () {
   LOG(INFO)<<"#============================================================#";
 
   int seed = 2022;
-  int epochs = 3000;
+  int epochs = 20000;
 
   ifstream *iris_data = new ifstream("/home/gabri/CODE/SoKAI/data/iris.csv");
 
@@ -82,15 +82,15 @@ int main () {
       /* ------ One Hot Encoding ------*/
       switch (label) {
         case 1:
-        label_instance.at(0)=1;
+        label_instance.at(0)=0.75;
         break;
 
         case 2:
-        label_instance.at(1)=1;
+        label_instance.at(1)=0.75;
         break;
 
         case 3:
-        label_instance.at(2)=1;
+        label_instance.at(2)=0.75;
         break;
 
       }
@@ -146,16 +146,21 @@ int main () {
   model->SetInputLabels(&input_labels);
 
   model->Init();
-  model->SetLearningRate(0.001);
+  model->SetLearningRate(0.01);
+
+  TRandom3 gen(0);
 
   /* ---------- Pass Data Through Model ----------*/
+start = clock();
+
 for (int j = 0 ; j < epochs ; j++){
 
- start = clock();
 
  for (int i = 0 ; i < data_sample.size() ; i++){
 
-  model->Propagate(i);
+  int sample_number = data_sample.size()*gen.Rndm();
+
+  model->Propagate(sample_number);
 
   model->Backpropagate();
 
@@ -163,18 +168,21 @@ for (int j = 0 ; j < epochs ; j++){
 
  }
 
-if(j%100==0){
+if(j%1000==0){
 
   LOG(INFO)<<"Epoch : "<<j;
   accuracy = model->Accuracy();
   LOG(INFO)<<"Model Accuracy : "<<accuracy<<" %";
+
   accuracy_vec.push_back(accuracy);
   epoch_vec.push_back(j);
+  end = clock();
+
+  LOG(INFO)<<"Time per 1000 epochs : "<<((float) end - start)/CLOCKS_PER_SEC<<" s";
+  start = clock();
 
  }
 
- end = clock();
- LOG(INFO)<<"Time per 100 epochs : "<<1000*((float) end - start)/CLOCKS_PER_SEC<<" ms";
 }
 
 TGraph *myGraph = new TGraph(epoch_vec.size(),&epoch_vec[0],&accuracy_vec[0]);

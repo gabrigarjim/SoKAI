@@ -177,10 +177,11 @@ nWeightsColumnsFirst = vModelWeights.at(0)->fColumns;
 vector<vector<double>> mFirstWeightsGradients(nWeightsRowsFirst,vector<double>(nWeightsColumnsFirst, 0));
 
 
-double firstStepSum=0.0;
 
 for (int i = 0 ; i < nWeightsRowsFirst ; i++){
  for(int j = 0 ; j < nWeightsColumnsFirst ; j++){
+
+   double firstStepSum=0.0;
 
    for(int k = 0 ; k < vModelLayers.at(nLayers-1)->fSize ; k++){
 
