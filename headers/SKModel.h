@@ -52,6 +52,8 @@ public:
 
  void SetLearningRate(float learningRate){nLearningRate=learningRate;};
 
+ void CheckDimensions();
+
 private:
 
  vector<SKLayer*> vModelLayers;

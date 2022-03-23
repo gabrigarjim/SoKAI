@@ -1,9 +1,8 @@
 #include "SKModel.h"
 
 /* ----- Standard Constructor ----- */
-SKModel::SKModel() {
-
-}
+SKModel::SKModel() :
+ nLearningRate(0.001) {}
 
 /* ----- Standard Destructor ----- */
 SKModel::~SKModel(){}
@@ -51,6 +50,8 @@ void SKModel::Init(){
 
   for(int i = 0 ; i < vModelWeights.size() ; i++)
    nTotalWeights = nTotalWeights + (vModelWeights.at(i)->fRows)*(vModelWeights.at(i)->fColumns);
+
+  CheckDimensions();
 
   LOG(INFO)<<"Initializing Model .......";
   LOG(INFO)<<"Feed forward model with "<<nLayers<<" layers";
@@ -102,6 +103,34 @@ void SKModel::Clear(){
  }
 
 
+void SKModel::CheckDimensions(){
+
+
+   bool isRight=1;
+
+   for (int i = 0 ; i < (nLayers-1) ; i++ ) {
+     isRight = (vModelLayers.at(i)->fSize == vModelWeights.at(i)->fRows);
+
+     if(!isRight)
+      LOG(FATAL)<<"Incompatible row dimensions :  Layer "<<i+1;
+  }
+
+   for (int i = (nLayers-1) ; i > 0 ; i-- ) {
+
+    isRight = (vModelLayers.at(i)->fSize == vModelWeights.at(i-1)->fColumns);
+
+    if(!isRight)
+     LOG(FATAL)<<"Incompatible column dimensions :  Layer "<<i;
+
+
+ }
+}
+
+
+
+
+
+
 void SKModel::QuadraticLoss(vector<double> *outputVector, vector<double> *targetVector) {
 
      for(int i = 0 ; i < outputVector->size() ; i++){
@@ -127,7 +156,8 @@ void SKModel::Backpropagate(){
  nWeightsRows = vModelWeights.at(1)->fRows;
  nWeightsColumns = vModelWeights.at(1)->fColumns;
 
- double mWeightsGradients[nWeightsRows][nWeightsColumns]={{0.0}};
+ vector<vector<double>> mWeightsGradients(nWeightsRows,vector<double>(nWeightsColumns, 0));
+
 
  for (int i = 0 ; i < nWeightsRows ; i++){
   for(int j = 0 ; j < nWeightsColumns ; j++){
@@ -144,7 +174,8 @@ void SKModel::Backpropagate(){
 nWeightsRowsFirst = vModelWeights.at(0)->fRows;
 nWeightsColumnsFirst = vModelWeights.at(0)->fColumns;
 
-double mFirstWeightsGradients[nWeightsRowsFirst][nWeightsColumnsFirst]={{0.0}};
+vector<vector<double>> mFirstWeightsGradients(nWeightsRowsFirst,vector<double>(nWeightsColumnsFirst, 0));
+
 
 double firstStepSum=0.0;
 

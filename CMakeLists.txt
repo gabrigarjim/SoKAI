@@ -1,7 +1,9 @@
 project(SoKAI)
 
+set (CMAKE_CXX_STANDARD 11)
+
 cmake_minimum_required(VERSION 2.6 FATAL_ERROR)
-find_package (glog 0.6.0 REQUIRED)
+find_package (glog 0.5.0 REQUIRED)
 
 include_directories(${PROJECT_SOURCE_DIR}/headers)
 
