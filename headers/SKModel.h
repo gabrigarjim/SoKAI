@@ -54,6 +54,8 @@ public:
 
  void CheckDimensions();
 
+ TH2F * ShowMe();
+
 private:
 
  vector<SKLayer*> vModelLayers;
@@ -78,6 +80,8 @@ private:
  int nIterations;
  float nAccuracy;
  float nLearningRate;
+ TCanvas *modelCanvas;
+ TH2F *modelHistogram;
 
  double SigmoidDer(double arg);
 

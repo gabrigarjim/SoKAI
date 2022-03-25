@@ -12,3 +12,5 @@
 #include "TCanvas.h"
 #include "TApplication.h"
 #include "TGraph.h"
+#include "TH2.h"
+#include "TStyle.h"

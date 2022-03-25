@@ -61,6 +61,21 @@ void SKModel::Init(){
 
   propagator = new SKPropagator();
 
+  int maxSize=0;
+
+  for (int i = 0 ; i < nLayers ; i++)
+   if(vModelLayers.at(i)->fSize > maxSize)
+    maxSize = vModelLayers.at(i)->fSize;
+
+  modelHistogram = new TH2F("modelHistogram","Model",1000,0,vModelLayers.size() + 1,1000,0,maxSize+1);
+
+
+  modelHistogram->GetXaxis()->SetTitle("Layer");
+  modelHistogram->GetYaxis()->SetTitle("Neuron");
+  modelHistogram->GetXaxis()->SetNdivisions(nLayers+1);
+  modelHistogram->GetYaxis()->SetNdivisions(maxSize+1);
+
+
 
 }
 
@@ -276,5 +291,54 @@ for (int i = 0 ; i < mInputSample->size() ; i++){
 double SKModel::SigmoidDer(double arg) {
 
      return (1.0/(1.0 + exp(-1.0*arg)))*(1.0-1.0/(1.0 + exp(-1.0*arg)));
+
+}
+
+
+
+
+TH2F * SKModel::ShowMe(){
+
+   double x_start,x_end,y_start,y_end,m,n_const;
+   double x,y;
+
+   TRandom3 gen(0);
+
+   for ( int n = 0 ; n < nLayers-1 ; n++) {
+    for( int i = 0 ; i < vModelLayers.at(n)->fSize ; i++) {
+     for( int j = 0 ; j < vModelLayers.at(n+1)->fSize ; j++) {
+
+        x_start = n + 1 - 0.01;
+        x_end   = n + 2 + 0.01;
+
+        y_start = float(i) + 1.0;
+        y_end   = float(j) + 1.0;
+
+        m = (y_end - y_start)/(x_end - x_start);
+        n_const = (y_start - m*x_start);
+
+        for(int z = 0 ; z < abs(vModelWeights.at(n)->mWeightMatrix[i][j])*10000 ; z++) {
+
+           x = (x_end-x_start)* gen.Rndm() + x_start;
+
+           y = m*x + n_const;
+
+           y = gen.Gaus(y,0.02);
+
+           modelHistogram->Fill(x,y);
+
+       }
+     }
+   }
+ }
+
+ return modelHistogram;
+
+
+
+
+
+
+
 
 }
