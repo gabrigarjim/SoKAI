@@ -2,7 +2,6 @@
 #include "SKLayer.h"
 #include "SKWeights.h"
 #include "SKPropagator.h"
-#include "SKBackProp.h"
 #include "SKModel.h"
 #include "SKFancyPlots.h"
 
@@ -22,9 +21,9 @@ int main () {
   LOG(INFO)<<"#============================================================#";
 
   int seed = 2022;
-  int epochs = 20000;
+  int epochs = 10000;
 
-  ifstream *iris_data = new ifstream("/home/gabri/CODE/SoKAI/data/iris.csv");
+  ifstream *iris_data = new ifstream("../SoKAI/data/iris.csv");
 
   if(!iris_data->is_open())
    LOG(ERROR)<<"File not opened!!!";
@@ -36,7 +35,7 @@ int main () {
   vector<double> epoch_vec;
   double accuracy;
 
-  /* -------- Put this in a header or something ----------*/
+  /* -------- Put this on a header or something..... ----------*/
   gStyle->SetOptStat(0);
   Double_t Red[5]    = { 0.06, 0.25, 0.50, 0.75, 1.0};
   Double_t Green[5]  = {0.01, 0.1, 0.15, 0.20, 0.8};
@@ -150,25 +149,37 @@ int main () {
 
 
   SKLayer   *layer_1 = new SKLayer(4,"Sigmoid");
-  SKWeights *weights_12 = new SKWeights(4,2);
+  SKWeights *weights_12 = new SKWeights(4,4);
+  SKWeights *gradients_12 = new SKWeights(4,4);
 
-  SKLayer   *layer_2 = new SKLayer(2,"Sigmoid");
-  SKWeights *weights_23 = new SKWeights(2,3);
+  SKLayer   *layer_2 = new SKLayer(4,"ReLU");
+  SKWeights *weights_23 = new SKWeights(4,3);
+  SKWeights *gradients_23 = new SKWeights(4,3);
+
 
   SKLayer   *layer_3 = new SKLayer(3,"Sigmoid");
 
   weights_12->Init(seed);
+  gradients_12->InitGradients();
+
   weights_23->Init(seed);
+  gradients_23->InitGradients();
+
+
+
 
   SKModel *model = new SKModel();
 
   model->AddLayer(layer_1);
   model->AddWeights(weights_12);
+  model->AddGradients(gradients_12);
 
   model->AddLayer(layer_2);
   model->AddWeights(weights_23);
+  model->AddGradients(gradients_23);
 
   model->AddLayer(layer_3);
+
 
   model->SetInputSample(&data_sample);
   model->SetInputLabels(&input_labels);
@@ -179,21 +190,19 @@ int main () {
   TRandom3 gen(0);
 
   /* ---------- Pass Data Through Model ----------*/
-start = clock();
+  start = clock();
 
 for (int j = 0 ; j < epochs ; j++){
+   for (int i = 0 ; i < data_sample.size() ; i++){
+
+    int sample_number = data_sample.size()*gen.Rndm();
+
+    model->Propagate(sample_number);
+
+    model->Backpropagate();
 
 
- for (int i = 0 ; i < data_sample.size() ; i++){
-
-  int sample_number = data_sample.size()*gen.Rndm();
-
-  model->Propagate(sample_number);
-
-  model->Backpropagate();
-
-
-  model->Clear();
+    model->Clear();
 
  }
 
@@ -206,6 +215,7 @@ if(j%1000==0){
   accuracy_vec.push_back(accuracy);
   epoch_vec.push_back(j);
   end = clock();
+
   LOG(INFO)<<"Time per 1000 epochs : "<<((float) end - start)/CLOCKS_PER_SEC<<" s";
   start = clock();
 

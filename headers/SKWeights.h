@@ -18,6 +18,13 @@ public:
  /* ----- Public Method Init ----- */
  void Init(int seed);
 
+ /* ----- Public Method Init Gradients ----- */
+ void InitGradients();
+
+ /* ----- Public Method Zero Gradients ----- */
+ void ZeroGradients();
+
+
  /* ----- Public Method Print Weights -----*/
  void Print();
 
@@ -26,6 +33,7 @@ public:
   int fRows;
   int fColumns;
   vector<vector<double>> mWeightMatrix;
+
 
  friend class SKPropagator;
  friend class SKBackProp;

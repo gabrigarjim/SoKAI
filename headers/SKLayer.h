@@ -27,7 +27,14 @@ class SKLayer {
   /* ----- Public Method Clear ----- */
   void Clear();
 
+  /* ----- Derivatives ------- */
+  double SigmoidDer(double arg);
+  double ReLUDer(double arg);
+  double LinearDer(double arg);
+  double TanhDer(double arg);
+  double LeakyReLUDer(double arg);
 
+  double LayerDer(int neuron);
 
 
  private:
@@ -35,6 +42,7 @@ class SKLayer {
   int fSize;
   vector<SKNeuron> vNeurons;
   vector<double> vLayerOutput;
+  string sActivationFunction;
 
   friend class SKPropagator;
   friend class SKBackProp;

@@ -1,5 +1,52 @@
 #include "SKModel.h"
 
+void get_comb(int w ,int first,int second,vector<vector<int>>& arr,vector<vector<vector<int>>> &mWeightsPaths)
+{
+    int n = arr.size();
+
+    vector<int> path;
+    vector<vector<int>> pathMatrix;
+
+    vector<int> indices(n,0);
+
+    while (1) {
+
+      path.push_back(first);
+      path.push_back(second);
+
+      for (int i = 0; i < n; i++)
+        path.push_back(arr[i][indices[i]]);
+
+
+      pathMatrix.push_back(path);
+
+      path.clear();
+
+      int next = n - 1;
+
+      while (next >= 0 && (indices[next] + 1 >= arr[next].size()))
+        next--;
+
+
+        if (next < 0){
+
+            indices.clear();
+            mWeightsPaths.push_back(pathMatrix);
+            return;
+       }
+
+        indices[next]++;
+
+        for (int i = next + 1; i < n; i++)
+            indices[i] = 0;
+
+    }
+  }
+
+
+
+
+
 /* ----- Standard Constructor ----- */
 SKModel::SKModel() :
  nLearningRate(0.001) {}
@@ -21,6 +68,14 @@ void SKModel::AddWeights(SKWeights *weights){
   vModelWeights.push_back(weights);
 
 }
+
+/* ----- Public Method Add Gradients ----- */
+void SKModel::AddGradients(SKWeights *gradients){
+
+  vModelGradients.push_back(gradients);
+
+}
+
 
 /* ----- Public Method Set Input ----- */
 void SKModel::SetInputSample(vector<vector<double>> *input){
@@ -75,7 +130,39 @@ void SKModel::Init(){
   modelHistogram->GetXaxis()->SetNdivisions(nLayers+1);
   modelHistogram->GetYaxis()->SetNdivisions(maxSize+1);
 
+  LOG(INFO)<<"Calculating weight paths .......";
 
+  vector <vector<int>> comb_vec;
+
+  for (int w = vModelWeights.size()-1 ; w >= 0 ; w--) {
+   for (int i = 0 ; i < vModelWeights.at(w)->fRows ; i++) {
+     for (int j = 0 ; j < vModelWeights.at(w)->fColumns ; j++) {
+
+         int firstLayer = w + 2;
+         int lastLayer  = nLayers - 1;
+
+         vector <int> layer_coord;
+
+         /* ---- Calculate all possible paths for a given weight ----- */
+         for(int n = firstLayer ; n <= lastLayer ; n++){
+           for(int s = 0 ; s < vModelLayers.at(n)->fSize ; s++){
+
+              layer_coord.push_back(s);
+
+           }
+
+           comb_vec.push_back(layer_coord);
+           layer_coord.clear();
+
+         }
+
+           get_comb(w,i,j,comb_vec,mWeightsPaths);
+
+           comb_vec.clear();
+
+       }
+      }
+     }
 
 }
 
@@ -95,15 +182,9 @@ void SKModel::Init(){
      propagator->Propagate(vModelLayers.at(i-1),vModelLayers.at(i),vModelWeights.at(i-1));
 
 
-     QuadraticLoss(&(vModelLayers.at(nLayers-1)->vLayerOutput),vLabel);
-
-     //cout<<"Loss : "<<vLossVector.at(0)<<" "<<vLossVector.at(1)<<" "<<vLossVector.at(2)<<endl;
-
-
+     //QuadraticLoss(&(vModelLayers.at(nLayers-1)->vLayerOutput),vLabel);
 
      nIterations++;
-
-
 
  }
 
@@ -124,10 +205,12 @@ void SKModel::CheckDimensions(){
    bool isRight=1;
 
    for (int i = 0 ; i < (nLayers-1) ; i++ ) {
+
      isRight = (vModelLayers.at(i)->fSize == vModelWeights.at(i)->fRows);
 
      if(!isRight)
       LOG(FATAL)<<"Incompatible row dimensions :  Layer "<<i+1;
+
   }
 
    for (int i = (nLayers-1) ; i > 0 ; i-- ) {
@@ -136,9 +219,8 @@ void SKModel::CheckDimensions(){
 
     if(!isRight)
      LOG(FATAL)<<"Incompatible column dimensions :  Layer "<<i;
-
-
  }
+
 }
 
 
@@ -148,127 +230,131 @@ void SKModel::CheckDimensions(){
 
 void SKModel::QuadraticLoss(vector<double> *outputVector, vector<double> *targetVector) {
 
-     for(int i = 0 ; i < outputVector->size() ; i++){
-
+     for(int i = 0 ; i < outputVector->size() ; i++)
        vLossVector.push_back((1.0/outputVector->size())*pow(outputVector->at(i) - targetVector->at(i),2));
-
-     }
 
 }
 
 
 void SKModel::Backpropagate(){
 
+  // First we calculate the gradient contribution for each path
+  double pathGradient;
 
- /* Now the mother of the lamb .....*/
+  // Then we add all path gradients to compute the change for a given weight
+  double gradientSum;
 
+  // This refers to the block of paths that are used for the current weight
 
- /* Second weight matrix */
+  vector<double> lossDerivatives;
+  vector <vector<int>> comb_vec;
 
- int nWeightsRows,nWeightsColumns;
- int nWeightsRowsFirst,nWeightsColumnsFirst;
+  vector <vector<int>> path_matrix;
 
- nWeightsRows = vModelWeights.at(1)->fRows;
- nWeightsColumns = vModelWeights.at(1)->fColumns;
-
- vector<vector<double>> mWeightsGradients(nWeightsRows,vector<double>(nWeightsColumns, 0));
-
-
- for (int i = 0 ; i < nWeightsRows ; i++){
-  for(int j = 0 ; j < nWeightsColumns ; j++){
-
-    mWeightsGradients[i][j] = (1.0/vModelLayers.at(nLayers-1)->fSize)*(vModelLayers.at(nLayers-1)->vLayerOutput.at(j)- vLabel->at(j))
-                              *SigmoidDer(vModelLayers.at(nLayers-1)->vNeurons.at(j).fInput)*(vModelLayers.at(nLayers-2)->vLayerOutput.at(i));
-  }
-}
+  int counter=0;
 
 
+  for (int i = 0 ; i < vModelLayers.at(nLayers-1)->fSize ; i++)
+    lossDerivatives.push_back((1.0/vModelLayers.at(nLayers-1)->fSize)*(vModelLayers.at(nLayers-1)->vLayerOutput.at(i)-vLabel->at(i)));
 
-/* First Weight Matrix*/
-
-nWeightsRowsFirst = vModelWeights.at(0)->fRows;
-nWeightsColumnsFirst = vModelWeights.at(0)->fColumns;
-
-vector<vector<double>> mFirstWeightsGradients(nWeightsRowsFirst,vector<double>(nWeightsColumnsFirst, 0));
+  // Init gradients to 0
+  for (int i = 0 ; i < vModelGradients.size() ; i++)
+    vModelGradients.at(i)->ZeroGradients();
 
 
 
-for (int i = 0 ; i < nWeightsRowsFirst ; i++){
- for(int j = 0 ; j < nWeightsColumnsFirst ; j++){
+   for (int w = vModelWeights.size()-1 ; w >= 0 ; w--) {
+    for (int i = 0 ; i < vModelWeights.at(w)->fRows ; i++) {
+      for (int j = 0 ; j < vModelWeights.at(w)->fColumns ; j++) {
 
-   double firstStepSum=0.0;
+        gradientSum = 0.0;
+        path_matrix = mWeightsPaths[counter];
 
-   for(int k = 0 ; k < vModelLayers.at(nLayers-1)->fSize ; k++){
 
-    firstStepSum = firstStepSum + (1.0/vModelLayers.at(nLayers-1)->fSize)*
-                   (vModelLayers.at(nLayers-1)->vLayerOutput.at(k)- vLabel->at(k))*
-                   SigmoidDer(vModelLayers.at(nLayers-1)->vNeurons.at(k).fInput)*
-                   vModelWeights.at(1)->mWeightMatrix[j][k];
+         /*-------- Now compute all gradients for all paths ---------*/
+         for(int path = 0 ; path < path_matrix.size() ; path++){
 
+            pathGradient=1;
+            pathGradient = pathGradient*lossDerivatives.at(path_matrix[path][path_matrix[path].size()-1])*vModelLayers.at(w)->vLayerOutput.at(i);
+
+
+
+
+          for(int r = 1 ; r < path_matrix[path].size() ; r++) {
+
+             pathGradient=pathGradient*vModelLayers.at(r + w)->LayerDer(path_matrix[path][r]);
+
+         }
+
+
+           for(int r = 1 ; r < path_matrix[path].size()-1 ; r++){
+
+             pathGradient=pathGradient*vModelWeights.at(w + r)->mWeightMatrix[path_matrix[path][r]][path_matrix[path][r+1]];
+
+         }
+
+             gradientSum = gradientSum + pathGradient;
+
+        }
+
+
+           vModelGradients.at(w)->mWeightMatrix[i][j] = gradientSum ;
+           counter++;
+
+     }
     }
+   }
 
-   mFirstWeightsGradients[i][j] = SigmoidDer(vModelLayers.at(nLayers-2)->vNeurons.at(j).fInput)*
-                                  vModelLayers.at(0)->vLayerOutput.at(i)*firstStepSum;
+
+
+   for (int w = vModelWeights.size()-1 ; w >= 0 ; w--) {
+    for (int i = 0 ; i < vModelWeights.at(w)->fRows ; i++) {
+      for (int j = 0 ; j < vModelWeights.at(w)->fColumns ; j++) {
+
+          vModelWeights.at(w)->mWeightMatrix[i][j] = vModelWeights.at(w)->mWeightMatrix[i][j] - nLearningRate*vModelGradients.at(w)->mWeightMatrix[i][j];
+
+      }
+    }
   }
 
-
 }
 
 
 
-
-/* ------ Updating Weights ------*/
-for (int i = 0 ; i < nWeightsRows ; i++){
- for(int j = 0 ; j < nWeightsColumns ; j++){
-
-   vModelWeights.at(1)->mWeightMatrix[i][j] = vModelWeights.at(1)->mWeightMatrix[i][j] - nLearningRate*mWeightsGradients[i][j];
-
- }
-}
-
-for (int i = 0 ; i < nWeightsRowsFirst ; i++){
- for(int j = 0 ; j < nWeightsColumnsFirst ; j++){
-
-   vModelWeights.at(0)->mWeightMatrix[i][j] = vModelWeights.at(0)->mWeightMatrix[i][j] - nLearningRate*mFirstWeightsGradients[i][j];
-
- }
-}
-
-
-}
 
 float SKModel::Accuracy(){
 
 
-float counter = 0.0;
+ float counter = 0.0;
 
 
-for (int i = 0 ; i < mInputSample->size() ; i++){
+ for (int i = 0 ; i < mInputSample->size() ; i++){
 
-  vInput = &mInputSample->at(i);
-  vLabel = &mInputLabels->at(i);
+   vInput = &mInputSample->at(i);
+   vLabel = &mInputLabels->at(i);
 
-  float maxLabel=0.0,maxOutput=0.0;
+   float maxLabel=0.0,maxOutput=0.0;
 
-  maxLabel =  std::distance(vLabel->begin(),std::max_element(vLabel->begin(), vLabel->end()));
+   maxLabel =  std::distance(vLabel->begin(),std::max_element(vLabel->begin(), vLabel->end()));
 
-  propagator->Feed(vInput,vModelLayers.at(0));
+   propagator->Feed(vInput,vModelLayers.at(0));
 
-  for(int i = 1 ; i < nLayers ; i++)
-    propagator->Propagate(vModelLayers.at(i-1),vModelLayers.at(i),vModelWeights.at(i-1));
-
-
-  vector<double> layerOut = vModelLayers.at(nLayers-1)->vLayerOutput;
-  maxOutput = std::distance(layerOut.begin(),std::max_element(layerOut.begin(), layerOut.end()));
+   for(int i = 1 ; i < nLayers ; i++)
+     propagator->Propagate(vModelLayers.at(i-1),vModelLayers.at(i),vModelWeights.at(i-1));
 
 
+   vector<double> layerOut = vModelLayers.at(nLayers-1)->vLayerOutput;
 
-  if(maxOutput==maxLabel)
-  counter++;
+   maxOutput = std::distance(layerOut.begin(),std::max_element(layerOut.begin(), layerOut.end()));
 
-  Clear();
 
-  }
+
+   if(maxOutput==maxLabel)
+    counter++;
+
+   Clear();
+
+   }
 
 
   return 100*counter/mInputSample->size();
@@ -278,29 +364,11 @@ for (int i = 0 ; i < mInputSample->size() ; i++){
 
 
 
-
-
-
-
-
-
-
-
-
-
-double SKModel::SigmoidDer(double arg) {
-
-     return (1.0/(1.0 + exp(-1.0*arg)))*(1.0-1.0/(1.0 + exp(-1.0*arg)));
-
-}
-
-
-
-
 TH2F * SKModel::ShowMe(){
 
    double x_start,x_end,y_start,y_end,m,n_const;
    double x,y;
+   double true_smear;
 
    TRandom3 gen(0);
 
@@ -323,7 +391,9 @@ TH2F * SKModel::ShowMe(){
 
            y = m*x + n_const;
 
-           y = gen.Gaus(y,0.02);
+           true_smear = 0.02/cos(TMath::Pi() - atan(m));
+
+           y = gen.Gaus(y,true_smear);
 
            modelHistogram->Fill(x,y);
 
@@ -333,12 +403,5 @@ TH2F * SKModel::ShowMe(){
  }
 
  return modelHistogram;
-
-
-
-
-
-
-
 
 }

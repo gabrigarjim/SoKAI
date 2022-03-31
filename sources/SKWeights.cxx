@@ -19,9 +19,6 @@ void SKWeights::Init(int seed) {
   vector<double> row;
 
 
-  // GG - As recommended in many sources, weights should be initialize
-  // with values around a gaussian distribution with mean = 0
-
   for(int i = 0 ; i < fRows ; i++) {
    for(int j = 0 ; j < fColumns ; j++){
 
@@ -31,9 +28,10 @@ void SKWeights::Init(int seed) {
    mWeightMatrix.push_back(row);
    row.clear();
 
-  }
+   }
+ }
 
-}
+
 
 
 
@@ -47,3 +45,33 @@ void SKWeights::Print(){
      cout<<"\n";
   }
 }
+
+
+void SKWeights::InitGradients() {
+
+  vector<double> row;
+
+  for(int i = 0 ; i < fRows ; i++) {
+   for(int j = 0 ; j < fColumns ; j++){
+
+      row.push_back(0.0);
+   }
+
+   mWeightMatrix.push_back(row);
+   row.clear();
+
+  }
+}
+
+
+void SKWeights::ZeroGradients() {
+
+
+  for(int i = 0 ; i < fRows ; i++) {
+   for(int j = 0 ; j < fColumns ; j++){
+
+      mWeightMatrix[i][j]=0.0;
+
+   }
+  }
+ }

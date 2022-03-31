@@ -40,6 +40,8 @@ private:
 
 friend class SKBackProp;
 friend class SKModel;
+friend class SKLayer;
+
 
 
 };

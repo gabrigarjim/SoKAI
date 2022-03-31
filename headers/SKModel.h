@@ -24,8 +24,13 @@ public:
  /* ----- Public Method Init ----- */
   void Init();
 
+
  /* ----- Public Method Add Weights -----*/
  void AddWeights(SKWeights *weights);
+
+ /* ----- Public Method Add Gradients -----*/
+ void AddGradients(SKWeights *gradients);
+
 
 
  /* ----- Public Set Input Sample ----- */
@@ -60,6 +65,8 @@ private:
 
  vector<SKLayer*> vModelLayers;
  vector<SKWeights*> vModelWeights;
+ vector<SKWeights*> vModelGradients;
+ vector<vector<vector<int>>> mWeightsPaths;
 
  vector<vector<double>> *mInputLabels;
  vector<vector<double>> *mInputSample;
