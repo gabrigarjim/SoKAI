@@ -32,7 +32,6 @@ public:
  void AddGradients(SKWeights *gradients);
 
 
-
  /* ----- Public Set Input Sample ----- */
  void SetInputSample(vector<vector<double>> *input);
 
@@ -40,18 +39,24 @@ public:
  void SetInputLabels(vector<vector<double>> *labels);
 
 
- /* ----- Public Method Propagate ----- */
- void Propagate(int n);
+ /* ----- Public Method Train ----- */
+ void Train(int n);
 
+ /* ----- Public Method Set Batch Size ----- */
+ void SetBatchSize(int bSize){ nBatchSize = bSize;};
 
  /* ----- Public Method Clear ----- */
  void Clear();
 
  /* ----- Public Method Quadratic Loss ----- */
- void QuadraticLoss(vector<double> *outputVector, vector<double> *targetVector);
+ double QuadraticLoss();
 
  /* ----- Public Method Backpropagate -----*/
  void Backpropagate();
+
+ /* ----- Public Method Propagate -----*/
+ vector<double> Propagate(int n);
+
 
  float Accuracy();
 
@@ -79,19 +84,19 @@ private:
  vector<double> vLossVector;
  SKPropagator *propagator;
 
+ vector<double> vModelOutput;
+
  int nDataSize;
  int nDataNRows;
  int nDataNColumns;
  int nTotalWeights;
  int nLayers;
  int nIterations;
+ int nBatchSize;
  float nAccuracy;
  float nLearningRate;
  TCanvas *modelCanvas;
  TH2F *modelHistogram;
-
- double SigmoidDer(double arg);
-
 
 
 };

@@ -48,11 +48,11 @@ void SKLayer::Clear(){
 }
 
 /* ------- Derivatives ------- */
-double SKLayer::SigmoidDer(double arg){
-
-  return (1.0/(1.0 + exp(-1.0*arg)))*(1.0-1.0/(1.0 + exp(-1.0*arg)));
-
-}
+// double SKLayer::SigmoidDer(double arg){
+//
+//   return (1.0/(1.0 + exp(-1.0*arg)))*(1.0-1.0/(1.0 + exp(-1.0*arg)));
+//
+// }
 
 double SKLayer::TanhDer(double arg){
 

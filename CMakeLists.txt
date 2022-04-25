@@ -23,5 +23,8 @@ EXECUTE_PROCESS(COMMAND root-config --libs OUTPUT_VARIABLE ROOT_LD_FLAGS OUTPUT_
 set(CMAKE_EXE_LINKER_FLAGS ${ROOT_LD_FLAGS})
 
 
-add_executable(SoKAI SoKAI.cc ${sources} ${headers} )
+add_executable(SoKAI macros/examples/classification/SoKAI.cc ${sources} ${headers} )
+add_executable(CosineRegression macros/examples/regression/function_regression.cc ${sources} ${headers} )
+
 target_link_libraries(SoKAI ${ROOT_LIBRARIES} glog::glog)
+target_link_libraries(CosineRegression ${ROOT_LIBRARIES} glog::glog)

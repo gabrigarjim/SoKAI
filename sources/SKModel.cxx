@@ -49,7 +49,8 @@ void get_comb(int w ,int first,int second,vector<vector<int>>& arr,vector<vector
 
 /* ----- Standard Constructor ----- */
 SKModel::SKModel() :
- nLearningRate(0.001) {}
+ nLearningRate(0.001),
+ nIterations(0) {}
 
 /* ----- Standard Destructor ----- */
 SKModel::~SKModel(){}
@@ -94,7 +95,6 @@ void SKModel::SetInputLabels(vector<vector<double>> *labels){
 
 /* ----- Public Method Init ----- */
 void SKModel::Init(){
-
 
   nLayers = vModelLayers.size();
   nTotalWeights = 0;
@@ -169,27 +169,6 @@ void SKModel::Init(){
 
 
 
-
- void SKModel::Propagate(int n){
-
-   vInput = &mInputSample->at(n);
-   vLabel = &mInputLabels->at(n);
-
-
-   propagator->Feed(vInput,vModelLayers.at(0));
-
-   for(int i = 1 ; i < nLayers ; i++)
-     propagator->Propagate(vModelLayers.at(i-1),vModelLayers.at(i),vModelWeights.at(i-1));
-
-
-     //QuadraticLoss(&(vModelLayers.at(nLayers-1)->vLayerOutput),vLabel);
-
-     nIterations++;
-
- }
-
-
-
 void SKModel::Clear(){
 
    for (int i = 0 ; i < nLayers ; i++)
@@ -226,14 +205,51 @@ void SKModel::CheckDimensions(){
 
 
 
+vector<double> SKModel::Propagate(int n){
 
 
-void SKModel::QuadraticLoss(vector<double> *outputVector, vector<double> *targetVector) {
+  vModelOutput.clear();
 
-     for(int i = 0 ; i < outputVector->size() ; i++)
-       vLossVector.push_back((1.0/outputVector->size())*pow(outputVector->at(i) - targetVector->at(i),2));
+  vInput = &mInputSample->at(n);
+  vLabel = &mInputLabels->at(n);
+
+
+  propagator->Feed(vInput,vModelLayers.at(0));
+
+  for(int i = 1 ; i < nLayers ; i++)
+    propagator->Propagate(vModelLayers.at(i-1),vModelLayers.at(i),vModelWeights.at(i-1));
+
+
+  for(int i = 0 ; i < vModelLayers.at(nLayers-1)->vLayerOutput.size() ; i++)
+    vModelOutput.push_back(vModelLayers.at(nLayers-1)->vLayerOutput.at(i));
+
+
+
+    return vModelOutput;
 
 }
+
+
+
+
+void SKModel::Train(int n){
+
+  vInput = &mInputSample->at(n);
+  vLabel = &mInputLabels->at(n);
+
+
+  propagator->Feed(vInput,vModelLayers.at(0));
+
+  for(int i = 1 ; i < nLayers ; i++)
+    propagator->Propagate(vModelLayers.at(i-1),vModelLayers.at(i),vModelWeights.at(i-1));
+
+
+
+    nIterations++;
+    Backpropagate();
+
+}
+
 
 
 void SKModel::Backpropagate(){
@@ -244,8 +260,6 @@ void SKModel::Backpropagate(){
   // Then we add all path gradients to compute the change for a given weight
   double gradientSum;
 
-  // This refers to the block of paths that are used for the current weight
-
   vector<double> lossDerivatives;
   vector <vector<int>> comb_vec;
 
@@ -253,14 +267,13 @@ void SKModel::Backpropagate(){
 
   int counter=0;
 
-
   for (int i = 0 ; i < vModelLayers.at(nLayers-1)->fSize ; i++)
     lossDerivatives.push_back((1.0/vModelLayers.at(nLayers-1)->fSize)*(vModelLayers.at(nLayers-1)->vLayerOutput.at(i)-vLabel->at(i)));
 
   // Init gradients to 0
+  if(nIterations%(nBatchSize+1) == 0)
   for (int i = 0 ; i < vModelGradients.size() ; i++)
     vModelGradients.at(i)->ZeroGradients();
-
 
 
    for (int w = vModelWeights.size()-1 ; w >= 0 ; w--) {
@@ -274,10 +287,10 @@ void SKModel::Backpropagate(){
          /*-------- Now compute all gradients for all paths ---------*/
          for(int path = 0 ; path < path_matrix.size() ; path++){
 
+
+
             pathGradient=1;
             pathGradient = pathGradient*lossDerivatives.at(path_matrix[path][path_matrix[path].size()-1])*vModelLayers.at(w)->vLayerOutput.at(i);
-
-
 
 
           for(int r = 1 ; r < path_matrix[path].size() ; r++) {
@@ -293,29 +306,35 @@ void SKModel::Backpropagate(){
 
          }
 
+
              gradientSum = gradientSum + pathGradient;
 
         }
 
+               vModelGradients.at(w)->mWeightMatrix[i][j] = vModelGradients.at(w)->mWeightMatrix[i][j] + (1.0/(nIterations%nBatchSize + 1))*(gradientSum - vModelGradients.at(w)->mWeightMatrix[i][j]);
 
-           vModelGradients.at(w)->mWeightMatrix[i][j] = gradientSum ;
-           counter++;
+               counter++;
+
 
      }
     }
    }
 
 
+   if(nIterations%nBatchSize==0) {
 
    for (int w = vModelWeights.size()-1 ; w >= 0 ; w--) {
     for (int i = 0 ; i < vModelWeights.at(w)->fRows ; i++) {
       for (int j = 0 ; j < vModelWeights.at(w)->fColumns ; j++) {
 
-          vModelWeights.at(w)->mWeightMatrix[i][j] = vModelWeights.at(w)->mWeightMatrix[i][j] - nLearningRate*vModelGradients.at(w)->mWeightMatrix[i][j];
+          vModelWeights.at(w)->mWeightMatrix[i][j] = vModelWeights.at(w)->mWeightMatrix[i][j]
+          - nLearningRate*vModelGradients.at(w)->mWeightMatrix[i][j];
+        }
+     }
+   }
 
-      }
-    }
-  }
+
+ }
 
 }
 
@@ -362,6 +381,23 @@ float SKModel::Accuracy(){
 
 }
 
+
+double SKModel::QuadraticLoss() {
+
+    vLossVector.clear();
+
+
+     for(int i = 0 ; i < vModelLayers.at(nLayers-1)->vLayerOutput.size() ; i++)
+       vLossVector.push_back((1.0/2.0)*pow((vModelLayers.at(nLayers-1)->vLayerOutput.at(i)-vLabel->at(i)),2));
+
+
+     double loss = (std::accumulate(vLossVector.begin(), vLossVector.end(), 0.0))/vLossVector.size();
+
+     return loss;
+
+
+
+}
 
 
 TH2F * SKModel::ShowMe(){
