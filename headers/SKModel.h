@@ -51,6 +51,10 @@ public:
  /* ----- Public Method Quadratic Loss ----- */
  double QuadraticLoss();
 
+ /* ----- Public Method Abs Loss ----- */
+ double AbsoluteLoss();
+
+
  /* ----- Public Method Backpropagate -----*/
  void Backpropagate();
 
@@ -61,6 +65,9 @@ public:
  float Accuracy();
 
  void SetLearningRate(float learningRate){nLearningRate=learningRate;};
+
+ void SetLossFunction(string lossFunc){sLossFuction=lossFunc;};
+
 
  void CheckDimensions();
 
@@ -97,6 +104,7 @@ private:
  float nLearningRate;
  TCanvas *modelCanvas;
  TH2F *modelHistogram;
+ string sLossFuction;
 
 
 };

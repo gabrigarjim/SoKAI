@@ -21,18 +21,20 @@ int main () {
   LOG(INFO)<<"#============================================================#";
 
   int seed = 2022;
-  int epochs = 12000;
-  int nSamples = 1000;
+  int epochs = 100000;
+  int nSamples = 400;
 
 
   real_start = clock();
 
+  /*---- Input Data ---- */
   vector<vector<double>> data_sample;
   vector<vector<double>> input_labels;
 
   vector<double> data_instance;
   vector<double> label_instance;
 
+  /*---- For training results ----*/
   vector<double> loss_vec;
   vector<double> output_vec;
   vector<double> output_model;
@@ -72,8 +74,8 @@ int main () {
 
    for (int i = 0 ; i < nSamples ; i++){
 
-      x = gen.Uniform(-1*TMath::Pi(),1*TMath::Pi());
-      y = TMath::Cos(x);
+      x = gen.Uniform(-2,2);
+      y = x*x;
 
       data_instance.push_back(x);
       data_sample.push_back(data_instance);
@@ -93,12 +95,13 @@ int main () {
   /*------- The Model Itself -------*/
 
   SKLayer   *layer_1 = new SKLayer(1,"Sigmoid");
-  SKWeights *weights_12 = new SKWeights(1,20);
-  SKWeights *gradients_12 = new SKWeights(1,20);
+  SKWeights *weights_12 = new SKWeights(1,4);
+  SKWeights *gradients_12 = new SKWeights(1,4);
 
-  SKLayer   *layer_2 = new SKLayer(20,"Sigmoid");
-  SKWeights *weights_23 = new SKWeights(20,1);
-  SKWeights *gradients_23 = new SKWeights(20,1);
+  SKLayer   *layer_2 = new SKLayer(4,"Sigmoid");
+  SKWeights *weights_23 = new SKWeights(4,1);
+  SKWeights *gradients_23 = new SKWeights(4,1);
+
 
   SKLayer   *layer_3 = new SKLayer(1,"Linear");
 
@@ -108,7 +111,6 @@ int main () {
 
   weights_23->Init(seed);
   gradients_23->InitGradients();
-
 
 
   SKModel *model = new SKModel();
@@ -129,9 +131,10 @@ int main () {
 
   model->Init();
   model->SetLearningRate(0.01);
+  model->SetLossFunction("Quadratic");
 
   /* ---- Number of processed inputs before updating gradients ---- */
-  model->SetBatchSize(10);
+  model->SetBatchSize(8);
 
 
   int iterCounter=0;
@@ -146,28 +149,21 @@ int main () {
       int sample_number = (data_sample.size()/2)*gen.Rndm();
 
 
-      iterCounter++;
-
       model->Train(sample_number);
 
-      loss =  model->QuadraticLoss();
+      loss =  model->AbsoluteLoss();
 
       model->Clear();
+   }
 
+    if(i%1000==0){
 
-      end = clock();
+     LOG(INFO)<<" Loss : "<<loss<<" . Epoch : "<<i;
+     loss_vec.push_back(loss);
+     epoch_vec.push_back(i);
 
-      if(iterCounter%10000 == 0){
+   }
 
-      LOG(INFO)<<" Loss : "<<loss<<" . Epoch : "<<iterCounter;
-      loss_vec.push_back(loss);
-      epoch_vec.push_back(iterCounter);
-
-
-  }
-      start = clock();
-
-}
 }
 
 real_end = clock();
@@ -190,9 +186,7 @@ cout<<"Total training time : "<<((float) real_end - real_start)/CLOCKS_PER_SEC<<
 
     x_vec.push_back(data_sample.at(sample_number).at(0));
 
-    target_vec.push_back(TMath::Cos(data_sample.at(sample_number).at(0)));
-
-    LOG(INFO)<<"Model Output : "<<output_vec.at(output_vec.size()-1)<<" Target : "<<TMath::Cos(data_sample.at(sample_number).at(0))<<" X : "<<data_sample.at(sample_number).at(0)<<endl;
+    target_vec.push_back(data_sample.at(sample_number).at(0)*data_sample.at(sample_number).at(0));
 
     model->Clear();
 
@@ -210,6 +204,7 @@ model_canvas->Divide(2,1);
 
 
 TGraph *target_graph = new TGraph(x_vec.size(),&x_vec[0],&target_vec[0]);
+TGraph *out_graph = new TGraph(x_vec.size(),&x_vec[0],&output_model[0]);
 
 model_canvas->cd(1);
 target_graph->Draw("AC*");
@@ -217,17 +212,22 @@ target_graph->SetTitle("Target");
 target_graph->GetXaxis()->SetTitle("X");
 target_graph->GetYaxis()->SetTitle("Y(Target)");
 target_graph->SetMarkerColor(2);
+target_graph->SetMarkerStyle(24);
+target_graph->SetMarkerSize(0.7);
 
 
 
-TGraph *out_graph = new TGraph(x_vec.size(),&x_vec[0],&output_model[0]);
 
 model_canvas->cd(1);
-out_graph->Draw("SAME");
+out_graph->Draw("SAME*");
 out_graph->SetTitle("Model Prediction");
 out_graph->GetXaxis()->SetTitle("X");
 out_graph->GetYaxis()->SetTitle("Y(Predicted)");
 out_graph->SetMarkerColor(0);
+out_graph->SetMarkerStyle(24);
+out_graph->SetMarkerSize(0.7);
+
+
 
 
 TGraph *loss_graph = new TGraph(epoch_vec.size(),&epoch_vec[0],&loss_vec[0]);
@@ -245,8 +245,6 @@ loss_graph->SetLineColor(0);
 theApp->Run();
 
 return 0;
-
-
 
 
 
