@@ -48,6 +48,7 @@ void get_comb(int w ,int first,int second,vector<vector<int>>& arr,vector<vector
 SKModel::SKModel() :
  nLearningRate(0.001),
  nIterations(0),
+ nBatchSize(1),
  sLossFuction("Quadratic"){}
 
 /* ----- Standard Destructor ----- */
@@ -173,7 +174,8 @@ void SKModel::Clear(){
      vModelLayers.at(i)->Clear();
 
      vLossVector.clear();
- }
+
+}
 
 
 void SKModel::CheckDimensions(){
@@ -241,8 +243,6 @@ void SKModel::Train(int n){
   for(int i = 1 ; i < nLayers ; i++)
     propagator->Propagate(vModelLayers.at(i-1),vModelLayers.at(i),vModelWeights.at(i-1));
 
-
-
     nIterations++;
     Backpropagate();
 
@@ -293,14 +293,6 @@ void SKModel::Backpropagate(){
   }
 
 
-  // Init gradients to 0
-  if(nIterations%(nBatchSize) == 1){
-  for (int i = 0 ; i < vModelGradients.size() ; i++)
-    vModelGradients.at(i)->ZeroGradients();
-
-   batchCounter=1;
- }
-
    for (int w = vModelWeights.size()-1 ; w >= 0 ; w--) {
     for (int i = 0 ; i < vModelWeights.at(w)->fRows ; i++) {
       for (int j = 0 ; j < vModelWeights.at(w)->fColumns ; j++) {
@@ -318,7 +310,7 @@ void SKModel::Backpropagate(){
             pathGradient = pathGradient*lossDerivatives.at(path_matrix[path][path_matrix[path].size()-1])*vModelLayers.at(w)->vLayerOutput.at(i);
 
 
-          for(int r = 1 ; r < path_matrix[path].size() ; r++) {
+           for(int r = 1 ; r < path_matrix[path].size() ; r++) {
 
              pathGradient=pathGradient*vModelLayers.at(r + w)->LayerDer(path_matrix[path][r]);
 
@@ -332,33 +324,33 @@ void SKModel::Backpropagate(){
          }
 
 
-             gradientSum = gradientSum + pathGradient;
+            gradientSum = gradientSum + pathGradient;
 
-        }
-
-               vModelGradients.at(w)->mWeightMatrix[i][j] = vModelGradients.at(w)->mWeightMatrix[i][j] + (1.0/batchCounter)*(gradientSum - vModelGradients.at(w)->mWeightMatrix[i][j]);
+         }
+               vModelGradients.at(w)->mWeightMatrix[i][j] += gradientSum;
                counter++;
 
+          }
+        }
+      }
 
-     }
-    }
-   }
 
-   batchCounter++;
+   if(nIterations==nBatchSize) {
 
-   if(nIterations%nBatchSize==0) {
-
-   for (int w = vModelWeights.size()-1 ; w >= 0 ; w--) {
-    for (int i = 0 ; i < vModelWeights.at(w)->fRows ; i++) {
-      for (int j = 0 ; j < vModelWeights.at(w)->fColumns ; j++) {
+     for (int w = vModelWeights.size()-1 ; w >= 0 ; w--) {
+      for (int i = 0 ; i < vModelWeights.at(w)->fRows ; i++) {
+        for (int j = 0 ; j < vModelWeights.at(w)->fColumns ; j++) {
 
           vModelWeights.at(w)->mWeightMatrix[i][j] = vModelWeights.at(w)->mWeightMatrix[i][j]
-          - nLearningRate*vModelGradients.at(w)->mWeightMatrix[i][j];
+          - nLearningRate*(vModelGradients.at(w)->mWeightMatrix[i][j])/(float)nBatchSize;
         }
      }
    }
 
+      for (int i = 0 ; i < vModelGradients.size() ; i++)
+       vModelGradients.at(i)->ZeroGradients();
 
+       nIterations=0;
  }
 
 }

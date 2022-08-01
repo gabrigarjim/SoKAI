@@ -5,6 +5,13 @@
 #include "SKModel.h"
 #include "SKFancyPlots.h"
 
+
+double weird_function(double x){
+
+ return TMath::Sin(6*x)*TMath::Exp(-1.0*(x*x));
+
+}
+
 int main () {
 
 
@@ -20,9 +27,13 @@ int main () {
   LOG(INFO)<<"# Welcome to SoKAI (Some Kind of Artificial Intelligence) !! #";
   LOG(INFO)<<"#============================================================#";
 
-  int seed = 2022;
-  int epochs = 100000;
-  int nSamples = 400;
+  int seed            = 2022;
+  int epochs          = 13400;
+  int nSamples        = 512;
+  int nTrainingSize   = (7.0/10.0)*nSamples;
+  int nTestSize       = (3.0/10.0)*nSamples;
+  int nMiniBatchSize  = 4;
+  float fLearningRate = 0.1;
 
 
   real_start = clock();
@@ -45,7 +56,7 @@ int main () {
 
   double loss=0.0;
 
-  TRandom3 gen(2022);
+  TRandom3 gen(seed);
 
 
   /* -------- Put this on a header or something..... ----------*/
@@ -74,13 +85,13 @@ int main () {
 
    for (int i = 0 ; i < nSamples ; i++){
 
-      x = gen.Uniform(-2,2);
-      y = x*x;
+      x = gen.Uniform(-1,1);
+      y = weird_function(x);
 
       data_instance.push_back(x);
       data_sample.push_back(data_instance);
 
-      label_instance.push_back(y);
+      label_instance.push_back(y);          // Normalizing
       input_labels.push_back(label_instance);
 
 
@@ -95,15 +106,20 @@ int main () {
   /*------- The Model Itself -------*/
 
   SKLayer   *layer_1 = new SKLayer(1,"Sigmoid");
-  SKWeights *weights_12 = new SKWeights(1,4);
-  SKWeights *gradients_12 = new SKWeights(1,4);
+  SKWeights *weights_12 = new SKWeights(1,8);
+  SKWeights *gradients_12 = new SKWeights(1,8);
 
-  SKLayer   *layer_2 = new SKLayer(4,"Sigmoid");
-  SKWeights *weights_23 = new SKWeights(4,1);
-  SKWeights *gradients_23 = new SKWeights(4,1);
+  SKLayer   *layer_2 = new SKLayer(8,"Sigmoid");
+  SKWeights *weights_23 = new SKWeights(8,8);
+  SKWeights *gradients_23 = new SKWeights(8,8);
+
+  SKLayer   *layer_3 = new SKLayer(8,"Sigmoid");
+  SKWeights *weights_34 = new SKWeights(8,1);
+  SKWeights *gradients_34 = new SKWeights(8,1);
 
 
-  SKLayer   *layer_3 = new SKLayer(1,"Linear");
+
+  SKLayer   *layer_4 = new SKLayer(1,"Linear");
 
 
   weights_12->Init(seed);
@@ -111,6 +127,9 @@ int main () {
 
   weights_23->Init(seed);
   gradients_23->InitGradients();
+
+  weights_34->Init(seed);
+  gradients_34->InitGradients();
 
 
   SKModel *model = new SKModel();
@@ -124,39 +143,42 @@ int main () {
   model->AddGradients(gradients_23);
 
   model->AddLayer(layer_3);
+  model->AddWeights(weights_34);
+  model->AddGradients(gradients_34);
+
+
+  model->AddLayer(layer_4);
 
 
   model->SetInputSample(&data_sample);
   model->SetInputLabels(&input_labels);
 
   model->Init();
-  model->SetLearningRate(0.01);
+  model->SetLearningRate(fLearningRate);
   model->SetLossFunction("Quadratic");
 
   /* ---- Number of processed inputs before updating gradients ---- */
-  model->SetBatchSize(8);
+  model->SetBatchSize(nMiniBatchSize);
 
-
-  int iterCounter=0;
 
   /* ---------- Pass Data Through Model ----------*/
 
    for (int i = 0 ; i < epochs ; i++){
-     for (int j = 0 ; j < data_sample.size()/2 ; j++){
+     for (int j = 0 ; j < nTrainingSize ; j++){
 
 
-      // Using only half of the dataset to train the network
-      int sample_number = (data_sample.size()/2)*gen.Rndm();
+      // Using  7/10 of the dataset to train the network
+      int sample_number = nTrainingSize*gen.Rndm();
 
+      model->Train(j);
 
-      model->Train(sample_number);
-
-      loss =  model->AbsoluteLoss();
+      loss =  model->QuadraticLoss();
 
       model->Clear();
+
    }
 
-    if(i%1000==0){
+    if(i%100==0){
 
      LOG(INFO)<<" Loss : "<<loss<<" . Epoch : "<<i;
      loss_vec.push_back(loss);
@@ -172,11 +194,12 @@ cout<<"Total training time : "<<((float) real_end - real_start)/CLOCKS_PER_SEC<<
 
 /* --------- Testing the model --------- */
 
-  for (int j = 0 ; j < data_sample.size()/2 ; j++){
+  for (int j = 0 ; j < nTestSize ; j++){
 
 
-    // Using only the other half of the dataset to test the network
-    int sample_number = (data_sample.size()/2)*gen.Rndm() + (data_sample.size()/2);
+    // Using only 3/10 of the dataset to test the network
+    int sample_number = nTrainingSize + nTestSize*gen.Rndm();
+
 
     output_vec.clear();
 
@@ -186,7 +209,7 @@ cout<<"Total training time : "<<((float) real_end - real_start)/CLOCKS_PER_SEC<<
 
     x_vec.push_back(data_sample.at(sample_number).at(0));
 
-    target_vec.push_back(data_sample.at(sample_number).at(0)*data_sample.at(sample_number).at(0));
+    target_vec.push_back(weird_function(data_sample.at(sample_number).at(0)));
 
     model->Clear();
 
@@ -201,7 +224,7 @@ cout<<"Total training time : "<<((float) real_end - real_start)/CLOCKS_PER_SEC<<
 TCanvas *model_canvas = new TCanvas("model_canvas","Model");
 model_canvas->Divide(2,1);
 
-
+TCanvas *weight_canvas = new TCanvas("weight_canvas","Weights");
 
 TGraph *target_graph = new TGraph(x_vec.size(),&x_vec[0],&target_vec[0]);
 TGraph *out_graph = new TGraph(x_vec.size(),&x_vec[0],&output_model[0]);
@@ -239,8 +262,11 @@ loss_graph->GetXaxis()->SetTitle("Epochs");
 loss_graph->GetYaxis()->SetTitle("Loss (Quadratic)");
 loss_graph->SetLineColor(0);
 
+TH2F* model_histo;
+model_histo = (TH2F*)model->ShowMe();
 
-
+weight_canvas->cd();
+ model_histo->Draw("COLZ");
 
 theApp->Run();
 
