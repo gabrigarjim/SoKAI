@@ -1,0 +1,19 @@
+This is where we try to reconstruct the punch through by using Neural Networks.
+First we begin with some quite simple (but powerful) models.
+Main model is proton_reconstruction.cc. The input to the model was made by simulating
+uniform random single protons, with energies from 50 to 600 MeV (so both punch_through
+and fully stopped protons are included). Then the model is trained and results are stored
+in root files, with some nice plots.
+
+Model 1 : proton_reconstruction.cc
+
+A couple of hidden layers with variable number of proccessing units per layer. We use
+a few activation functions.
+
+Target : Primary proton energy.
+
+Input  : (Nmb Crystals Inside cluster : Cluster Theta : Cluster Phi : Cluster Energy : Mother Crystal Energy )
+
+
+  Model 1.1 :
+  Model 1.2 :
