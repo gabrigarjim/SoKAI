@@ -7,7 +7,7 @@
 
 
 
-int main () {
+int main (int argc, char** argv) {
 
 
   FLAGS_alsologtostderr = 1;
@@ -23,17 +23,16 @@ int main () {
   LOG(INFO)<<"#============================================================#";
 
   int seed            = 2022;
-  int epochs          = 8000;
-  int nSamples        = 8000;
+  int epochs          = stoi(argv[1]);
+  int nSamples        = stoi(argv[2]);
   int nTrainingSize   = (7.0/10.0)*nSamples;
   int nTestSize       = (3.0/10.0)*nSamples;
-  int nMiniBatchSize  = 16;
-  float fLearningRate = 0.1;
-
+  int nMiniBatchSize  = stoi(argv[4]);
+  float fLearningRate = stoi(argv[3])/100.;
 
   real_start = clock();
 
-  /*---- Input Data ---- */
+  /*---- Input Data (Use this format!) ---- */
   vector<vector<double>> data_sample;
   vector<vector<double>> input_labels;
 
@@ -50,16 +49,16 @@ int main () {
   vector<double> epoch_vec;
   vector<double> reconstruction_resolution_vec;
 
-  double loss=0.0;
+  double loss = 0.0;
 
   TRandom3 gen(seed);
 
   float fCrystalMax = 50;
   float fPolarMax = TMath::Pi();
   float fAzimuthalMax =2*TMath::Pi();
-  float fClusterEnergyMax = 300;
-  float fSingleCrystalEnergyMax = 300;
-  float fPrimEnergyMax = 300;
+  float fClusterEnergyMax = 250;
+  float fSingleCrystalEnergyMax = 250;
+  float fPrimEnergyMax = 250;
 
 
   /* -------- Put this on a header or something..... ----------*/
@@ -129,9 +128,9 @@ int main () {
     if(!(j%100))
      LOG(INFO)<<"Reading event "<<j<<" out of "<<nEvents<<" ("<<100.0*Float_t(j)/Float_t(nSamples)<<" % ) "<<endl;
 
-    data_instance.push_back(rCrystalMultiplicity/fCrystalMax);
+    //data_instance.push_back(rCrystalMultiplicity/fCrystalMax);
     data_instance.push_back(rPolar/fPolarMax);
-    data_instance.push_back(rAzimuthal/fAzimuthalMax);
+    //data_instance.push_back(rAzimuthal/fAzimuthalMax);
     data_instance.push_back(rClusterEnergy/fClusterEnergyMax);
     data_instance.push_back(rSingleCrystalEnergy/fSingleCrystalEnergyMax);
 
@@ -147,20 +146,17 @@ int main () {
 
   /*------- The Model Itself -------*/
 
-  SKLayer   *layer_1 = new SKLayer(5,"Sigmoid");
-  SKWeights *weights_12 = new SKWeights(5,10);
-  SKWeights *gradients_12 = new SKWeights(5,10);
+  SKLayer   *layer_1 = new SKLayer(3,argv[6]);
+  SKWeights *weights_12 = new SKWeights(3,stoi(argv[5]));
+  SKWeights *gradients_12 = new SKWeights(3,stoi(argv[5]));
 
-  SKLayer   *layer_2 = new SKLayer(10,"Sigmoid");
-  SKWeights *weights_23 = new SKWeights(10,10);
-  SKWeights *gradients_23 = new SKWeights(10,10);
+  SKLayer   *layer_2 = new SKLayer(stoi(argv[5]),argv[7]);
+  SKWeights *weights_23 = new SKWeights(stoi(argv[5]),1);
+  SKWeights *gradients_23 = new SKWeights(stoi(argv[5]),1);
 
-  SKLayer   *layer_3 = new SKLayer(10,"Sigmoid");
-  SKWeights *weights_34 = new SKWeights(10,1);
-  SKWeights *gradients_34 = new SKWeights(10,1);
+  SKLayer   *layer_3 = new SKLayer(1,argv[8]);
 
 
-  SKLayer   *layer_4 = new SKLayer(1,"Sigmoid");
 
 
   weights_12->Init(seed);
@@ -168,9 +164,6 @@ int main () {
 
   weights_23->Init(seed);
   gradients_23->InitGradients();
-
-  weights_34->Init(seed);
-  gradients_34->InitGradients();
 
 
 
@@ -186,23 +179,23 @@ int main () {
   model->AddGradients(gradients_23);
 
   model->AddLayer(layer_3);
-  model->AddWeights(weights_34);
-  model->AddGradients(gradients_34);
-
-
-  model->AddLayer(layer_4);
-
 
   model->SetInputSample(&data_sample);
   model->SetInputLabels(&input_labels);
 
   model->Init();
   model->SetLearningRate(fLearningRate);
-  model->SetLossFunction("Quadratic");
+  model->SetLossFunction(argv[9]);
 
   /* ---- Number of processed inputs before updating gradients ---- */
   model->SetBatchSize(nMiniBatchSize);
 
+  LOG(INFO)<<"Model Training Hyper Parameters. Epochs : "<<argv[1]<<" Samples : "<<argv[2]<<" Learning Rate : "<<stoi(argv[3])/100.0<<" Metric : "<<argv[9];
+  LOG(INFO)<<"";
+  LOG(INFO)<<"/* ---------- Model Structure -----------";
+  LOG(INFO)<<"L1 : "<<argv[6]<<" "<<"3";
+  LOG(INFO)<<"H1 : "<<argv[7]<<" "<<argv[5];
+  LOG(INFO)<<"L4 : "<<argv[8]<<" "<<"1";
 
   /* ---------- Pass Data Through Model ----------*/
 
@@ -238,7 +231,7 @@ cout<<"Total training time : "<<((float) real_end - real_start)/CLOCKS_PER_SEC<<
 /* --------- Testing the model --------- */
 TH1F *hReconstruction_results = new TH1F("hReconstruction_results","Reconstructed Energy",400,-500,500);
 TH2F *hCorrReconstruction_results = new TH2F("hCorrReconstruction_results","Reconstructed Energy Vs Primary Energy",400,-300,300,400,0,300);
-TH2F *hCorrCluster_results = new TH2F("hCorrCluster_results","Cluster Energy Vs Primary Energy",400,-300,300,400,0,300);
+TH2F *hCorrCluster_results = new TH2F("hCorrCluster_results","Cluster Energy Vs Primary Energy",400,-600,600,400,0,300);
 
 
   for (int j = 0 ; j < nTestSize ; j++){
@@ -255,7 +248,8 @@ TH2F *hCorrCluster_results = new TH2F("hCorrCluster_results","Cluster Energy Vs 
     reconstruction_resolution_vec.push_back(fPrimEnergyMax*(output_vec.at(0) - input_labels.at(sample_number).at(0)));
 
     hCorrReconstruction_results->Fill(fPrimEnergyMax*(output_vec.at(0)),fPrimEnergyMax*input_labels.at(sample_number).at(0));
-    hCorrCluster_results->Fill(fClusterEnergyMax*data_sample.at(sample_number).at(3),fPrimEnergyMax*input_labels.at(sample_number).at(0));
+    hCorrCluster_results->Fill(fClusterEnergyMax*data_sample.at(sample_number).at(1),fPrimEnergyMax*input_labels.at(sample_number).at(0));
+
     model->Clear();
 
 
@@ -310,6 +304,15 @@ model_histo = (TH2F*)model->ShowMe();
 
 weight_canvas->cd();
  model_histo->Draw("COLZ");
+
+TString name = "training_results_";
+name = name + argv[10] + "_" + argv[11] + ".root";
+
+TFile resultsFile(name,"RECREATE");
+
+model_canvas->Write();
+summary_canvas->Write();
+weight_canvas->Write();
 
 theApp->Run();
 

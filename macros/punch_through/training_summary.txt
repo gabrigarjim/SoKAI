@@ -14,6 +14,25 @@ Target : Primary proton energy.
 
 Input  : (Nmb Crystals Inside cluster : Cluster Theta : Cluster Phi : Cluster Energy : Mother Crystal Energy )
 
+Executable Arguments
 
-  Model 1.1 :
-  Model 1.2 :
+1 : Epochs
+2 : Samples
+3 : Learning Rate (as learning rate / 100 i.e 0.01 = 1/100, because stoi accepts only integers)
+4 : Mini Batch Size
+5 : Neurons in Hidden 1
+6 : Function_Layer_1
+7 : Function_Layer_2
+8 : Function_Layer_3
+9 : Metric
+10 : Model
+11 : Sub-Model
+
+./ProtonReconstruction Arg_1 Arg_2 .....
+
+
+
+  Model 1.1 : 40.000 Epochs, 5000 Samples, 0.1 learning rate. Minibatch = 16,  3 Layers (3,10,1). Sigmoid, Sigmoid, Linear, Absolute.
+  Model 1.2 : 40.000 Epochs, 5000 Samples, 0.1 learning rate. Minibatch = 16,  3 Layers (3,40,1). Sigmoid, Sigmoid, Linear, Absolute.
+  Model 1.3 : 40.000 Epochs, 5000 Samples, 0.1 learning rate. Minibatch = 16,  3 Layers (3,10,1). Linear, Linear, Linear, Absolute.
+  Model 1.4 : 40.000 Epochs, 5000 Samples, 0.1 learning rate. Minibatch = 16,  3 Layers (3,40,1). Linear, Linear, Linear, Absolute.
