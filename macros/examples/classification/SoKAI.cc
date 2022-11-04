@@ -168,7 +168,7 @@ int main () {
 
 
 
-  SKModel *model = new SKModel();
+  SKModel *model = new SKModel("Classification");
 
   model->AddLayer(layer_1);
   model->AddWeights(weights_12);

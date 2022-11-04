@@ -13,7 +13,7 @@ class SKModel {
 public:
 
   /* ----- Standard Constructor ----- */
-  SKModel();
+  SKModel(string model);
 
  /* ----- Standard Destructor ----- */
  ~SKModel();
@@ -45,6 +45,10 @@ public:
  /* ----- Public Method Set Batch Size ----- */
  void SetBatchSize(int bSize){ nBatchSize = bSize;};
 
+ /* ----- Public Method Write Weights */
+ void SaveWeights(string file);
+
+
  /* ----- Public Method Clear ----- */
  void Clear();
 
@@ -54,6 +58,8 @@ public:
  /* ----- Public Method Abs Loss ----- */
  double AbsoluteLoss();
 
+ /* ----- Public Method Cross Entropy Loss ----- */
+ double CrossEntropyLoss();
 
  /* ----- Public Method Backpropagate -----*/
  void Backpropagate();
@@ -66,7 +72,7 @@ public:
 
  void SetLearningRate(float learningRate){nLearningRate=learningRate;};
 
- void SetLossFunction(string lossFunc){sLossFuction=lossFunc;};
+ void SetLossFunction(string lossFunc){sLossFunction=lossFunc;};
 
 
  void CheckDimensions();
@@ -104,7 +110,8 @@ private:
  float nLearningRate;
  TCanvas *modelCanvas;
  TH2F *modelHistogram;
- string sLossFuction;
+ string sLossFunction;
+ string sModelType;
 
 
 };

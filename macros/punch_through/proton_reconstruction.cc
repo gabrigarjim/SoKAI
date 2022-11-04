@@ -56,9 +56,11 @@ int main (int argc, char** argv) {
   float fCrystalMax = 50;
   float fPolarMax = TMath::Pi();
   float fAzimuthalMax =2*TMath::Pi();
-  float fClusterEnergyMax = 250;
-  float fSingleCrystalEnergyMax = 250;
-  float fPrimEnergyMax = 250;
+  float fClusterEnergyMax = 400;
+  float fSingleCrystalEnergyMax = 340;
+  float fPrimEnergyMax = 600;
+  float fCrystalTypeMax = 27;
+
 
 
   /* -------- Put this on a header or something..... ----------*/
@@ -85,7 +87,7 @@ int main (int argc, char** argv) {
 
 
    /* ------- Reading Root Data -------- */
-  TString fileList = "/home/gabri/Analysis/s455/simulation/punch_through/neural_tree_data_input_cut.root";
+  TString fileList = "/home/gabri/Analysis/s455/simulation/punch_through/neural_tree_data_input_cut_punched.root";
 
   TFile *eventFile;
   TTree* eventTree;
@@ -117,6 +119,10 @@ int main (int argc, char** argv) {
   TBranch  *primBranch = eventTree->GetBranch("PrimEnergy");
   primBranch->SetAddress(&rPrimaryEnergy);
 
+  float rCrystalType;
+  TBranch *typeBranch = eventTree->GetBranch("MotherCrystalType");
+  typeBranch->SetAddress(&rCrystalType);
+
   int nEvents = eventTree->GetEntries();
 
   LOG(INFO)<<"Number of Samples : "<<nEvents<<endl;
@@ -128,14 +134,12 @@ int main (int argc, char** argv) {
     if(!(j%100))
      LOG(INFO)<<"Reading event "<<j<<" out of "<<nEvents<<" ("<<100.0*Float_t(j)/Float_t(nSamples)<<" % ) "<<endl;
 
-    //data_instance.push_back(rCrystalMultiplicity/fCrystalMax);
-    data_instance.push_back(rPolar/fPolarMax);
-    //data_instance.push_back(rAzimuthal/fAzimuthalMax);
     data_instance.push_back(rClusterEnergy/fClusterEnergyMax);
-    data_instance.push_back(rSingleCrystalEnergy/fSingleCrystalEnergyMax);
+    // data_instance.push_back(rSingleCrystalEnergy/fSingleCrystalEnergyMax);
+    data_instance.push_back((rCrystalType + 1)/fCrystalTypeMax);
 
     label_instance.push_back(rPrimaryEnergy/fPrimEnergyMax);
-
+    cout<<"Data Instance : "<<data_instance.at(0)<<" "<<data_instance.at(1)<<endl;
     data_sample.push_back(data_instance);
     input_labels.push_back(label_instance);
 
@@ -146,9 +150,9 @@ int main (int argc, char** argv) {
 
   /*------- The Model Itself -------*/
 
-  SKLayer   *layer_1 = new SKLayer(3,argv[6]);
-  SKWeights *weights_12 = new SKWeights(3,stoi(argv[5]));
-  SKWeights *gradients_12 = new SKWeights(3,stoi(argv[5]));
+  SKLayer   *layer_1 = new SKLayer(2,argv[6]);
+  SKWeights *weights_12 = new SKWeights(2,stoi(argv[5]));
+  SKWeights *gradients_12 = new SKWeights(2,stoi(argv[5]));
 
   SKLayer   *layer_2 = new SKLayer(stoi(argv[5]),argv[7]);
   SKWeights *weights_23 = new SKWeights(stoi(argv[5]),1);
@@ -168,7 +172,7 @@ int main (int argc, char** argv) {
 
 
 
-  SKModel *model = new SKModel();
+  SKModel *model = new SKModel("Regression");
 
   model->AddLayer(layer_1);
   model->AddWeights(weights_12);
@@ -229,9 +233,11 @@ real_end = clock();
 cout<<"Total training time : "<<((float) real_end - real_start)/CLOCKS_PER_SEC<<" s"<<endl;
 
 /* --------- Testing the model --------- */
-TH1F *hReconstruction_results = new TH1F("hReconstruction_results","Reconstructed Energy",400,-500,500);
-TH2F *hCorrReconstruction_results = new TH2F("hCorrReconstruction_results","Reconstructed Energy Vs Primary Energy",400,-300,300,400,0,300);
-TH2F *hCorrCluster_results = new TH2F("hCorrCluster_results","Cluster Energy Vs Primary Energy",400,-600,600,400,0,300);
+TH1F *hReconstruction_results = new TH1F("hReconstruction_results","Reconstructed Energy",400,-400,400);
+TH1F *hCluster_results = new TH1F("hCluster_results","Cluster Energy",400,-400,400);
+
+TH2F *hCorrReconstruction_results = new TH2F("hCorrReconstruction_results","Reconstructed Energy Vs Primary Energy",400,-600,800,400,0,600);
+TH2F *hCorrCluster_results = new TH2F("hCorrCluster_results","Cluster Energy Vs Primary Energy",400,-600,600,400,0,600);
 
 
   for (int j = 0 ; j < nTestSize ; j++){
@@ -245,11 +251,10 @@ TH2F *hCorrCluster_results = new TH2F("hCorrCluster_results","Cluster Energy Vs 
 
     output_vec = model->Propagate(sample_number);
 
+    hCluster_results->Fill(fClusterEnergyMax*data_sample.at(sample_number).at(0)- fPrimEnergyMax*input_labels.at(sample_number).at(0));
     reconstruction_resolution_vec.push_back(fPrimEnergyMax*(output_vec.at(0) - input_labels.at(sample_number).at(0)));
-
     hCorrReconstruction_results->Fill(fPrimEnergyMax*(output_vec.at(0)),fPrimEnergyMax*input_labels.at(sample_number).at(0));
-    hCorrCluster_results->Fill(fClusterEnergyMax*data_sample.at(sample_number).at(1),fPrimEnergyMax*input_labels.at(sample_number).at(0));
-
+    hCorrCluster_results->Fill(fClusterEnergyMax*data_sample.at(sample_number).at(0),fPrimEnergyMax*input_labels.at(sample_number).at(0));
     model->Clear();
 
 
@@ -293,11 +298,9 @@ hCorrCluster_results->GetYaxis()->SetTitle("Primary Energy (MeV)");
 TGraph *loss_graph = new TGraph(epoch_vec.size(),&epoch_vec[0],&loss_vec[0]);
 
 model_canvas->cd(2);
-loss_graph->Draw("AC");
-loss_graph->SetTitle("Model Loss");
-loss_graph->GetXaxis()->SetTitle("Epochs");
-loss_graph->GetYaxis()->SetTitle("Loss (Quadratic)");
-loss_graph->SetLineColor(0);
+hCluster_results->Draw("");
+hCluster_results->GetXaxis()->SetTitle("Cluster Energy - Primary Energy (MeV)");
+hCluster_results->GetYaxis()->SetTitle("Counts");
 
 TH2F* model_histo;
 model_histo = (TH2F*)model->ShowMe();

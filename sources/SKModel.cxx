@@ -1,5 +1,9 @@
 #include "SKModel.h"
 
+using namespace std::chrono;
+
+
+
 void get_comb(int w ,int first,int second,vector<vector<int>>& arr,vector<vector<vector<int>>> &mWeightsPaths)
 {
     int n = arr.size();
@@ -45,11 +49,17 @@ void get_comb(int w ,int first,int second,vector<vector<int>>& arr,vector<vector
 
 
 /* ----- Standard Constructor ----- */
-SKModel::SKModel() :
+SKModel::SKModel(string model) :
+
  nLearningRate(0.001),
  nIterations(0),
  nBatchSize(1),
- sLossFuction("Quadratic"){}
+ sLossFunction("Quadratic"),
+ sModelType("Regression"){
+
+ sModelType = model;
+
+}
 
 /* ----- Standard Destructor ----- */
 SKModel::~SKModel(){}
@@ -61,6 +71,7 @@ void SKModel::AddLayer(SKLayer *layer){
   vModelLayers.push_back(layer);
 
 }
+
 
 /* ----- Public Method Add Weights ----- */
 void SKModel::AddWeights(SKWeights *weights){
@@ -216,16 +227,22 @@ vector<double> SKModel::Propagate(int n){
 
   propagator->Feed(vInput,vModelLayers.at(0));
 
+
   for(int i = 1 ; i < nLayers ; i++)
     propagator->Propagate(vModelLayers.at(i-1),vModelLayers.at(i),vModelWeights.at(i-1));
 
 
-  for(int i = 0 ; i < vModelLayers.at(nLayers-1)->vLayerOutput.size() ; i++)
+   if(sModelType == "Classification")
+    vModelLayers.at(nLayers-1)->RearrangeSoftmax();
+
+
+   for(int i = 0 ; i < vModelLayers.at(nLayers-1)->vLayerOutput.size() ; i++)
     vModelOutput.push_back(vModelLayers.at(nLayers-1)->vLayerOutput.at(i));
 
 
 
-    return vModelOutput;
+
+  return vModelOutput;
 
 }
 
@@ -233,6 +250,7 @@ vector<double> SKModel::Propagate(int n){
 
 
 void SKModel::Train(int n){
+
 
   vInput = &mInputSample->at(n);
   vLabel = &mInputLabels->at(n);
@@ -243,8 +261,13 @@ void SKModel::Train(int n){
   for(int i = 1 ; i < nLayers ; i++)
     propagator->Propagate(vModelLayers.at(i-1),vModelLayers.at(i),vModelWeights.at(i-1));
 
+  if(sModelType == "Classification")
+    vModelLayers.at(nLayers-1)->RearrangeSoftmax();
+
+
     nIterations++;
     Backpropagate();
+
 
 }
 
@@ -266,16 +289,19 @@ void SKModel::Backpropagate(){
   int counter=0;
   int batchCounter;
 
-  if(sLossFuction=="Quadratic"){
+  auto begin_1 = high_resolution_clock::now();
+
+  if(sLossFunction=="Quadratic"){
 
    for (int i = 0 ; i < vModelLayers.at(nLayers-1)->fSize ; i++)
      lossDerivatives.push_back((1.0/vModelLayers.at(nLayers-1)->fSize)*(vModelLayers.at(nLayers-1)->vLayerOutput.at(i)-vLabel->at(i)));
 
   }
 
-  else if(sLossFuction=="Absolute"){
 
-   for (int i = 0 ; i < vModelLayers.at(nLayers-1)->fSize ; i++)
+  else if (sLossFunction=="Absolute"){
+
+   for (int i = 0 ; i < vModelLayers.at(nLayers-1)->fSize ; i++) {
 
      if(vModelLayers.at(nLayers-1)->vLayerOutput.at(i)-vLabel->at(i)>=0.0)
       lossDerivatives.push_back((1.0/vModelLayers.at(nLayers-1)->fSize)*(1.0));
@@ -283,14 +309,31 @@ void SKModel::Backpropagate(){
      else
       lossDerivatives.push_back((1.0/vModelLayers.at(nLayers-1)->fSize)*(-1.0));
 
+     }
   }
 
+
+  else if (sLossFunction == "CrossEntropy" && sModelType == "Classification") {
+
+    for (int i = 0 ; i < vModelLayers.at(nLayers-1)->fSize ; i++){
+
+      double layerOut = vModelLayers.at(nLayers-1)->vLayerOutput.at(i);
+
+      if(vLabel->at(i) == 0)
+        lossDerivatives.push_back((1.0/vModelLayers.at(nLayers-1)->fSize)*layerOut);
+
+      if(vLabel->at(i) == 1)
+        lossDerivatives.push_back((1.0/vModelLayers.at(nLayers-1)->fSize)*(layerOut-1.0));
+
+    }
+
+  }
 
   else{
 
-     LOG(FATAL)<<"Loss function "<<sLossFuction<<" does not exist (in SoKAI)!";
+     LOG(FATAL)<<"Loss function "<<sLossFunction<<" does not exist (in SoKAI)!";
 
-  }
+   }
 
 
    for (int w = vModelWeights.size()-1 ; w >= 0 ; w--) {
@@ -327,12 +370,16 @@ void SKModel::Backpropagate(){
             gradientSum = gradientSum + pathGradient;
 
          }
+
+
                vModelGradients.at(w)->mWeightMatrix[i][j] += gradientSum;
                counter++;
 
           }
         }
       }
+
+
 
 
    if(nIterations==nBatchSize) {
@@ -352,6 +399,9 @@ void SKModel::Backpropagate(){
 
        nIterations=0;
  }
+
+
+
 
 }
 
@@ -422,7 +472,7 @@ double SKModel::AbsoluteLoss() {
 
 
      for(int i = 0 ; i < vModelLayers.at(nLayers-1)->vLayerOutput.size() ; i++)
-       vLossVector.push_back(TMath::Abs((vModelLayers.at(nLayers-1)->vLayerOutput.at(i)-vLabel->at(i))));
+       vLossVector.push_back(abs(vModelLayers.at(nLayers-1)->vLayerOutput.at(i) - vLabel->at(i)));
 
 
      double loss = (std::accumulate(vLossVector.begin(), vLossVector.end(), 0.0))/vLossVector.size();
@@ -431,6 +481,24 @@ double SKModel::AbsoluteLoss() {
 
 }
 
+
+double SKModel::CrossEntropyLoss() {
+
+      double loss;
+
+     for(int i = 0 ; i < vModelLayers.at(nLayers-1)->vLayerOutput.size() ; i++){
+
+       if(vLabel->at(i) == 1){
+
+        double layerOut = vModelLayers.at(nLayers-1)->vLayerOutput.at(i);
+        loss  = -1.0*log(layerOut);
+
+        }
+      }
+
+     return loss;
+
+}
 
 
 TH2F * SKModel::ShowMe(){
@@ -472,5 +540,32 @@ TH2F * SKModel::ShowMe(){
  }
 
  return modelHistogram;
+
+}
+
+
+void SKModel::SaveWeights(string file){
+
+ ofstream *weight_file = new ofstream(file);
+
+
+  for(int w = 0 ; w < vModelWeights.size() ; w++){
+   for(int i = 0 ; i < vModelWeights.at(w)->fRows ; i++){
+    for(int j = 0 ; j < vModelWeights.at(w)->fColumns ; j++){
+
+       double weight = vModelWeights.at(w)->mWeightMatrix[i][j];
+       *weight_file<<weight<<" ";
+
+
+
+     }
+     *weight_file<<endl;
+   }
+     *weight_file<<endl;
+ }
+
+
+ weight_file->close();
+
 
 }

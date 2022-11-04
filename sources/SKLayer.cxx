@@ -1,5 +1,18 @@
 #include "SKLayer.h"
 
+
+double EvaluateSoftmax(vector<double> &vec , int index){
+
+ double denominator = 0.0;
+
+ for(int i = 0 ; i < vec.size() ; i++)
+  denominator += exp(vec.at(i));
+
+ return exp(vec.at(index))/denominator;
+
+}
+
+
 /* ----- Standard Constructor ----- */
 SKLayer::SKLayer(int size, string activation) {
 
@@ -47,12 +60,6 @@ void SKLayer::Clear(){
 
 }
 
-/* ------- Derivatives ------- */
-// double SKLayer::SigmoidDer(double arg){
-//
-//   return (1.0/(1.0 + exp(-1.0*arg)))*(1.0-1.0/(1.0 + exp(-1.0*arg)));
-//
-// }
 
 double SKLayer::TanhDer(double arg){
 
@@ -77,6 +84,22 @@ double SKLayer::LeakyReLUDer(double arg){
  return (arg > 0.0) ?  arg : 0.01;
 
 }
+
+
+
+void SKLayer::RearrangeSoftmax() {
+
+  vector<double> vAuxVector;
+
+  for ( int i = 0; i < fSize ; i++)
+    vAuxVector.push_back(EvaluateSoftmax(vLayerOutput,i));
+
+  for ( int i = 0; i < fSize ; i++)
+    vLayerOutput.at(i) = vAuxVector.at(i);
+
+
+}
+
 
 
 double SKLayer::LayerDer(int neuron) {

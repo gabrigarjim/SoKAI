@@ -26,7 +26,12 @@ set(CMAKE_EXE_LINKER_FLAGS ${ROOT_LD_FLAGS})
 add_executable(SoKAI macros/examples/classification/SoKAI.cc ${sources} ${headers} )
 add_executable(FunctionRegression macros/examples/regression/function_regression.cc ${sources} ${headers} )
 add_executable(ProtonReconstruction macros/punch_through/proton_reconstruction.cc ${sources} ${headers} )
+add_executable(QuasifreeReconstruction macros/quasifree_reconstruction/quasifree_reconstruction.cc ${sources} ${headers} )
+add_executable(QuasifreeClassification macros/quasifree_reconstruction/quasifree_classification.cc ${sources} ${headers} )
+
 
 target_link_libraries(SoKAI ${ROOT_LIBRARIES} glog::glog)
 target_link_libraries(FunctionRegression ${ROOT_LIBRARIES} glog::glog)
 target_link_libraries(ProtonReconstruction ${ROOT_LIBRARIES} glog::glog)
+target_link_libraries(QuasifreeReconstruction ${ROOT_LIBRARIES} glog::glog)
+target_link_libraries(QuasifreeClassification ${ROOT_LIBRARIES} glog::glog)

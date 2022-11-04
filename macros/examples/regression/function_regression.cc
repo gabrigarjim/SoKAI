@@ -12,6 +12,8 @@ double weird_function(double x){
 
 }
 
+using namespace std::chrono;
+
 int main () {
 
 
@@ -28,13 +30,14 @@ int main () {
   LOG(INFO)<<"#============================================================#";
 
   int seed            = 2022;
-  int epochs          = 13400;
+  int epochs          = 100;
   int nSamples        = 512;
   int nTrainingSize   = (7.0/10.0)*nSamples;
   int nTestSize       = (3.0/10.0)*nSamples;
   int nMiniBatchSize  = 4;
   float fLearningRate = 0.1;
 
+  double time_1, time_2, time_3, time_4;
 
   real_start = clock();
 
@@ -60,7 +63,7 @@ int main () {
 
 
   /* -------- Put this on a header or something..... ----------*/
-  gStyle->SetOptStat(0);
+  gStyle->SetOptStat(1111);
   Double_t Red[5]    = { 0.06, 0.25, 0.50, 0.75, 1.0};
   Double_t Green[5]  = {0.01, 0.1, 0.15, 0.20, 0.8};
   Double_t Blue[5]   = { 0.00, 0.00, 0.00, 0.0, 0.0};
@@ -100,6 +103,8 @@ int main () {
 
    }
 
+  TH1F *hSampleDuration_histo = new TH1F("hSampleDuration_histo","Training time (per event, us) ",800,0,1500);
+  TH1F *hBatchDuration_histo = new TH1F("hBatchDuration_histo","Training time (per event, ms) ",800,0,600);
 
 
 
@@ -110,14 +115,12 @@ int main () {
   SKWeights *gradients_12 = new SKWeights(1,8);
 
   SKLayer   *layer_2 = new SKLayer(8,"Sigmoid");
-  SKWeights *weights_23 = new SKWeights(8,8);
-  SKWeights *gradients_23 = new SKWeights(8,8);
+  SKWeights *weights_23 = new SKWeights(8,2);
+  SKWeights *gradients_23 = new SKWeights(8,2);
 
-  SKLayer   *layer_3 = new SKLayer(8,"Sigmoid");
-  SKWeights *weights_34 = new SKWeights(8,1);
-  SKWeights *gradients_34 = new SKWeights(8,1);
-
-
+  SKLayer   *layer_3 = new SKLayer(2,"Sigmoid");
+  SKWeights *weights_34 = new SKWeights(2,1);
+  SKWeights *gradients_34 = new SKWeights(2,1);
 
   SKLayer   *layer_4 = new SKLayer(1,"Linear");
 
@@ -132,7 +135,9 @@ int main () {
   gradients_34->InitGradients();
 
 
-  SKModel *model = new SKModel();
+
+
+  SKModel *model = new SKModel("Regression");
 
   model->AddLayer(layer_1);
   model->AddWeights(weights_12);
@@ -146,9 +151,7 @@ int main () {
   model->AddWeights(weights_34);
   model->AddGradients(gradients_34);
 
-
   model->AddLayer(layer_4);
-
 
   model->SetInputSample(&data_sample);
   model->SetInputLabels(&input_labels);
@@ -164,19 +167,24 @@ int main () {
   /* ---------- Pass Data Through Model ----------*/
 
    for (int i = 0 ; i < epochs ; i++){
+     auto begin_1 = high_resolution_clock::now();
+
      for (int j = 0 ; j < nTrainingSize ; j++){
 
 
       // Using  7/10 of the dataset to train the network
       int sample_number = nTrainingSize*gen.Rndm();
 
+
       model->Train(j);
+
 
       loss =  model->QuadraticLoss();
 
       model->Clear();
 
    }
+
 
     if(i%100==0){
 
@@ -261,6 +269,19 @@ loss_graph->SetTitle("Model Loss");
 loss_graph->GetXaxis()->SetTitle("Epochs");
 loss_graph->GetYaxis()->SetTitle("Loss (Quadratic)");
 loss_graph->SetLineColor(0);
+
+
+
+TCanvas *performance_canvas = new TCanvas("performance_canvas","performance_canvas");
+performance_canvas->Divide(2,1);
+
+performance_canvas->cd(1);
+hSampleDuration_histo->Draw("");
+
+performance_canvas->cd(2);
+hBatchDuration_histo->Draw("");
+
+
 
 TH2F* model_histo;
 model_histo = (TH2F*)model->ShowMe();

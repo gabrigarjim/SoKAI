@@ -24,6 +24,10 @@ class SKLayer {
   /* ----- Public Method Print ----- */
   void Print();
 
+  /* ----- Public Method Rearrange Softmax ----- */
+  void RearrangeSoftmax();
+
+
   /* ----- Public Method Clear ----- */
   void Clear();
 
