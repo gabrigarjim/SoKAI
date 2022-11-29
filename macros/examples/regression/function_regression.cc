@@ -30,12 +30,12 @@ int main () {
   LOG(INFO)<<"#============================================================#";
 
   int seed            = 2022;
-  int epochs          = 100;
-  int nSamples        = 512;
+  int epochs          = 8000;
+  int nSamples        = 1024;
   int nTrainingSize   = (7.0/10.0)*nSamples;
   int nTestSize       = (3.0/10.0)*nSamples;
-  int nMiniBatchSize  = 4;
-  float fLearningRate = 0.1;
+  int nMiniBatchSize  = 8;
+  float fLearningRate = 0.001;
 
   double time_1, time_2, time_3, time_4;
 
@@ -113,43 +113,64 @@ int main () {
   SKLayer   *layer_1 = new SKLayer(1,"Sigmoid");
   SKWeights *weights_12 = new SKWeights(1,8);
   SKWeights *gradients_12 = new SKWeights(1,8);
+  SKWeights *firstMoment_12 = new SKWeights(1,8);
+  SKWeights *secondMoment_12 = new SKWeights(1,8);
+
 
   SKLayer   *layer_2 = new SKLayer(8,"Sigmoid");
-  SKWeights *weights_23 = new SKWeights(8,2);
-  SKWeights *gradients_23 = new SKWeights(8,2);
+  SKWeights *weights_23 = new SKWeights(8,8);
+  SKWeights *gradients_23 = new SKWeights(8,8);
+  SKWeights *firstMoment_23 = new SKWeights(8,8);
+  SKWeights *secondMoment_23 = new SKWeights(8,8);
 
-  SKLayer   *layer_3 = new SKLayer(2,"Sigmoid");
-  SKWeights *weights_34 = new SKWeights(2,1);
-  SKWeights *gradients_34 = new SKWeights(2,1);
+
+  SKLayer   *layer_3 = new SKLayer(8,"Sigmoid");
+  SKWeights *weights_34 = new SKWeights(8,1);
+  SKWeights *gradients_34 = new SKWeights(8,1);
+  SKWeights *firstMoment_34 = new SKWeights(8,1);
+  SKWeights *secondMoment_34 = new SKWeights(8,1);
+
 
   SKLayer   *layer_4 = new SKLayer(1,"Linear");
 
 
   weights_12->Init(seed);
   gradients_12->InitGradients();
+  firstMoment_12->InitMoment();
+  secondMoment_12->InitMoment();
 
   weights_23->Init(seed);
   gradients_23->InitGradients();
+  firstMoment_23->InitMoment();
+  secondMoment_23->InitMoment();
 
   weights_34->Init(seed);
   gradients_34->InitGradients();
-
-
+  firstMoment_34->InitMoment();
+  secondMoment_34->InitMoment();
 
 
   SKModel *model = new SKModel("Regression");
 
+  model->SetOptimizer("Adam");
+
   model->AddLayer(layer_1);
   model->AddWeights(weights_12);
   model->AddGradients(gradients_12);
+  model->AddFirstMoments(firstMoment_12);
+  model->AddSecondMoments(secondMoment_12);
 
   model->AddLayer(layer_2);
   model->AddWeights(weights_23);
   model->AddGradients(gradients_23);
+  model->AddFirstMoments(firstMoment_23);
+  model->AddSecondMoments(secondMoment_23);
 
   model->AddLayer(layer_3);
   model->AddWeights(weights_34);
   model->AddGradients(gradients_34);
+  model->AddFirstMoments(firstMoment_34);
+  model->AddSecondMoments(secondMoment_34);
 
   model->AddLayer(layer_4);
 
@@ -175,9 +196,7 @@ int main () {
       // Using  7/10 of the dataset to train the network
       int sample_number = nTrainingSize*gen.Rndm();
 
-
       model->Train(j);
-
 
       loss =  model->QuadraticLoss();
 

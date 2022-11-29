@@ -91,12 +91,15 @@ void SKLayer::RearrangeSoftmax() {
 
   vector<double> vAuxVector;
 
-  for ( int i = 0; i < fSize ; i++)
+  for ( int i = 0; i < fSize ; i++){
     vAuxVector.push_back(EvaluateSoftmax(vLayerOutput,i));
+  }
 
-  for ( int i = 0; i < fSize ; i++)
+  for ( int i = 0; i < fSize ; i++){
     vLayerOutput.at(i) = vAuxVector.at(i);
+  }
 
+ vAuxVector.clear();
 
 }
 

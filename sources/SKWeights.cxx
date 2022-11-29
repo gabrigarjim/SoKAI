@@ -33,8 +33,6 @@ void SKWeights::Init(int seed) {
 
 
 
-
-
 void SKWeights::Print(){
 
  for(int i = 0 ; i < fRows ; i++){
@@ -62,6 +60,23 @@ void SKWeights::InitGradients() {
 
   }
 }
+
+void SKWeights::InitMoment() {
+
+  vector<double> row;
+
+  for(int i = 0 ; i < fRows ; i++) {
+   for(int j = 0 ; j < fColumns ; j++){
+
+      row.push_back(0.0);
+   }
+
+   mWeightMatrix.push_back(row);
+   row.clear();
+
+  }
+}
+
 
 
 void SKWeights::ZeroGradients() {

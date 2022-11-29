@@ -31,6 +31,11 @@ public:
  /* ----- Public Method Add Gradients -----*/
  void AddGradients(SKWeights *gradients);
 
+ /* ----- Public Method Add Moment -----*/
+ void AddFirstMoments(SKWeights *firstMoments);
+
+ /* ----- Public Method Add Moment -----*/
+ void AddSecondMoments(SKWeights *secondMoments);
 
  /* ----- Public Set Input Sample ----- */
  void SetInputSample(vector<vector<double>> *input);
@@ -67,6 +72,12 @@ public:
  /* ----- Public Method Propagate -----*/
  vector<double> Propagate(int n);
 
+ /* ----- Public Method Load Weights -----*/
+ void LoadWeights(string file);
+
+ void SetOptimizer(string opt){ sOptimizer = opt;};
+
+
 
  float Accuracy();
 
@@ -81,10 +92,13 @@ public:
 
 private:
 
- vector<SKLayer*> vModelLayers;
+ vector<SKLayer*> *vModelLayers = new vector<SKLayer*>();
  vector<SKWeights*> vModelWeights;
  vector<SKWeights*> vModelGradients;
  vector<vector<vector<int>>> mWeightsPaths;
+
+ vector<SKWeights*> vModelFirstMoment;
+ vector<SKWeights*> vModelSecondMoment;
 
  vector<vector<double>> *mInputLabels;
  vector<vector<double>> *mInputSample;
@@ -105,6 +119,7 @@ private:
  int nTotalWeights;
  int nLayers;
  int nIterations;
+ int nTotalIterations;
  int nBatchSize;
  float nAccuracy;
  float nLearningRate;
@@ -112,7 +127,14 @@ private:
  TH2F *modelHistogram;
  string sLossFunction;
  string sModelType;
+ string sOptimizer;
 
+ float nBeta1;
+ float nBeta2;
+ float nEpsilon;
+
+ double nFirstHatMoment;
+ double nSecondHatMoment;
 
 };
 

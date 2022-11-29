@@ -3,9 +3,7 @@
 #include "SKWeights.h"
 #include "SKPropagator.h"
 #include "SKModel.h"
-#include "SKFancyPlots.h"
-#include "exc_energy.h"
-
+#include "SKColorScheme.h"
 
 int main (int argc, char** argv) {
 
@@ -25,22 +23,18 @@ int main (int argc, char** argv) {
   int seed            = 2022;
   int epochs          = stoi(argv[1]);
   int nSamples        = stoi(argv[2]);
-  int nTrainingSize   = (7.0/10.0)*nSamples;
-  int nTestSize       = (3.0/10.0)*nSamples;
   int nMiniBatchSize  = stoi(argv[4]);;
-  float fLearningRate = stoi(argv[3])/100.;
+  float fLearningRate = stoi(argv[3])/1000.;
 
   real_start = clock();
 
   /*---- Input Data (Use this format!) ---- */
   vector<vector<double>> data_sample;
   vector<vector<double>> input_labels;
-  vector<vector<double>> azimut_sample;
 
 
   vector<double> data_instance;
   vector<double> label_instance;
-  vector<double> azimuth_instance;
 
   /*---- For training results ----*/
   vector<double> loss_vec;
@@ -63,63 +57,39 @@ int main (int argc, char** argv) {
   float fSingleCrystalEnergyMax = 340;
   float fPrimEnergyMax = 700;
 
-
-
-  /* -------- Put this on a header or something..... ----------*/
-  gStyle->SetOptStat(1111);
-  Double_t Red[5]    = { 0.06, 0.25, 0.50, 0.75, 1.0};
-  Double_t Green[5]  = {0.01, 0.1, 0.15, 0.20, 0.8};
-  Double_t Blue[5]   = { 0.00, 0.00, 0.00, 0.0, 0.0};
-  Double_t Length[5] = { 0.00, 0.25, 0.50, 0.75, 1.00 };
-  Int_t nb=250;
-
-  TColor::CreateGradientColorTable(5,Length,Red,Green,Blue,nb);
-   gStyle->SetCanvasColor(1);
-   gStyle->SetTitleFillColor(1);
-   gStyle->SetStatColor(1);
-
-   gStyle->SetFrameLineColor(0);
-   gStyle->SetGridColor(0);
-   gStyle->SetStatTextColor(0);
-   gStyle->SetTitleTextColor(0);
-   gStyle->SetLabelColor(0,"xyz");
-   gStyle->SetTitleColor(0,"xyz");
-   gStyle->SetAxisColor(0,"xyz");
-   /* --------------------------------------------------------*/
-
+  SKColorScheme();
 
    /* ------- Reading Root Data -------- */
-  TString fileList = "/home/gabri/Analysis/s455/simulation/punch_through/files/pca_file_matched.root";
+  TString fileList = "/home/gabri/Analysis/s455/simulation/punch_through/files/punched_sorted.root";
 
   TFile *eventFile;
   TTree* eventTree;
 
   eventFile = TFile::Open(fileList);
-  eventTree = (TTree*)eventFile->Get("evt");
+  eventTree = (TTree*)eventFile->Get("data");
 
-  Float_t rClusterEnergy[2];
-  TBranch  *energyBranch = eventTree->GetBranch("ClusterEnergy");
-  energyBranch->SetAddress(rClusterEnergy);
+  Float_t rClusterEnergy;
+  TBranch  *energyBranch = eventTree->GetBranch("PunchedEnergy");
+  energyBranch->SetAddress(&rClusterEnergy);
 
-  Float_t rPolar[2];
-  TBranch  *polarBranch = eventTree->GetBranch("ClusterTheta");
-  polarBranch->SetAddress(rPolar);
+  Float_t rPolar;
+  TBranch  *polarBranch = eventTree->GetBranch("PunchedTheta");
+  polarBranch->SetAddress(&rPolar);
 
-  Float_t rAzimuthal[2];
-  TBranch  *aziBranch = eventTree->GetBranch("ClusterPhi");
-  aziBranch->SetAddress(rAzimuthal);
+  Float_t rAzimuthal;
+  TBranch  *aziBranch = eventTree->GetBranch("PunchedPhi");
+  aziBranch->SetAddress(&rAzimuthal);
 
-  Float_t rMotherCrystalEnergy[2];
-  TBranch  *singleBranch = eventTree->GetBranch("MotherCrystalEnergy");
-  singleBranch->SetAddress(rMotherCrystalEnergy);
+  Float_t rMotherCrystalEnergy;
+  TBranch  *singleBranch = eventTree->GetBranch("PunchedCrystalEnergy");
+  singleBranch->SetAddress(&rMotherCrystalEnergy);
 
-  Float_t rPrimaryEnergy[2];
+  Float_t rPrimaryEnergy;
   TBranch  *primBranch = eventTree->GetBranch("PrimaryEnergy");
-  primBranch->SetAddress(rPrimaryEnergy);
+  primBranch->SetAddress(&rPrimaryEnergy);
 
   int nEvents = eventTree->GetEntries();
 
-  float fExcEnergyCalifa,fExcEnergyNN;
 
   LOG(INFO)<<"Number of Samples : "<<nEvents<<endl;
 
@@ -130,50 +100,47 @@ int main (int argc, char** argv) {
     if(!(j%100))
      LOG(INFO)<<"Reading event "<<j<<" out of "<<nEvents<<" ("<<100.0*Float_t(j)/Float_t(nSamples)<<" % ) "<<endl;
 
-    data_instance.push_back(rClusterEnergy[0]/fClusterEnergyMax);
-    data_instance.push_back(rClusterEnergy[1]/fClusterEnergyMax);
+     if(TMath::Abs(700*rPrimaryEnergy - 400*rClusterEnergy) < 10 || 700*rPrimaryEnergy < 300 && 400*rClusterEnergy < 150)
+     continue;
 
-    data_instance.push_back(rMotherCrystalEnergy[0]/fSingleCrystalEnergyMax);
-    data_instance.push_back(rMotherCrystalEnergy[1]/fSingleCrystalEnergyMax);
+    data_instance.push_back(rClusterEnergy);
 
-    data_instance.push_back(rPolar[0]/fPolarMax);
-    data_instance.push_back(rPolar[1]/fPolarMax);
+    data_instance.push_back(rMotherCrystalEnergy);
 
-    // data_instance.push_back(rAzimuthal[0]/fAzimuthalMax);
-    // data_instance.push_back(rAzimuthal[1]/fAzimuthalMax);
-    azimuth_instance.push_back(rAzimuthal[0]/fAzimuthalMax);
-    azimuth_instance.push_back(rAzimuthal[1]/fAzimuthalMax);
+    // data_instance.push_back(rPolar);
+    //
+    // data_instance.push_back(rAzimuthal);
 
-
-
-    label_instance.push_back(rPrimaryEnergy[0]/fPrimEnergyMax);
-    label_instance.push_back(rPrimaryEnergy[1]/fPrimEnergyMax);
+    label_instance.push_back(rPrimaryEnergy);
 
 
     data_sample.push_back(data_instance);
     input_labels.push_back(label_instance);
-    azimut_sample.push_back(azimuth_instance);
 
     data_instance.clear();
     label_instance.clear();
-    azimuth_instance.clear();
+
    }
+
+  int nTrainingSize   = (5.0/10.0)*data_sample.size();
+  int nTestSize       = (5.0/10.0)*data_sample.size();
+
 
   /*------- The Model Itself -------*/
 
-  SKLayer   *layer_1 = new SKLayer(6,argv[5]);
-  SKWeights *weights_12 = new SKWeights(6,stoi(argv[6]));
-  SKWeights *gradients_12 = new SKWeights(6,stoi(argv[6]));
+  SKLayer   *layer_1 = new SKLayer(2,argv[5]);
+  SKWeights *weights_12 = new SKWeights(2,stoi(argv[6]));
+  SKWeights *gradients_12 = new SKWeights(2,stoi(argv[6]));
 
   SKLayer   *layer_2 = new SKLayer(stoi(argv[6]),argv[7]);
   SKWeights *weights_23 = new SKWeights(stoi(argv[6]),stoi(argv[8]));
   SKWeights *gradients_23 = new SKWeights(stoi(argv[6]),stoi(argv[8]));
 
   SKLayer   *layer_3 = new SKLayer(stoi(argv[8]),argv[9]);
-  SKWeights *weights_34 = new SKWeights(stoi(argv[8]),2);
-  SKWeights *gradients_34 = new SKWeights(stoi(argv[8]),2);
+  SKWeights *weights_34 = new SKWeights(stoi(argv[8]),1);
+  SKWeights *gradients_34 = new SKWeights(stoi(argv[8]),1);
 
-  SKLayer   *layer_4 = new SKLayer(2,argv[10]);
+  SKLayer   *layer_4 = new SKLayer(1,argv[10]);
 
 
 
@@ -185,8 +152,6 @@ int main (int argc, char** argv) {
 
   weights_34->Init(seed);
   gradients_34->InitGradients();
-
-
 
 
 
@@ -216,7 +181,7 @@ int main (int argc, char** argv) {
   /* ---- Number of processed inputs before updating gradients ---- */
   model->SetBatchSize(nMiniBatchSize);
 
-  LOG(INFO)<<"Model Training Hyper Parameters. Epochs : "<<argv[1]<<" Samples : "<<argv[2]<<" Learning Rate : "<<stoi(argv[3])/100.0<<" Metric : "<<argv[11];
+  LOG(INFO)<<"Model Training Hyper Parameters. Epochs : "<<argv[1]<<" Samples : "<<argv[2]<<" Learning Rate : "<<stoi(argv[3])/1000.0<<" Metric : "<<argv[11];
   LOG(INFO)<<"";
   LOG(INFO)<<"/* ---------- Model Structure -----------";
   LOG(INFO)<<"L1 : "<<argv[5]<<" "<<"8";
@@ -265,11 +230,6 @@ TH2F *hCorrReconstruction_results = new TH2F("hCorrReconstruction_results","Reco
 TH2F *hCorrKinematics_califa = new TH2F("hCorrKinematics_califa","Kinematics",400,0,100,400,0,700);
 TH2F *hCorrKinematics_reconstruction = new TH2F("hCorrKinematics_reconstruction","Kinematics",400,0,100,400,0,700);
 
-/* ----- Exc Energy ----- */
-
-TH1F *hExcEnergy_califa = new TH1F("hExcEnergy_califa","Excitation Energy (Califa)",400,-200,200);
-TH1F *hExcEnergy_network = new TH1F("hExcEnergy_network","Excitation Energy (Neural Network)",400,-200,200);
-
   for (int j = 0 ; j < nTestSize ; j++){
 
 
@@ -282,26 +242,13 @@ TH1F *hExcEnergy_network = new TH1F("hExcEnergy_network","Excitation Energy (Neu
     output_vec = model->Propagate(sample_number);
 
     hCorrReconstruction_results->Fill(fPrimEnergyMax*(output_vec.at(0)),fPrimEnergyMax*input_labels.at(sample_number).at(0));
-    hCorrReconstruction_results->Fill(fPrimEnergyMax*(output_vec.at(1)),fPrimEnergyMax*input_labels.at(sample_number).at(1));
 
     hCorrReconstruction_energy->Fill(fPrimEnergyMax*(output_vec.at(0))-fPrimEnergyMax*input_labels.at(sample_number).at(0),fPrimEnergyMax*input_labels.at(sample_number).at(0));
-    hCorrReconstruction_energy->Fill(fPrimEnergyMax*(output_vec.at(1))-fPrimEnergyMax*input_labels.at(sample_number).at(1),fPrimEnergyMax*input_labels.at(sample_number).at(1));
 
-
-    hCorrKinematics_califa->Fill(TMath::RadToDeg()*fPolarMax*data_sample.at(sample_number).at(4),fClusterEnergyMax*data_sample.at(sample_number).at(0));
-    hCorrKinematics_califa->Fill(TMath::RadToDeg()*fPolarMax*data_sample.at(sample_number).at(5),fClusterEnergyMax*data_sample.at(sample_number).at(1));
-
-    hCorrKinematics_reconstruction->Fill(TMath::RadToDeg()*fPolarMax*data_sample.at(sample_number).at(4),fPrimEnergyMax*(output_vec.at(0)));
-    hCorrKinematics_reconstruction->Fill(TMath::RadToDeg()*fPolarMax*data_sample.at(sample_number).at(5),fPrimEnergyMax*(output_vec.at(1)));
-
-
-    fExcEnergyCalifa = exc_energy(fClusterEnergyMax*data_sample.at(sample_number).at(0),fClusterEnergyMax*data_sample.at(sample_number).at(1),TMath::RadToDeg()*fPolarMax*data_sample.at(sample_number).at(4),TMath::RadToDeg()*fPolarMax*data_sample.at(sample_number).at(5),TMath::RadToDeg()*fAzimuthalMax*azimut_sample.at(sample_number).at(0),TMath::RadToDeg()*fAzimuthalMax*azimut_sample.at(sample_number).at(1));
-    fExcEnergyNN     = exc_energy(fPrimEnergyMax*(output_vec.at(0)),fPrimEnergyMax*(output_vec.at(1)),TMath::RadToDeg()*fPolarMax*data_sample.at(sample_number).at(4),TMath::RadToDeg()*fPolarMax*data_sample.at(sample_number).at(5),TMath::RadToDeg()*fAzimuthalMax*azimut_sample.at(sample_number).at(0),TMath::RadToDeg()*fAzimuthalMax*azimut_sample.at(sample_number).at(1));
-
-
-    hExcEnergy_califa->Fill(fExcEnergyCalifa);
-    hExcEnergy_network->Fill(fExcEnergyNN);
-
+    //
+    // hCorrKinematics_califa->Fill(TMath::RadToDeg()*fPolarMax*data_sample.at(sample_number).at(2),fClusterEnergyMax*data_sample.at(sample_number).at(0));
+    //
+    // hCorrKinematics_reconstruction->Fill(TMath::RadToDeg()*fPolarMax*data_sample.at(sample_number).at(2),fPrimEnergyMax*(output_vec.at(0)));
 
     model->Clear();
 
@@ -336,6 +283,7 @@ TGraph *loss_graph = new TGraph(epoch_vec.size(),&epoch_vec[0],&loss_vec[0]);
 TH2F* model_histo;
 model_histo = (TH2F*)model->ShowMe();
 
+model->SaveWeights("weights_reconstruction.txt");
 
 TCanvas *summary_canvas = new TCanvas("summary_canvas","Model");
 summary_canvas->Divide(2,1);
@@ -347,41 +295,28 @@ summary_canvas->cd(1);
 summary_canvas->cd(2);
  loss_graph->Draw("AC");
 
-TCanvas *reconstruction_canvas = new TCanvas("reconstruction_canvas","Reconstruction");
+// TCanvas *reconstruction_canvas = new TCanvas("reconstruction_canvas","Reconstruction");
+//
+// reconstruction_canvas->Divide(2,1);
+//
+// reconstruction_canvas->cd(1);
+// hCorrKinematics_califa->Draw("COLZ");
+// hCorrKinematics_califa->GetXaxis()->SetTitle("Polar Angle (degrees)");
+// hCorrKinematics_califa->GetYaxis()->SetTitle("Energy (MeV)");
+//
+//
+//
+// reconstruction_canvas->cd(2);
+// hCorrKinematics_reconstruction->Draw("COLZ");
+// hCorrKinematics_reconstruction->GetXaxis()->SetTitle("Polar Angle (degrees)");
+// hCorrKinematics_reconstruction->GetYaxis()->SetTitle("Energy (MeV)");
 
-reconstruction_canvas->Divide(2,1);
-
-reconstruction_canvas->cd(1);
-hCorrKinematics_califa->Draw("COLZ");
-hCorrKinematics_califa->GetXaxis()->SetTitle("Polar Angle (degrees)");
-hCorrKinematics_califa->GetYaxis()->SetTitle("Energy (MeV)");
-
-
-
-reconstruction_canvas->cd(2);
-hCorrKinematics_reconstruction->Draw("COLZ");
-hCorrKinematics_reconstruction->GetXaxis()->SetTitle("Polar Angle (degrees)");
-hCorrKinematics_reconstruction->GetYaxis()->SetTitle("Energy (MeV)");
-
-
-
-TCanvas *excitation_energy_canvas = new TCanvas("excitation_energy_canvas","Reconstruction");
-excitation_energy_canvas->Divide(2,1);
-
-excitation_energy_canvas->cd(1);
-hExcEnergy_califa->Draw();
-
-excitation_energy_canvas->cd(2);
-hExcEnergy_network->Draw();
-
-
-TString name = "training_results_";
+TString name = "training_results_regression_";
  name = name + argv[12] + ".root";
 
 TFile resultsFile(name,"RECREATE");
 
- reconstruction_canvas->Write();
- excitation_energy_canvas->Write();
+ // reconstruction_canvas->Write();
  model_canvas->Write();
  summary_canvas->Write();
 

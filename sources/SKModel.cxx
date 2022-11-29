@@ -55,7 +55,12 @@ SKModel::SKModel(string model) :
  nIterations(0),
  nBatchSize(1),
  sLossFunction("Quadratic"),
- sModelType("Regression"){
+ sModelType("Regression"),
+ sOptimizer("Stochastic"),
+ nBeta1(0.9),
+ nBeta2(0.999),
+ nEpsilon(1E-8),
+ nTotalIterations(0){
 
  sModelType = model;
 
@@ -68,7 +73,7 @@ SKModel::~SKModel(){}
 /* ----- Public Method Add Layer ----- */
 void SKModel::AddLayer(SKLayer *layer){
 
-  vModelLayers.push_back(layer);
+  vModelLayers->push_back(layer);
 
 }
 
@@ -84,6 +89,22 @@ void SKModel::AddWeights(SKWeights *weights){
 void SKModel::AddGradients(SKWeights *gradients){
 
   vModelGradients.push_back(gradients);
+
+}
+
+
+/* ----- Public Method Add Moments ----- */
+void SKModel::AddFirstMoments(SKWeights *firstMoments){
+
+  vModelFirstMoment.push_back(firstMoments);
+
+}
+
+
+/* ----- Public Method Add Moments ----- */
+void SKModel::AddSecondMoments(SKWeights *secondMoments){
+
+  vModelSecondMoment.push_back(secondMoments);
 
 }
 
@@ -106,7 +127,7 @@ void SKModel::SetInputLabels(vector<vector<double>> *labels){
 /* ----- Public Method Init ----- */
 void SKModel::Init(){
 
-  nLayers = vModelLayers.size();
+  nLayers = vModelLayers->size();
   nTotalWeights = 0;
 
   nDataSize = mInputSample->size();
@@ -115,6 +136,7 @@ void SKModel::Init(){
 
   for(int i = 0 ; i < vModelWeights.size() ; i++)
    nTotalWeights = nTotalWeights + (vModelWeights.at(i)->fRows)*(vModelWeights.at(i)->fColumns);
+
 
   CheckDimensions();
 
@@ -126,13 +148,19 @@ void SKModel::Init(){
 
   propagator = new SKPropagator();
 
+  if(sOptimizer != "Stochastic" && sOptimizer != "Adam")
+   LOG(ERROR)<<"Optimizer "<<sOptimizer<<" does not exist in SoKAI!!!";
+
+
+
   int maxSize=0;
 
   for (int i = 0 ; i < nLayers ; i++)
-   if(vModelLayers.at(i)->fSize > maxSize)
-    maxSize = vModelLayers.at(i)->fSize;
+   if(vModelLayers->at(i)->fSize > maxSize)
+    maxSize = vModelLayers->at(i)->fSize;
 
-  modelHistogram = new TH2F("modelHistogram","Model",1000,0,vModelLayers.size() + 1,1000,0,maxSize+1);
+   int modelSizeHisto = vModelLayers->size() + 1 ;
+   modelHistogram = new TH2F("modelHistogram","Model",1000,0,(int)modelSizeHisto,1000,0,(int)(maxSize+1));
 
 
   modelHistogram->GetXaxis()->SetTitle("Layer");
@@ -155,7 +183,7 @@ void SKModel::Init(){
 
          /* ---- Calculate all possible paths for a given weight ----- */
          for(int n = firstLayer ; n <= lastLayer ; n++){
-           for(int s = 0 ; s < vModelLayers.at(n)->fSize ; s++){
+           for(int s = 0 ; s < vModelLayers->at(n)->fSize ; s++){
 
               layer_coord.push_back(s);
 
@@ -182,7 +210,7 @@ void SKModel::Init(){
 void SKModel::Clear(){
 
    for (int i = 0 ; i < nLayers ; i++)
-     vModelLayers.at(i)->Clear();
+     vModelLayers->at(i)->Clear();
 
      vLossVector.clear();
 
@@ -196,7 +224,7 @@ void SKModel::CheckDimensions(){
 
    for (int i = 0 ; i < (nLayers-1) ; i++ ) {
 
-     isRight = (vModelLayers.at(i)->fSize == vModelWeights.at(i)->fRows);
+     isRight = (vModelLayers->at(i)->fSize == vModelWeights.at(i)->fRows);
 
      if(!isRight)
       LOG(FATAL)<<"Incompatible row dimensions :  Layer "<<i+1;
@@ -205,7 +233,7 @@ void SKModel::CheckDimensions(){
 
    for (int i = (nLayers-1) ; i > 0 ; i-- ) {
 
-    isRight = (vModelLayers.at(i)->fSize == vModelWeights.at(i-1)->fColumns);
+    isRight = (vModelLayers->at(i)->fSize == vModelWeights.at(i-1)->fColumns);
 
     if(!isRight)
      LOG(FATAL)<<"Incompatible column dimensions :  Layer "<<i;
@@ -213,7 +241,28 @@ void SKModel::CheckDimensions(){
 
 }
 
+void SKModel::LoadWeights(string file){
 
+
+  LOG(INFO)<<"Loading weights ....";
+
+  ifstream *weight_file = new ifstream(file);
+  double weight;
+
+    for(int w = 0 ; w < vModelWeights.size() ; w++){
+     for(int i = 0 ; i < vModelWeights.at(w)->fRows ; i++){
+       for(int j = 0 ; j < vModelWeights.at(w)->fColumns ; j++){
+
+         *weight_file>>weight;
+         vModelWeights.at(w)->mWeightMatrix[i][j] = weight;
+
+       }
+     }
+   }
+
+   weight_file->close();
+
+}
 
 
 vector<double> SKModel::Propagate(int n){
@@ -222,27 +271,23 @@ vector<double> SKModel::Propagate(int n){
   vModelOutput.clear();
 
   vInput = &mInputSample->at(n);
-  vLabel = &mInputLabels->at(n);
 
-
-  propagator->Feed(vInput,vModelLayers.at(0));
+  propagator->Feed(vInput,vModelLayers->at(0));
 
 
   for(int i = 1 ; i < nLayers ; i++)
-    propagator->Propagate(vModelLayers.at(i-1),vModelLayers.at(i),vModelWeights.at(i-1));
+    propagator->Propagate(vModelLayers->at(i-1),vModelLayers->at(i),vModelWeights.at(i-1));
 
 
    if(sModelType == "Classification")
-    vModelLayers.at(nLayers-1)->RearrangeSoftmax();
+    vModelLayers->at(nLayers-1)->RearrangeSoftmax();
 
 
-   for(int i = 0 ; i < vModelLayers.at(nLayers-1)->vLayerOutput.size() ; i++)
-    vModelOutput.push_back(vModelLayers.at(nLayers-1)->vLayerOutput.at(i));
+   for(int i = 0 ; i < vModelLayers->at(nLayers-1)->vLayerOutput.size() ; i++)
+    vModelOutput.push_back(vModelLayers->at(nLayers-1)->vLayerOutput.at(i));
 
 
-
-
-  return vModelOutput;
+   return vModelOutput;
 
 }
 
@@ -256,16 +301,17 @@ void SKModel::Train(int n){
   vLabel = &mInputLabels->at(n);
 
 
-  propagator->Feed(vInput,vModelLayers.at(0));
+  propagator->Feed(vInput,vModelLayers->at(0));
 
   for(int i = 1 ; i < nLayers ; i++)
-    propagator->Propagate(vModelLayers.at(i-1),vModelLayers.at(i),vModelWeights.at(i-1));
+    propagator->Propagate(vModelLayers->at(i-1),vModelLayers->at(i),vModelWeights.at(i-1));
 
   if(sModelType == "Classification")
-    vModelLayers.at(nLayers-1)->RearrangeSoftmax();
+    vModelLayers->at(nLayers-1)->RearrangeSoftmax();
 
 
     nIterations++;
+    nTotalIterations++;
     Backpropagate();
 
 
@@ -289,25 +335,23 @@ void SKModel::Backpropagate(){
   int counter=0;
   int batchCounter;
 
-  auto begin_1 = high_resolution_clock::now();
-
   if(sLossFunction=="Quadratic"){
 
-   for (int i = 0 ; i < vModelLayers.at(nLayers-1)->fSize ; i++)
-     lossDerivatives.push_back((1.0/vModelLayers.at(nLayers-1)->fSize)*(vModelLayers.at(nLayers-1)->vLayerOutput.at(i)-vLabel->at(i)));
+   for (int i = 0 ; i < vModelLayers->at(nLayers-1)->fSize ; i++)
+     lossDerivatives.push_back((1.0/vModelLayers->at(nLayers-1)->fSize)*(vModelLayers->at(nLayers-1)->vLayerOutput.at(i)-vLabel->at(i)));
 
   }
 
 
   else if (sLossFunction=="Absolute"){
 
-   for (int i = 0 ; i < vModelLayers.at(nLayers-1)->fSize ; i++) {
+   for (int i = 0 ; i < vModelLayers->at(nLayers-1)->fSize ; i++) {
 
-     if(vModelLayers.at(nLayers-1)->vLayerOutput.at(i)-vLabel->at(i)>=0.0)
-      lossDerivatives.push_back((1.0/vModelLayers.at(nLayers-1)->fSize)*(1.0));
+     if(vModelLayers->at(nLayers-1)->vLayerOutput.at(i)-vLabel->at(i)>=0.0)
+      lossDerivatives.push_back((1.0/vModelLayers->at(nLayers-1)->fSize)*(1.0));
 
      else
-      lossDerivatives.push_back((1.0/vModelLayers.at(nLayers-1)->fSize)*(-1.0));
+      lossDerivatives.push_back((1.0/vModelLayers->at(nLayers-1)->fSize)*(-1.0));
 
      }
   }
@@ -315,15 +359,15 @@ void SKModel::Backpropagate(){
 
   else if (sLossFunction == "CrossEntropy" && sModelType == "Classification") {
 
-    for (int i = 0 ; i < vModelLayers.at(nLayers-1)->fSize ; i++){
+    for (int i = 0 ; i < vModelLayers->at(nLayers-1)->fSize ; i++){
 
-      double layerOut = vModelLayers.at(nLayers-1)->vLayerOutput.at(i);
+      double layerOut = vModelLayers->at(nLayers-1)->vLayerOutput.at(i);
 
       if(vLabel->at(i) == 0)
-        lossDerivatives.push_back((1.0/vModelLayers.at(nLayers-1)->fSize)*layerOut);
+        lossDerivatives.push_back((1.0/vModelLayers->at(nLayers-1)->fSize)*layerOut);
 
       if(vLabel->at(i) == 1)
-        lossDerivatives.push_back((1.0/vModelLayers.at(nLayers-1)->fSize)*(layerOut-1.0));
+        lossDerivatives.push_back((1.0/vModelLayers->at(nLayers-1)->fSize)*(layerOut-1.0));
 
     }
 
@@ -350,12 +394,12 @@ void SKModel::Backpropagate(){
 
 
             pathGradient=1;
-            pathGradient = pathGradient*lossDerivatives.at(path_matrix[path][path_matrix[path].size()-1])*vModelLayers.at(w)->vLayerOutput.at(i);
+            pathGradient = pathGradient*lossDerivatives.at(path_matrix[path][path_matrix[path].size()-1])*vModelLayers->at(w)->vLayerOutput.at(i);
 
 
            for(int r = 1 ; r < path_matrix[path].size() ; r++) {
 
-             pathGradient=pathGradient*vModelLayers.at(r + w)->LayerDer(path_matrix[path][r]);
+             pathGradient=pathGradient*vModelLayers->at(r + w)->LayerDer(path_matrix[path][r]);
 
          }
 
@@ -382,7 +426,7 @@ void SKModel::Backpropagate(){
 
 
 
-   if(nIterations==nBatchSize) {
+   if(nIterations==nBatchSize && sOptimizer == "Stochastic") {
 
      for (int w = vModelWeights.size()-1 ; w >= 0 ; w--) {
       for (int i = 0 ; i < vModelWeights.at(w)->fRows ; i++) {
@@ -391,6 +435,32 @@ void SKModel::Backpropagate(){
           vModelWeights.at(w)->mWeightMatrix[i][j] = vModelWeights.at(w)->mWeightMatrix[i][j]
           - nLearningRate*(vModelGradients.at(w)->mWeightMatrix[i][j])/(float)nBatchSize;
         }
+     }
+   }
+
+      for (int i = 0 ; i < vModelGradients.size() ; i++)
+       vModelGradients.at(i)->ZeroGradients();
+
+       nIterations=0;
+ }
+
+
+   if(nIterations==nBatchSize && sOptimizer == "Adam") {
+
+     for (int w = vModelWeights.size()-1 ; w >= 0 ; w--) {
+      for (int i = 0 ; i < vModelWeights.at(w)->fRows ; i++) {
+        for (int j = 0 ; j < vModelWeights.at(w)->fColumns ; j++) {
+
+             vModelFirstMoment.at(w)->mWeightMatrix[i][j] = nBeta1*vModelFirstMoment.at(w)->mWeightMatrix[i][j] + (1.0 - nBeta1)*(vModelGradients.at(w)->mWeightMatrix[i][j])/(float)nBatchSize;
+             vModelSecondMoment.at(w)->mWeightMatrix[i][j] = nBeta2*vModelSecondMoment.at(w)->mWeightMatrix[i][j] + (1.0 - nBeta2)*pow((vModelGradients.at(w)->mWeightMatrix[i][j])/(float)nBatchSize,2);
+
+             nFirstHatMoment = (vModelFirstMoment.at(w)->mWeightMatrix[i][j])/(1.0 - pow(nBeta1,nTotalIterations));
+             nSecondHatMoment = (vModelSecondMoment.at(w)->mWeightMatrix[i][j])/(1.0 - pow(nBeta2,nTotalIterations));
+
+             vModelWeights.at(w)->mWeightMatrix[i][j] = vModelWeights.at(w)->mWeightMatrix[i][j]
+             - nLearningRate*nFirstHatMoment/(sqrt(nSecondHatMoment) + nEpsilon);
+
+      }
      }
    }
 
@@ -423,13 +493,13 @@ float SKModel::Accuracy(){
 
    maxLabel =  std::distance(vLabel->begin(),std::max_element(vLabel->begin(), vLabel->end()));
 
-   propagator->Feed(vInput,vModelLayers.at(0));
+   propagator->Feed(vInput,vModelLayers->at(0));
 
    for(int i = 1 ; i < nLayers ; i++)
-     propagator->Propagate(vModelLayers.at(i-1),vModelLayers.at(i),vModelWeights.at(i-1));
+     propagator->Propagate(vModelLayers->at(i-1),vModelLayers->at(i),vModelWeights.at(i-1));
 
 
-   vector<double> layerOut = vModelLayers.at(nLayers-1)->vLayerOutput;
+   vector<double> layerOut = vModelLayers->at(nLayers-1)->vLayerOutput;
 
    maxOutput = std::distance(layerOut.begin(),std::max_element(layerOut.begin(), layerOut.end()));
 
@@ -454,25 +524,24 @@ double SKModel::QuadraticLoss() {
     vLossVector.clear();
 
 
-     for(int i = 0 ; i < vModelLayers.at(nLayers-1)->vLayerOutput.size() ; i++)
-       vLossVector.push_back((1.0/2.0)*pow((vModelLayers.at(nLayers-1)->vLayerOutput.at(i)-vLabel->at(i)),2));
+     for(int i = 0 ; i < vModelLayers->at(nLayers-1)->vLayerOutput.size() ; i++)
+       vLossVector.push_back((1.0/2.0)*pow((vModelLayers->at(nLayers-1)->vLayerOutput.at(i)-vLabel->at(i)),2));
 
 
      double loss = (std::accumulate(vLossVector.begin(), vLossVector.end(), 0.0))/vLossVector.size();
 
      return loss;
 
-
-
 }
+
 
 double SKModel::AbsoluteLoss() {
 
     vLossVector.clear();
 
 
-     for(int i = 0 ; i < vModelLayers.at(nLayers-1)->vLayerOutput.size() ; i++)
-       vLossVector.push_back(abs(vModelLayers.at(nLayers-1)->vLayerOutput.at(i) - vLabel->at(i)));
+     for(int i = 0 ; i < vModelLayers->at(nLayers-1)->vLayerOutput.size() ; i++)
+       vLossVector.push_back(abs(vModelLayers->at(nLayers-1)->vLayerOutput.at(i) - vLabel->at(i)));
 
 
      double loss = (std::accumulate(vLossVector.begin(), vLossVector.end(), 0.0))/vLossVector.size();
@@ -486,11 +555,11 @@ double SKModel::CrossEntropyLoss() {
 
       double loss;
 
-     for(int i = 0 ; i < vModelLayers.at(nLayers-1)->vLayerOutput.size() ; i++){
+     for(int i = 0 ; i < vModelLayers->at(nLayers-1)->vLayerOutput.size() ; i++){
 
        if(vLabel->at(i) == 1){
 
-        double layerOut = vModelLayers.at(nLayers-1)->vLayerOutput.at(i);
+        double layerOut = vModelLayers->at(nLayers-1)->vLayerOutput.at(i);
         loss  = -1.0*log(layerOut);
 
         }
@@ -510,8 +579,8 @@ TH2F * SKModel::ShowMe(){
    TRandom3 gen(0);
 
    for ( int n = 0 ; n < nLayers-1 ; n++) {
-    for( int i = 0 ; i < vModelLayers.at(n)->fSize ; i++) {
-     for( int j = 0 ; j < vModelLayers.at(n+1)->fSize ; j++) {
+    for( int i = 0 ; i < vModelLayers->at(n)->fSize ; i++) {
+     for( int j = 0 ; j < vModelLayers->at(n+1)->fSize ; j++) {
 
         x_start = n + 1 - 0.01;
         x_end   = n + 2 + 0.01;

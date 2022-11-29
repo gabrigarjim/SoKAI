@@ -26,10 +26,10 @@ int main (int argc, char** argv) {
   int seed            = 2022;
   int epochs          = stoi(argv[1]);
   int nSamples        = stoi(argv[2]);
-  int nTrainingSize   = (1.0/10.0)*nSamples;
-  int nTestSize       = (9.0/10.0)*nSamples;
+  int nTrainingSize   = (7.0/10.0)*nSamples;
+  int nTestSize       = (3.0/10.0)*nSamples;
   int nMiniBatchSize  = stoi(argv[4]);;
-  float fLearningRate = stoi(argv[3])/100.;
+  float fLearningRate = stoi(argv[3])/1000.;
 
   real_start = clock();
 
@@ -61,7 +61,7 @@ int main (int argc, char** argv) {
   SKColorScheme();
 
    /* ------- Reading Root Data -------- */
-  TString fileList = "/home/gabri/Analysis/s455/simulation/punch_through/files/nn_classification_file.root";
+  TString fileList = "/home/gabri/Analysis/s455/simulation/punch_through/writers/U238_Quasifree_560AMeV_NN.root";
 
   TFile *eventFile;
   TTree* eventTree;
@@ -110,8 +110,8 @@ int main (int argc, char** argv) {
     data_instance.push_back(rPolar[0]/fPolarMax);
     data_instance.push_back(rPolar[1]/fPolarMax);
 
-    // data_instance.push_back(rAzimuthal[0]/fAzimuthalMax);
-    // data_instance.push_back(rAzimuthal[1]/fAzimuthalMax);
+    data_instance.push_back(rAzimuthal[0]/fAzimuthalMax);
+    data_instance.push_back(rAzimuthal[1]/fAzimuthalMax);
 
 
     label_instance.push_back(rPunched[0]);
@@ -130,17 +130,25 @@ int main (int argc, char** argv) {
 
   /*------- The Model Itself -------*/
 
-  SKLayer   *layer_1 = new SKLayer(6,argv[5]);
-  SKWeights *weights_12 = new SKWeights(6,stoi(argv[6]));
-  SKWeights *gradients_12 = new SKWeights(6,stoi(argv[6]));
+  SKLayer   *layer_1 = new SKLayer(8,argv[5]);
+  SKWeights *weights_12 = new SKWeights(8,stoi(argv[6]));
+  SKWeights *gradients_12 = new SKWeights(8,stoi(argv[6]));
+  SKWeights *firstMoment_12 = new SKWeights(8,stoi(argv[6]));
+  SKWeights *secondMoment_12 = new SKWeights(8,stoi(argv[6]));
+
 
   SKLayer   *layer_2 = new SKLayer(stoi(argv[6]),argv[7]);
   SKWeights *weights_23 = new SKWeights(stoi(argv[6]),stoi(argv[8]));
   SKWeights *gradients_23 = new SKWeights(stoi(argv[6]),stoi(argv[8]));
+  SKWeights *firstMoment_23 = new SKWeights(stoi(argv[6]),stoi(argv[8]));
+  SKWeights *secondMoment_23 = new SKWeights(stoi(argv[6]),stoi(argv[8]));
 
   SKLayer   *layer_3 = new SKLayer(stoi(argv[8]),argv[9]);
   SKWeights *weights_34 = new SKWeights(stoi(argv[8]),4);
   SKWeights *gradients_34 = new SKWeights(stoi(argv[8]),4);
+  SKWeights *firstMoment_34 = new SKWeights(stoi(argv[8]),4);
+  SKWeights *secondMoment_34 = new SKWeights(stoi(argv[8]),4);
+
 
   SKLayer   *layer_4 = new SKLayer(4,argv[10]);
 
@@ -148,27 +156,46 @@ int main (int argc, char** argv) {
 
   weights_12->Init(seed);
   gradients_12->InitGradients();
+  firstMoment_12->InitMoment();
+  secondMoment_12->InitMoment();
+
 
   weights_23->Init(seed);
   gradients_23->InitGradients();
+  firstMoment_23->InitMoment();
+  secondMoment_23->InitMoment();
+
 
   weights_34->Init(seed);
   gradients_34->InitGradients();
+  firstMoment_34->InitMoment();
+  secondMoment_34->InitMoment();
 
 
   SKModel *model = new SKModel("Classification");
 
+  model->SetOptimizer("Adam");
+
   model->AddLayer(layer_1);
   model->AddWeights(weights_12);
   model->AddGradients(gradients_12);
+  model->AddFirstMoments(firstMoment_12);
+  model->AddSecondMoments(secondMoment_12);
+
 
   model->AddLayer(layer_2);
   model->AddWeights(weights_23);
   model->AddGradients(gradients_23);
+  model->AddFirstMoments(firstMoment_23);
+  model->AddSecondMoments(secondMoment_23);
+
 
   model->AddLayer(layer_3);
   model->AddWeights(weights_34);
   model->AddGradients(gradients_34);
+  model->AddFirstMoments(firstMoment_34);
+  model->AddSecondMoments(secondMoment_34);
+
 
   model->AddLayer(layer_4);
 
@@ -182,7 +209,7 @@ int main (int argc, char** argv) {
   /* ---- Number of processed inputs before updating gradients ---- */
   model->SetBatchSize(nMiniBatchSize);
 
-  LOG(INFO)<<"Model Training Hyper Parameters. Epochs : "<<argv[1]<<" Samples : "<<argv[2]<<" Learning Rate : "<<stoi(argv[3])/100.0<<" Metric : "<<argv[11];
+  LOG(INFO)<<"Model Training Hyper Parameters. Epochs : "<<argv[1]<<" Samples : "<<argv[2]<<" Learning Rate : "<<stoi(argv[3])/1000.0<<" Metric : "<<argv[11];
   LOG(INFO)<<"";
   LOG(INFO)<<"/* ---------- Model Structure -----------";
   LOG(INFO)<<"L1 : "<<argv[5]<<" "<<"8";
@@ -209,7 +236,7 @@ int main (int argc, char** argv) {
       model->Clear();
    }
 
-    if(i%100==0){
+    if(i%10==0){
 
      LOG(INFO)<<" Cross Entropy Loss : "<<crossEntropyLoss<<" . Epoch : "<<i;
      loss_vec.push_back(crossEntropyLoss);

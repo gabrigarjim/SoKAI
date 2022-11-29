@@ -21,8 +21,15 @@ public:
  /* ----- Public Method Init Gradients ----- */
  void InitGradients();
 
+ /* ----- Public Method Init Gradients ----- */
+ void InitMoment();
+
+
  /* ----- Public Method Zero Gradients ----- */
  void ZeroGradients();
+
+ /* ----- Public Method Zero Moments ----- */
+ void ZeroMoments();
 
 
  /* ----- Public Method Print Weights -----*/
