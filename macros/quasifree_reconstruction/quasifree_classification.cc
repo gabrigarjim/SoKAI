@@ -23,11 +23,11 @@ int main (int argc, char** argv) {
   LOG(INFO)<<"# Welcome to SoKAI (Some Kind of Artificial Intelligence) !! #";
   LOG(INFO)<<"#============================================================#";
 
-  int seed            = 2022;
+  int seed            = 202;
   int epochs          = stoi(argv[1]);
   int nSamples        = stoi(argv[2]);
-  int nTrainingSize   = (7.0/10.0)*nSamples;
-  int nTestSize       = (3.0/10.0)*nSamples;
+  int nTrainingSize   = (1.0/10.0)*nSamples;
+  int nTestSize       = (9.0/10.0)*nSamples;
   int nMiniBatchSize  = stoi(argv[4]);;
   float fLearningRate = stoi(argv[3])/1000.;
 
@@ -259,6 +259,10 @@ TH2F *hTraining_results = new TH2F("hTraining_results","Confussion Matrix",4,-0.
 TH2F *hPunched_kinematics = new TH2F("hPunched_kinematics","Punched Kinematics",400,0,100,400,0,600);
 TH2F *hStopped_kinematics = new TH2F("hStopped_kinematics","Stopped Kinematics",400,0,100,400,0,600);
 
+Float_t mConfussionMatrix[4][4]={0.0};
+Float_t vTotalCases[4] = {0.0};
+
+
   for (int j = 0 ; j < nTestSize ; j++){
 
 
@@ -273,8 +277,11 @@ TH2F *hStopped_kinematics = new TH2F("hStopped_kinematics","Stopped Kinematics",
     int highest_index_training = distance(output_vec.begin(),max_element(output_vec.begin(), output_vec.end()));
     int highest_index_label = distance(input_labels.at(sample_number).begin(),max_element(input_labels.at(sample_number).begin(), input_labels.at(sample_number).end()));
 
+    mConfussionMatrix[highest_index_training][highest_index_label] += 1;
+
     hTraining_results->Fill(highest_index_training,highest_index_label);
 
+    vTotalCases[highest_index_label] += 1.0;
 
     if(highest_index_training == 0){
 
@@ -307,16 +314,33 @@ TH2F *hStopped_kinematics = new TH2F("hStopped_kinematics","Stopped Kinematics",
 
     }
 
-    if(highest_index_label == highest_index_training)
-     fGoodClassification++;
 
     model->Clear();
 
 
 }
 
-LOG(INFO)<<"Classification accuraccy : "<<100*fGoodClassification/nTestSize<<" %";
-/* --------- Plots and so on ....... ------*/
+
+LOG(INFO)<<"Accuracy: "<<100*(mConfussionMatrix[0][0] + mConfussionMatrix[1][1] + mConfussionMatrix[2][2] + mConfussionMatrix[3][3])/nTestSize<<" %";
+
+LOG(INFO)<<"Confussion Matrix : Rows trained, Columns labels ";
+ for(int i = 0 ; i < 4 ; i ++){
+  for(int j = 0 ; j < 4 ; j ++){
+   cout<<mConfussionMatrix[i][j]<<"    ";
+  }
+   cout<<endl;
+
+}
+
+
+LOG(INFO)<<"Confussion Matrix (Porcentual): Rows trained, Columns labels ";
+ for(int i = 0 ; i < 4 ; i ++){
+  for(int j = 0 ; j < 4 ; j ++){
+   cout<<100*mConfussionMatrix[i][j]/vTotalCases[j]<<"    ";
+  }
+   cout<<endl;
+
+}
 
 
 TGraph *loss_graph = new TGraph(epoch_vec.size(),&epoch_vec[0],&loss_vec[0]);
@@ -367,7 +391,8 @@ TString name = "training_results_classification_";
 TFile resultsFile(name,"RECREATE");
 
  summary_canvas->Write();
-
+ kinematics_canvas->Write();
+ results_canvas->Write();
 
 theApp->Run();
 
