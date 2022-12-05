@@ -30,7 +30,7 @@ int main () {
   LOG(INFO)<<"#============================================================#";
 
   int seed            = 2022;
-  int epochs          = 8000;
+  int epochs          = 4000;
   int nSamples        = 1024;
   int nTrainingSize   = (7.0/10.0)*nSamples;
   int nTestSize       = (3.0/10.0)*nSamples;
@@ -153,6 +153,7 @@ int main () {
   SKModel *model = new SKModel("Regression");
 
   model->SetOptimizer("Adam");
+  model->SetSummaryFile("summary","0");
 
   model->AddLayer(layer_1);
   model->AddWeights(weights_12);

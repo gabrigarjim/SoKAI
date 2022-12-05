@@ -77,6 +77,12 @@ public:
 
  void SetOptimizer(string opt){ sOptimizer = opt;};
 
+ void SetSummaryFile(string file, string modelNumber){
+
+   sSummaryFile = file;
+   sModelNumber = modelNumber;
+ };
+
 
 
  float Accuracy();
@@ -135,6 +141,10 @@ private:
 
  double nFirstHatMoment;
  double nSecondHatMoment;
+ string sSummaryFile;
+ string sModelNumber;
+
+ ofstream *sum_file=NULL;
 
 };
 

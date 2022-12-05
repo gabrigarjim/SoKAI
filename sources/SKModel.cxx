@@ -2,8 +2,6 @@
 
 using namespace std::chrono;
 
-
-
 void get_comb(int w ,int first,int second,vector<vector<int>>& arr,vector<vector<vector<int>>> &mWeightsPaths)
 {
     int n = arr.size();
@@ -138,6 +136,16 @@ void SKModel::Init(){
    nTotalWeights = nTotalWeights + (vModelWeights.at(i)->fRows)*(vModelWeights.at(i)->fColumns);
 
 
+  if(!sSummaryFile.length())
+  LOG(FATAL)<<"Summary file not set!!!";
+
+
+  sSummaryFile = sSummaryFile + "_" + sModelNumber + ".txt";
+
+  sum_file = new ofstream(sSummaryFile);
+
+  LOG(INFO)<<"Dumping model info to file: "<<sSummaryFile;
+
   CheckDimensions();
 
   LOG(INFO)<<"Initializing Model .......";
@@ -146,11 +154,29 @@ void SKModel::Init(){
   LOG(INFO)<<"Data Size : "<<nDataSize<<" Input Samples";
   LOG(INFO)<<"Number of Features : "<<nDataNColumns;
 
+
+  *sum_file<<"Initializing Model ......."<<endl;
+  *sum_file<<"Feed forward model with "<<nLayers<<" layers"<<endl;
+  *sum_file<<"Number of trainable parameters : "<<nTotalWeights<<endl;
+  *sum_file<<"Data Size : "<<nDataSize<<" Input Samples"<<endl;
+  *sum_file<<"Number of Features : "<<nDataNColumns<<endl;
+  *sum_file<<"Learning Rate: "<<nLearningRate<<endl;
+
+  *sum_file<<"Optimizer: "<<sOptimizer<<endl;
+
   propagator = new SKPropagator();
 
   if(sOptimizer != "Stochastic" && sOptimizer != "Adam")
-   LOG(ERROR)<<"Optimizer "<<sOptimizer<<" does not exist in SoKAI!!!";
+   LOG(FATAL)<<"Optimizer "<<sOptimizer<<" does not exist in SoKAI!!!";
 
+  if(!sOptimizer.length())
+  LOG(WARNING)<<"Using default stochastic optimizer";
+
+
+ *sum_file<<"------------- Model Structure ------------ "<<endl;
+
+ for (int i = 0 ; i < nLayers ; i++)
+  *sum_file<<"Layer "<<i+1<<": "<<vModelLayers->at(i)->sActivationFunction<<". Size: "<<vModelLayers->at(i)->fSize<<endl;
 
 
   int maxSize=0;
@@ -219,24 +245,57 @@ void SKModel::Clear(){
 
 void SKModel::CheckDimensions(){
 
-
-   bool isRight=1;
+   int isRight;
 
    for (int i = 0 ; i < (nLayers-1) ; i++ ) {
 
-     isRight = (vModelLayers->at(i)->fSize == vModelWeights.at(i)->fRows);
+     isRight=0;
 
-     if(!isRight)
+     isRight = isRight + (vModelLayers->at(i)->fSize == vModelWeights.at(i)->fRows);
+     isRight = isRight + (vModelLayers->at(i)->fSize == vModelGradients.at(i)->fRows);
+
+
+     if(sOptimizer == "Adam") {
+
+      isRight = isRight + (vModelLayers->at(i)->fSize == vModelFirstMoment.at(i)->fRows);
+      isRight = isRight + (vModelLayers->at(i)->fSize == vModelSecondMoment.at(i)->fRows);
+
+     }
+
+    if(sOptimizer == "Adam" && isRight != 4 )
       LOG(FATAL)<<"Incompatible row dimensions :  Layer "<<i+1;
+
+
+    if(sOptimizer == "Stochastic" && isRight != 2 )
+      LOG(FATAL)<<"Incompatible row dimensions :  Layer "<<i+1;
+
 
   }
 
+
    for (int i = (nLayers-1) ; i > 0 ; i-- ) {
 
-    isRight = (vModelLayers->at(i)->fSize == vModelWeights.at(i-1)->fColumns);
+    isRight = 0;
 
-    if(!isRight)
-     LOG(FATAL)<<"Incompatible column dimensions :  Layer "<<i;
+    isRight = isRight + (vModelLayers->at(i)->fSize == vModelWeights.at(i-1)->fColumns);
+    isRight = isRight + (vModelLayers->at(i)->fSize == vModelGradients.at(i-1)->fColumns);
+
+
+    if(sOptimizer == "Adam"){
+
+     isRight = isRight + (vModelLayers->at(i)->fSize == vModelFirstMoment.at(i-1)->fColumns);
+     isRight = isRight + (vModelLayers->at(i)->fSize == vModelSecondMoment.at(i-1)->fColumns);
+
+   }
+
+
+    if(sOptimizer == "Adam" && isRight != 4 )
+      LOG(FATAL)<<"Incompatible row dimensions :  Layer "<<i+1;
+
+
+    if(sOptimizer == "Stochastic" && isRight != 2 )
+      LOG(FATAL)<<"Incompatible row dimensions :  Layer "<<i+1;
+
  }
 
 }
@@ -312,6 +371,7 @@ void SKModel::Train(int n){
 
     nIterations++;
     nTotalIterations++;
+
     Backpropagate();
 
 
@@ -576,6 +636,8 @@ TH2F * SKModel::ShowMe(){
    double x,y;
    double true_smear;
 
+   LOG(INFO)<<"Printing Model...";
+
    TRandom3 gen(0);
 
    for ( int n = 0 ; n < nLayers-1 ; n++) {
@@ -591,15 +653,16 @@ TH2F * SKModel::ShowMe(){
         m = (y_end - y_start)/(x_end - x_start);
         n_const = (y_start - m*x_start);
 
-        for(int z = 0 ; z < abs(vModelWeights.at(n)->mWeightMatrix[i][j])*10000 ; z++) {
+        for(int z = 0 ; z < abs(vModelWeights.at(n)->mWeightMatrix[i][j])*100000 ; z++) {
 
            x = (x_end-x_start)* gen.Rndm() + x_start;
 
            y = m*x + n_const;
 
-           true_smear = 0.02/cos(TMath::Pi() - atan(m));
+             true_smear = 0.02/cos(abs(atan(m)));
 
-           y = gen.Gaus(y,true_smear);
+
+           y = (y + true_smear - y + true_smear)*gen.Rndm() + (y-true_smear);
 
            modelHistogram->Fill(x,y);
 

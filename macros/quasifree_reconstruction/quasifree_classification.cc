@@ -175,6 +175,7 @@ int main (int argc, char** argv) {
   SKModel *model = new SKModel("Classification");
 
   model->SetOptimizer("Adam");
+  model->SetSummaryFile("model_architecture",argv[12]);
 
   model->AddLayer(layer_1);
   model->AddWeights(weights_12);
