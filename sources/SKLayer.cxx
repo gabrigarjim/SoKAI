@@ -61,31 +61,6 @@ void SKLayer::Clear(){
 }
 
 
-double SKLayer::TanhDer(double arg){
-
-  return (1-tanh(arg)*tanh(arg));
-
-}
-
-double SKLayer::LinearDer(double arg){
-
-  return 1.0;
-
-}
-
-double SKLayer::ReLUDer(double arg){
-
- return (arg > 0.0) ?  arg : 0.0;
-
-}
-
-double SKLayer::LeakyReLUDer(double arg){
-
- return (arg > 0.0) ?  arg : 0.01;
-
-}
-
-
 
 void SKLayer::RearrangeSoftmax() {
 
@@ -112,19 +87,19 @@ double SKLayer::LayerDer(int neuron) {
 
 
   if(sActivationFunction == "Tanh")
-   return TanhDer(vNeurons.at(neuron).fInput);
+   return (1-pow(tanh(vNeurons.at(neuron).fInput),2));
 
 
   if(sActivationFunction == "Linear")
-   return LinearDer(vNeurons.at(neuron).fInput);
+   return 1.0;
 
 
   if(sActivationFunction == "ReLU")
-   return ReLUDer(vNeurons.at(neuron).fInput);
+   return  (vNeurons.at(neuron).fInput > 0.0) ?  1.0 : 0.00;
 
 
   if(sActivationFunction == "LeakyReLU")
-   return LeakyReLUDer(vNeurons.at(neuron).fInput);
+   return  (vNeurons.at(neuron).fInput > 0.0) ?  1.0 : 0.01;
 
   else
    return 0.0;

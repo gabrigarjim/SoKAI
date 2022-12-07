@@ -130,7 +130,7 @@ void SKModel::Init(){
 
   nDataSize = mInputSample->size();
   nDataNRows = nDataSize;
-  nDataNColumns = mInputSample->at(0).size();
+  // nDataNColumns = mInputSample->at(0).size();
 
   for(int i = 0 ; i < vModelWeights.size() ; i++)
    nTotalWeights = nTotalWeights + (vModelWeights.at(i)->fRows)*(vModelWeights.at(i)->fColumns);
@@ -359,7 +359,6 @@ void SKModel::Train(int n){
   vInput = &mInputSample->at(n);
   vLabel = &mInputLabels->at(n);
 
-
   propagator->Feed(vInput,vModelLayers->at(0));
 
   for(int i = 1 ; i < nLayers ; i++)
@@ -394,6 +393,8 @@ void SKModel::Backpropagate(){
 
   int counter=0;
   int batchCounter;
+
+
 
   if(sLossFunction=="Quadratic"){
 
@@ -440,6 +441,8 @@ void SKModel::Backpropagate(){
    }
 
 
+
+
    for (int w = vModelWeights.size()-1 ; w >= 0 ; w--) {
     for (int i = 0 ; i < vModelWeights.at(w)->fRows ; i++) {
       for (int j = 0 ; j < vModelWeights.at(w)->fColumns ; j++) {
@@ -462,6 +465,8 @@ void SKModel::Backpropagate(){
              pathGradient=pathGradient*vModelLayers->at(r + w)->LayerDer(path_matrix[path][r]);
 
          }
+
+
 
 
            for(int r = 1 ; r < path_matrix[path].size()-1 ; r++){

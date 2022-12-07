@@ -23,7 +23,7 @@ int main (int argc, char** argv) {
   LOG(INFO)<<"# Welcome to SoKAI (Some Kind of Artificial Intelligence) !! #";
   LOG(INFO)<<"#============================================================#";
 
-  int seed            = 202;
+  int seed            = 2022;
   int epochs          = stoi(argv[1]);
   int nSamples        = stoi(argv[2]);
   int nTrainingSize   = (1.0/10.0)*nSamples;

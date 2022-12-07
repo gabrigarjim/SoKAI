@@ -32,12 +32,6 @@ class SKLayer {
   void Clear();
 
   /* ----- Derivatives ------- */
-  //double SigmoidDer(double arg);
-  double ReLUDer(double arg);
-  double LinearDer(double arg);
-  double TanhDer(double arg);
-  double LeakyReLUDer(double arg);
-
   double LayerDer(int neuron);
 
   inline double SigmoidDer(double arg) { return (1.0/(1.0 + exp(-1.0*arg)))*(1.0-1.0/(1.0 + exp(-1.0*arg)));}
