@@ -144,13 +144,18 @@ int main (int argc, char** argv) {
   SKWeights *secondMoment_23 = new SKWeights(stoi(argv[6]),stoi(argv[8]));
 
   SKLayer   *layer_3 = new SKLayer(stoi(argv[8]),argv[9]);
-  SKWeights *weights_34 = new SKWeights(stoi(argv[8]),4);
-  SKWeights *gradients_34 = new SKWeights(stoi(argv[8]),4);
-  SKWeights *firstMoment_34 = new SKWeights(stoi(argv[8]),4);
-  SKWeights *secondMoment_34 = new SKWeights(stoi(argv[8]),4);
+  SKWeights *weights_34 = new SKWeights(stoi(argv[8]),stoi(argv[10]));
+  SKWeights *gradients_34 = new SKWeights(stoi(argv[8]),stoi(argv[10]));
+  SKWeights *firstMoment_34 = new SKWeights(stoi(argv[8]),stoi(argv[10]));
+  SKWeights *secondMoment_34 = new SKWeights(stoi(argv[8]),stoi(argv[10]));
 
+  SKLayer   *layer_4 = new SKLayer(stoi(argv[10]),argv[11]);
+  SKWeights *weights_45 = new SKWeights(stoi(argv[10]),4);
+  SKWeights *gradients_45 = new SKWeights(stoi(argv[10]),4);
+  SKWeights *firstMoment_45 = new SKWeights(stoi(argv[10]),4);
+  SKWeights *secondMoment_45 = new SKWeights(stoi(argv[10]),4);
 
-  SKLayer   *layer_4 = new SKLayer(4,argv[10]);
+  SKLayer   *layer_5 = new SKLayer(4,argv[12]);
 
 
 
@@ -171,11 +176,17 @@ int main (int argc, char** argv) {
   firstMoment_34->InitMoment();
   secondMoment_34->InitMoment();
 
+  weights_45->Init(seed);
+  gradients_45->InitGradients();
+  firstMoment_45->InitMoment();
+  secondMoment_45->InitMoment();
+
+
 
   SKModel *model = new SKModel("Classification");
 
   model->SetOptimizer("Adam");
-  model->SetSummaryFile("model_architecture",argv[12]);
+  model->SetSummaryFile("model_architecture",argv[14]);
 
   model->AddLayer(layer_1);
   model->AddWeights(weights_12);
@@ -197,15 +208,22 @@ int main (int argc, char** argv) {
   model->AddFirstMoments(firstMoment_34);
   model->AddSecondMoments(secondMoment_34);
 
-
   model->AddLayer(layer_4);
+  model->AddWeights(weights_45);
+  model->AddGradients(gradients_45);
+  model->AddFirstMoments(firstMoment_45);
+  model->AddSecondMoments(secondMoment_45);
+
+
+
+  model->AddLayer(layer_5);
 
   model->SetInputSample(&data_sample);
   model->SetInputLabels(&input_labels);
 
   model->Init();
   model->SetLearningRate(fLearningRate);
-  model->SetLossFunction(argv[11]);
+  model->SetLossFunction(argv[13]);
 
   /* ---- Number of processed inputs before updating gradients ---- */
   model->SetBatchSize(nMiniBatchSize);
@@ -216,7 +234,8 @@ int main (int argc, char** argv) {
   LOG(INFO)<<"L1 : "<<argv[5]<<" "<<"8";
   LOG(INFO)<<"H1 : "<<argv[7]<<" "<<argv[6];
   LOG(INFO)<<"H2 : "<<argv[9]<<" "<<argv[8];
-  LOG(INFO)<<"L4 : "<<argv[10]<<" "<<"1";
+  LOG(INFO)<<"H3 : "<<argv[11]<<" "<<argv[10];
+  LOG(INFO)<<"L5 : "<<argv[12]<<" "<<"4";
 
   /* ---------- Pass Data Through Model ----------*/
 

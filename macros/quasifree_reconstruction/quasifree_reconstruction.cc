@@ -123,13 +123,13 @@ int main (int argc, char** argv) {
 
 
   SKLayer   *layer_2_class = new SKLayer(10,"LeakyReLU");
-  SKWeights *weights_23_class = new SKWeights(10,10);
-  SKWeights *gradients_23_class = new SKWeights(10,10);
+  SKWeights *weights_23_class = new SKWeights(10,20);
+  SKWeights *gradients_23_class = new SKWeights(10,20);
 
 
-  SKLayer   *layer_3_class = new SKLayer(10,"LeakyReLU");
-  SKWeights *weights_34_class = new SKWeights(10,4);
-  SKWeights *gradients_34_class = new SKWeights(10,4);
+  SKLayer   *layer_3_class = new SKLayer(20,"LeakyReLU");
+  SKWeights *weights_34_class = new SKWeights(20,4);
+  SKWeights *gradients_34_class = new SKWeights(20,4);
 
   SKLayer   *layer_4_class = new SKLayer(4,"LeakyReLU");
 
@@ -165,12 +165,12 @@ int main (int argc, char** argv) {
 
   model_class->SetInputSample(&data_sample);
 
-  model_class->SetSummaryFile("test","13");
+  model_class->SetSummaryFile("test","30");
 
   model_class->Init();
 
 
-  model_class->LoadWeights("model_weights_13.txt");
+  model_class->LoadWeights("/home/gabri/Analysis/s455/simulation/punch_through/analysis/nn_results/model_weights_classification_28.txt");
 
 
   LOG(INFO)<<"Number of Samples : "<<nEvents<<endl;
@@ -209,16 +209,50 @@ int main (int argc, char** argv) {
     hCorr_classified_kinematics[2*highest_index_training+1]->Fill(TMath::RadToDeg()*fPolarMax*data_sample.at(data_sample.size()-1).at(5),fClusterEnergyMax*data_sample.at(data_sample.size()-1).at(1));
 
 
-    if(highest_index_training != 0){
+    if(highest_index_training == 1){
 
      data_instance.push_back(highest_index_training/4.0);
      data_sample_reconstruction.push_back(data_instance);
 
-     label_instance.push_back(rPrimaryEnergy[0]/fPrimEnergyMax);
      label_instance.push_back(rPrimaryEnergy[1]/fPrimEnergyMax);
 
      input_labels.push_back(label_instance);
-   }
+
+
+    }
+
+    if(highest_index_training == 2){
+
+     data_instance.push_back(highest_index_training/4.0);
+     data_sample_reconstruction.push_back(data_instance);
+
+
+     label_instance.push_back(rPrimaryEnergy[0]/fPrimEnergyMax);
+
+     input_labels.push_back(label_instance);
+
+    }
+
+    if(highest_index_training == 3){
+
+     data_instance.push_back(highest_index_training/4.0);
+
+     data_sample_reconstruction.push_back(data_instance);
+
+     label_instance.push_back(rPrimaryEnergy[0]/fPrimEnergyMax);
+     input_labels.push_back(label_instance);
+
+
+     label_instance.clear();
+     data_sample_reconstruction.push_back(data_instance);
+
+     label_instance.push_back(rPrimaryEnergy[1]/fPrimEnergyMax);
+     input_labels.push_back(label_instance);
+
+
+    }
+
+
 
     data_instance.clear();
     model_class->Clear();
@@ -230,8 +264,8 @@ int main (int argc, char** argv) {
 
 
 
-  int nTrainingSize   = (6.0/10.0)*data_sample_reconstruction.size();
-  int nTestSize       = (4.0/10.0)*data_sample_reconstruction.size();
+  int nTrainingSize   = (1.0/10.0)*data_sample_reconstruction.size();
+  int nTestSize       = (9.0/10.0)*data_sample_reconstruction.size();
 
 
 
@@ -252,12 +286,12 @@ int main (int argc, char** argv) {
 
 
   SKLayer   *layer_3 = new SKLayer(stoi(argv[8]),argv[9]);
-  SKWeights *weights_34 = new SKWeights(stoi(argv[8]),2);
-  SKWeights *gradients_34 = new SKWeights(stoi(argv[8]),2);
-  SKWeights *firstMoment_34 = new SKWeights(stoi(argv[8]),2);
-  SKWeights *secondMoment_34 = new SKWeights(stoi(argv[8]),2);
+  SKWeights *weights_34 = new SKWeights(stoi(argv[8]),1);
+  SKWeights *gradients_34 = new SKWeights(stoi(argv[8]),1);
+  SKWeights *firstMoment_34 = new SKWeights(stoi(argv[8]),1);
+  SKWeights *secondMoment_34 = new SKWeights(stoi(argv[8]),1);
 
-  SKLayer   *layer_4 = new SKLayer(2,argv[10]);
+  SKLayer   *layer_4 = new SKLayer(1,argv[10]);
 
   weights_12->Init(seed);
   gradients_12->InitGradients();
@@ -321,7 +355,7 @@ int main (int argc, char** argv) {
   LOG(INFO)<<"L1 : "<<argv[5]<<" "<<"9";
   LOG(INFO)<<"H1 : "<<argv[7]<<" "<<argv[6];
   LOG(INFO)<<"H2 : "<<argv[9]<<" "<<argv[8];
-  LOG(INFO)<<"L4 : "<<argv[10]<<" "<<"2";
+  LOG(INFO)<<"L4 : "<<argv[10]<<" "<<"1";
 
   /* ---------- Pass Data Through Model ----------*/
 
@@ -363,9 +397,6 @@ LOG(INFO)<<"Total training time : "<<((float) real_end - real_start)/CLOCKS_PER_
 TH2F *hCorrReconstruction_energy = new TH2F("hCorrReconstruction_energy","Reconstructed Energy Difference Vs Energy",400,-400,400,400,0,600);
 TH2F *hCorrReconstruction_results = new TH2F("hCorrReconstruction_results","Reconstructed Energy Vs Primary Energy",400,-600,800,400,0,600);
 
-TH2F *hCorrKinematics_califa = new TH2F("hCorrKinematics_califa","Kinematics",400,0,100,400,0,700);
-TH2F *hCorrKinematics_reconstruction = new TH2F("hCorrKinematics_reconstruction","Kinematics",400,0,100,400,0,700);
-
   for (int j = 0 ; j < nTestSize ; j++){
 
 
@@ -378,16 +409,8 @@ TH2F *hCorrKinematics_reconstruction = new TH2F("hCorrKinematics_reconstruction"
     output_vec = model->Propagate(sample_number);
 
     hCorrReconstruction_results->Fill(fPrimEnergyMax*(output_vec.at(0)),fPrimEnergyMax*input_labels.at(sample_number).at(0));
-    hCorrReconstruction_results->Fill(fPrimEnergyMax*(output_vec.at(1)),fPrimEnergyMax*input_labels.at(sample_number).at(1));
 
     hCorrReconstruction_energy->Fill(fPrimEnergyMax*(output_vec.at(0))-fPrimEnergyMax*input_labels.at(sample_number).at(0),fPrimEnergyMax*input_labels.at(sample_number).at(0));
-    hCorrReconstruction_energy->Fill(fPrimEnergyMax*(output_vec.at(1))-fPrimEnergyMax*input_labels.at(sample_number).at(1),fPrimEnergyMax*input_labels.at(sample_number).at(1));
-
-    hCorrKinematics_califa->Fill(TMath::RadToDeg()*fPolarMax*data_sample_reconstruction.at(sample_number).at(4),fClusterEnergyMax*data_sample_reconstruction.at(sample_number).at(0));
-    hCorrKinematics_califa->Fill(TMath::RadToDeg()*fPolarMax*data_sample_reconstruction.at(sample_number).at(5),fClusterEnergyMax*data_sample_reconstruction.at(sample_number).at(1));
-
-    hCorrKinematics_reconstruction->Fill(TMath::RadToDeg()*fPolarMax*data_sample_reconstruction.at(sample_number).at(4),fPrimEnergyMax*(output_vec.at(0)));
-    hCorrKinematics_reconstruction->Fill(TMath::RadToDeg()*fPolarMax*data_sample_reconstruction.at(sample_number).at(5),fPrimEnergyMax*(output_vec.at(1)));
 
     model->Clear();
 
@@ -422,7 +445,7 @@ TGraph *loss_graph = new TGraph(epoch_vec.size(),&epoch_vec[0],&loss_vec[0]);
 TH2F* model_histo;
 model_histo = (TH2F*)model->ShowMe();
 
-model->SaveWeights("weights_reconstruction.txt");
+model->SaveWeights("weights_reconstruction_30.txt");
 
 TCanvas *summary_canvas = new TCanvas("summary_canvas","Model");
 summary_canvas->Divide(2,1);
@@ -434,28 +457,13 @@ summary_canvas->cd(1);
 summary_canvas->cd(2);
  loss_graph->Draw("AC");
 
-TCanvas *reconstruction_canvas = new TCanvas("reconstruction_canvas","Reconstruction");
-
-reconstruction_canvas->Divide(2,1);
-
-reconstruction_canvas->cd(1);
-hCorrKinematics_califa->Draw("COLZ");
-hCorrKinematics_califa->GetXaxis()->SetTitle("Polar Angle (degrees)");
-hCorrKinematics_califa->GetYaxis()->SetTitle("Energy (MeV)");
-
-
-
-reconstruction_canvas->cd(2);
-hCorrKinematics_reconstruction->Draw("COLZ");
-hCorrKinematics_reconstruction->GetXaxis()->SetTitle("Polar Angle (degrees)");
-hCorrKinematics_reconstruction->GetYaxis()->SetTitle("Energy (MeV)");
 
 TString filename = "training_results_regression_";
  filename = filename + argv[12] + ".root";
 
 TFile resultsFile(filename,"RECREATE");
 
- reconstruction_canvas->Write();
+
  model_canvas->Write();
  summary_canvas->Write();
 

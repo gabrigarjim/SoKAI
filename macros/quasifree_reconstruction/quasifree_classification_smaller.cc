@@ -12,9 +12,9 @@ int main (int argc, char** argv) {
 
 
   FLAGS_alsologtostderr = 1;
-  google::InitGoogleLogging("QuasifreeClassification");
+  google::InitGoogleLogging("QuasifreeClassificationSmall");
 
-  TApplication* theApp = new TApplication("reconstruction", 0, 0);
+  TApplication* theApp = new TApplication("classification", 0, 0);
 
 
   clock_t start, end,real_start,real_end;
@@ -130,28 +130,20 @@ int main (int argc, char** argv) {
 
   /*------- The Model Itself -------*/
 
-  SKLayer   *layer_1 = new SKLayer(8,argv[5]);
-  SKWeights *weights_12 = new SKWeights(8,stoi(argv[6]));
-  SKWeights *gradients_12 = new SKWeights(8,stoi(argv[6]));
-  SKWeights *firstMoment_12 = new SKWeights(8,stoi(argv[6]));
-  SKWeights *secondMoment_12 = new SKWeights(8,stoi(argv[6]));
+  SKLayer   *layer_1 = new SKLayer(8,argv[6]);
+  SKWeights *weights_12 = new SKWeights(8,stoi(argv[5]));
+  SKWeights *gradients_12 = new SKWeights(8,stoi(argv[5]));
+  SKWeights *firstMoment_12 = new SKWeights(8,stoi(argv[5]));
+  SKWeights *secondMoment_12 = new SKWeights(8,stoi(argv[5]));
 
 
-  SKLayer   *layer_2 = new SKLayer(stoi(argv[6]),argv[7]);
-  SKWeights *weights_23 = new SKWeights(stoi(argv[6]),stoi(argv[8]));
-  SKWeights *gradients_23 = new SKWeights(stoi(argv[6]),stoi(argv[8]));
-  SKWeights *firstMoment_23 = new SKWeights(stoi(argv[6]),stoi(argv[8]));
-  SKWeights *secondMoment_23 = new SKWeights(stoi(argv[6]),stoi(argv[8]));
+  SKLayer   *layer_2 = new SKLayer(stoi(argv[5]),argv[7]);
+  SKWeights *weights_23 = new SKWeights(stoi(argv[5]),4);
+  SKWeights *gradients_23 = new SKWeights(stoi(argv[5]),4);
+  SKWeights *firstMoment_23 = new SKWeights(stoi(argv[5]),4);
+  SKWeights *secondMoment_23 = new SKWeights(stoi(argv[5]),4);
 
-  SKLayer   *layer_3 = new SKLayer(stoi(argv[8]),argv[9]);
-  SKWeights *weights_34 = new SKWeights(stoi(argv[8]),4);
-  SKWeights *gradients_34 = new SKWeights(stoi(argv[8]),4);
-  SKWeights *firstMoment_34 = new SKWeights(stoi(argv[8]),4);
-  SKWeights *secondMoment_34 = new SKWeights(stoi(argv[8]),4);
-
-
-  SKLayer   *layer_4 = new SKLayer(4,argv[10]);
-
+  SKLayer   *layer_3 = new SKLayer(4,argv[8]);
 
 
   weights_12->Init(seed);
@@ -166,16 +158,10 @@ int main (int argc, char** argv) {
   secondMoment_23->InitMoment();
 
 
-  weights_34->Init(seed);
-  gradients_34->InitGradients();
-  firstMoment_34->InitMoment();
-  secondMoment_34->InitMoment();
-
-
   SKModel *model = new SKModel("Classification");
 
   model->SetOptimizer("Adam");
-  model->SetSummaryFile("model_architecture",argv[12]);
+  model->SetSummaryFile("model_architecture",argv[10]);
 
   model->AddLayer(layer_1);
   model->AddWeights(weights_12);
@@ -192,31 +178,23 @@ int main (int argc, char** argv) {
 
 
   model->AddLayer(layer_3);
-  model->AddWeights(weights_34);
-  model->AddGradients(gradients_34);
-  model->AddFirstMoments(firstMoment_34);
-  model->AddSecondMoments(secondMoment_34);
-
-
-  model->AddLayer(layer_4);
 
   model->SetInputSample(&data_sample);
   model->SetInputLabels(&input_labels);
 
   model->Init();
   model->SetLearningRate(fLearningRate);
-  model->SetLossFunction(argv[11]);
+  model->SetLossFunction(argv[9]);
 
   /* ---- Number of processed inputs before updating gradients ---- */
   model->SetBatchSize(nMiniBatchSize);
 
-  LOG(INFO)<<"Model Training Hyper Parameters. Epochs : "<<argv[1]<<" Samples : "<<argv[2]<<" Learning Rate : "<<stoi(argv[3])/1000.0<<" Metric : "<<argv[11];
+  LOG(INFO)<<"Model Training Hyper Parameters. Epochs : "<<argv[1]<<" Samples : "<<argv[2]<<" Learning Rate : "<<stoi(argv[3])/1000.0<<" Metric : "<<argv[9]<<" Batch Size: "<<argv[4];
   LOG(INFO)<<"";
   LOG(INFO)<<"/* ---------- Model Structure -----------";
-  LOG(INFO)<<"L1 : "<<argv[5]<<" "<<"8";
-  LOG(INFO)<<"H1 : "<<argv[7]<<" "<<argv[6];
-  LOG(INFO)<<"H2 : "<<argv[9]<<" "<<argv[8];
-  LOG(INFO)<<"L4 : "<<argv[10]<<" "<<"1";
+  LOG(INFO)<<"L1 : "<<argv[6]<<" "<<"8";
+  LOG(INFO)<<"H1 : "<<argv[7]<<" "<<argv[5];
+  LOG(INFO)<<"L4 : "<<argv[8]<<" "<<"4";
 
   /* ---------- Pass Data Through Model ----------*/
 
@@ -353,8 +331,8 @@ model_histo = (TH2F*)model->ShowMe();
 
 /* ------ Writing weights ------ */
 
-string weight_filename = "model_weights_";
- weight_filename = weight_filename + argv[12] + ".txt";
+string weight_filename = "model_weights_classification_";
+ weight_filename = weight_filename + argv[10] + ".txt";
 
 model->SaveWeights(weight_filename);
 
@@ -387,7 +365,7 @@ hStopped_kinematics->Draw("COLZ");
 
 
 TString name = "training_results_classification_";
- name = name + argv[12] + ".root";
+ name = name + argv[10] + ".root";
 
 TFile resultsFile(name,"RECREATE");
 
@@ -395,9 +373,9 @@ TFile resultsFile(name,"RECREATE");
  kinematics_canvas->Write();
  results_canvas->Write();
 
-theApp->Run();
+ theApp->Run();
 
-return 0;
+ return 0;
 
 
 
