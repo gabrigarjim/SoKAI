@@ -7,7 +7,6 @@
 #include "exc_energy.h"
 #include "SKColorScheme.h"
 
-
 int main (int argc, char** argv) {
 
 
@@ -61,7 +60,7 @@ int main (int argc, char** argv) {
   SKColorScheme();
 
    /* ------- Reading Root Data -------- */
-  TString fileList = "/home/gabri/Analysis/s455/simulation/punch_through/writers/U238_Quasifree_560AMeV_NN_debug.root";
+  TString fileList = "/home/gabri/Analysis/s455/simulation/punch_through/writers/U238_Quasifree_560AMeV_NN_weighted.root";
 
   TFile *eventFile;
   TTree* eventTree;
@@ -90,16 +89,21 @@ int main (int argc, char** argv) {
   punchedBranch->SetAddress(rPunched);
 
   int nEvents = eventTree->GetEntries();
-
-
+  int counter = 0;
   LOG(INFO)<<"Number of Samples : "<<nEvents<<endl;
+  Int_t fCounter_0 = 0 , fCounter_1 = 0 , fCounter_2 = 0 , fCounter_3 = 0;
 
-  for (Int_t j = 0; j<nSamples; j++) {
 
+  while(counter < nSamples) {
 
-    eventTree->GetEvent(j);
-    if(!(j%100))
-     LOG(INFO)<<"Reading event "<<j<<" out of "<<nEvents<<" ("<<100.0*Float_t(j)/Float_t(nSamples)<<" % ) "<<endl;
+    int sample_number = nEvents*gen.Rndm();
+
+    eventTree->GetEvent(sample_number);
+
+    counter++;
+
+    if(!(counter%1000))
+     LOG(INFO)<<"Reading event "<<counter<<" out of "<<nSamples<<" ("<<100.0*Float_t(counter)/Float_t(nSamples)<<" % ) "<<endl;
 
     data_instance.push_back(rClusterEnergy[0]/fClusterEnergyMax);
     data_instance.push_back(rClusterEnergy[1]/fClusterEnergyMax);
@@ -119,6 +123,19 @@ int main (int argc, char** argv) {
     label_instance.push_back(rPunched[2]);
     label_instance.push_back(rPunched[3]);
 
+    if(rPunched[0] == 1)
+     fCounter_0++;
+
+    if(rPunched[1] == 1)
+     fCounter_1++;
+
+    if(rPunched[2] == 1)
+     fCounter_2++;
+
+    if(rPunched[3] == 1)
+     fCounter_3++;
+
+
 
     data_sample.push_back(data_instance);
     input_labels.push_back(label_instance);
@@ -127,6 +144,8 @@ int main (int argc, char** argv) {
     label_instance.clear();
 
    }
+
+  LOG(INFO)<<"Training Cases. Class 0 : "<<fCounter_0<<" Class 1 : "<<fCounter_1<<" Class 2 : "<<fCounter_2<<" Class 3 : "<<fCounter_3;
 
   /*------- The Model Itself -------*/
 
@@ -241,6 +260,11 @@ TH2F *hStopped_kinematics = new TH2F("hStopped_kinematics","Stopped Kinematics",
 Float_t mConfussionMatrix[4][4]={0.0};
 Float_t vTotalCases[4] = {0.0};
 
+ fCounter_0 = 0;
+ fCounter_1 = 0;
+ fCounter_2 = 0;
+ fCounter_3 = 0;
+
 
   for (int j = 0 ; j < nTestSize ; j++){
 
@@ -255,6 +279,18 @@ Float_t vTotalCases[4] = {0.0};
 
     int highest_index_training = distance(output_vec.begin(),max_element(output_vec.begin(), output_vec.end()));
     int highest_index_label = distance(input_labels.at(sample_number).begin(),max_element(input_labels.at(sample_number).begin(), input_labels.at(sample_number).end()));
+
+    if(highest_index_label == 0)
+    fCounter_0++;
+
+    if(highest_index_label == 1)
+    fCounter_1++;
+
+    if(highest_index_label == 2)
+    fCounter_2++;
+
+    if(highest_index_label == 3)
+    fCounter_3++;
 
     mConfussionMatrix[highest_index_training][highest_index_label] += 1;
 
@@ -299,6 +335,7 @@ Float_t vTotalCases[4] = {0.0};
 
 }
 
+LOG(INFO)<<"Test Cases. Class 0 : "<<fCounter_0<<" Class 1 : "<<fCounter_1<<" Class 2 : "<<fCounter_2<<" Class 3 : "<<fCounter_3;
 
 LOG(INFO)<<"Accuracy: "<<100*(mConfussionMatrix[0][0] + mConfussionMatrix[1][1] + mConfussionMatrix[2][2] + mConfussionMatrix[3][3])/nTestSize<<" %";
 
