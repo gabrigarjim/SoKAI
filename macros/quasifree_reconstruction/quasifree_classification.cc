@@ -61,7 +61,7 @@ int main (int argc, char** argv) {
   SKColorScheme();
 
    /* ------- Reading Root Data -------- */
-  TString fileList = "/home/gabri/Analysis/s455/simulation/punch_through/writers/U238_Quasifree_560AMeV_NN_debug.root";
+  TString fileList = "../SoKAI/macros/quasifree_reconstruction/files/U238_Quasifree_560AMeV_NN_test_chamber.root";
 
   TFile *eventFile;
   TTree* eventTree;
@@ -130,24 +130,24 @@ int main (int argc, char** argv) {
 
   /*------- The Model Itself -------*/
 
-  SKLayer   *layer_1 = new SKLayer(8,argv[5]);
-  SKWeights *weights_12 = new SKWeights(8,stoi(argv[6]));
-  SKWeights *gradients_12 = new SKWeights(8,stoi(argv[6]));
-  SKWeights *firstMoment_12 = new SKWeights(8,stoi(argv[6]));
-  SKWeights *secondMoment_12 = new SKWeights(8,stoi(argv[6]));
+  SKLayer   *layer_1 = new SKLayer(8,argv[7]);
+  SKWeights *weights_12 = new SKWeights(8,stoi(argv[5]));
+  SKWeights *gradients_12 = new SKWeights(8,stoi(argv[5]));
+  SKWeights *firstMoment_12 = new SKWeights(8,stoi(argv[5]));
+  SKWeights *secondMoment_12 = new SKWeights(8,stoi(argv[5]));
 
 
-  SKLayer   *layer_2 = new SKLayer(stoi(argv[6]),argv[7]);
-  SKWeights *weights_23 = new SKWeights(stoi(argv[6]),stoi(argv[8]));
-  SKWeights *gradients_23 = new SKWeights(stoi(argv[6]),stoi(argv[8]));
-  SKWeights *firstMoment_23 = new SKWeights(stoi(argv[6]),stoi(argv[8]));
-  SKWeights *secondMoment_23 = new SKWeights(stoi(argv[6]),stoi(argv[8]));
+  SKLayer   *layer_2 = new SKLayer(stoi(argv[5]),argv[8]);
+  SKWeights *weights_23 = new SKWeights(stoi(argv[5]),stoi(argv[6]));
+  SKWeights *gradients_23 = new SKWeights(stoi(argv[5]),stoi(argv[6]));
+  SKWeights *firstMoment_23 = new SKWeights(stoi(argv[5]),stoi(argv[6]));
+  SKWeights *secondMoment_23 = new SKWeights(stoi(argv[5]),stoi(argv[6]));
 
-  SKLayer   *layer_3 = new SKLayer(stoi(argv[8]),argv[9]);
-  SKWeights *weights_34 = new SKWeights(stoi(argv[8]),4);
-  SKWeights *gradients_34 = new SKWeights(stoi(argv[8]),4);
-  SKWeights *firstMoment_34 = new SKWeights(stoi(argv[8]),4);
-  SKWeights *secondMoment_34 = new SKWeights(stoi(argv[8]),4);
+  SKLayer   *layer_3 = new SKLayer(stoi(argv[6]),argv[9]);
+  SKWeights *weights_34 = new SKWeights(stoi(argv[6]),4);
+  SKWeights *gradients_34 = new SKWeights(stoi(argv[6]),4);
+  SKWeights *firstMoment_34 = new SKWeights(stoi(argv[6]),4);
+  SKWeights *secondMoment_34 = new SKWeights(stoi(argv[6]),4);
 
 
   SKLayer   *layer_4 = new SKLayer(4,argv[10]);
@@ -213,10 +213,10 @@ int main (int argc, char** argv) {
   LOG(INFO)<<"Model Training Hyper Parameters. Epochs : "<<argv[1]<<" Samples : "<<argv[2]<<" Learning Rate : "<<stoi(argv[3])/1000.0<<" Metric : "<<argv[11];
   LOG(INFO)<<"";
   LOG(INFO)<<"/* ---------- Model Structure -----------";
-  LOG(INFO)<<"L1 : "<<argv[5]<<" "<<"8";
-  LOG(INFO)<<"H1 : "<<argv[7]<<" "<<argv[6];
-  LOG(INFO)<<"H2 : "<<argv[9]<<" "<<argv[8];
-  LOG(INFO)<<"L4 : "<<argv[10]<<" "<<"1";
+  LOG(INFO)<<"L1 : "<<argv[7]<<" "<<"8";
+  LOG(INFO)<<"H1 : "<<argv[8]<<" "<<argv[5];
+  LOG(INFO)<<"H2 : "<<argv[9]<<" "<<argv[6];
+  LOG(INFO)<<"L4 : "<<argv[10]<<" "<<"4";
 
   /* ---------- Pass Data Through Model ----------*/
 
@@ -280,6 +280,27 @@ Float_t vTotalCases[4] = {0.0};
 
     mConfussionMatrix[highest_index_training][highest_index_label] += 1;
 
+    if(highest_index_label == highest_index_training)
+     fGoodClassification += 2.0;
+
+
+    if(highest_index_label != highest_index_training){
+
+    if((highest_index_label == 0 && highest_index_training == 1) || (highest_index_label == 0 && highest_index_training == 2))
+     fGoodClassification++;
+
+    if((highest_index_label == 3 && highest_index_training == 1) || (highest_index_label == 3 && highest_index_training == 2))
+     fGoodClassification++;
+
+    if((highest_index_label == 1 && highest_index_training == 0) || (highest_index_label == 1 && highest_index_training == 3))
+     fGoodClassification++;
+
+    if((highest_index_label == 2 && highest_index_training == 0) || (highest_index_label == 2 && highest_index_training == 3))
+     fGoodClassification++;
+
+    }
+
+
     hTraining_results->Fill(highest_index_training,highest_index_label);
 
     vTotalCases[highest_index_label] += 1.0;
@@ -323,6 +344,7 @@ Float_t vTotalCases[4] = {0.0};
 
 
 LOG(INFO)<<"Accuracy: "<<100*(mConfussionMatrix[0][0] + mConfussionMatrix[1][1] + mConfussionMatrix[2][2] + mConfussionMatrix[3][3])/nTestSize<<" %";
+LOG(INFO)<<"Accuracy (pair): "<<100*(fGoodClassification)/(2.0*nTestSize)<<" %";
 
 LOG(INFO)<<"Confussion Matrix : Rows trained, Columns labels ";
  for(int i = 0 ; i < 4 ; i ++){
@@ -353,7 +375,7 @@ model_histo = (TH2F*)model->ShowMe();
 
 /* ------ Writing weights ------ */
 
-string weight_filename = "model_weights_";
+string weight_filename = "model_weights_classification_";
  weight_filename = weight_filename + argv[12] + ".txt";
 
 model->SaveWeights(weight_filename);

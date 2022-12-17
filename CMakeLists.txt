@@ -32,6 +32,7 @@ add_executable(QuasifreeClassificationBigger macros/quasifree_reconstruction/qua
 add_executable(QuasifreeClassificationSmaller macros/quasifree_reconstruction/quasifree_classification_smaller.cc ${sources} ${headers} )
 add_executable(QuasifreeExcitationEnergy macros/quasifree_reconstruction/quasifree_exc_energy.cc ${sources} ${headers} )
 add_executable(DeltaFission macros/delta_fission/function_regression_eofx.cc ${sources} ${headers} )
+add_executable(QuasifreeClassificationCheck macros/quasifree_reconstruction/quasifree_classification_check.cc ${sources} ${headers} )
 
 
 
@@ -40,6 +41,7 @@ target_link_libraries(FunctionRegression ${ROOT_LIBRARIES} glog::glog)
 target_link_libraries(ProtonReconstruction ${ROOT_LIBRARIES} glog::glog)
 target_link_libraries(QuasifreeReconstruction ${ROOT_LIBRARIES} glog::glog)
 target_link_libraries(QuasifreeClassification ${ROOT_LIBRARIES} glog::glog)
+target_link_libraries(QuasifreeClassificationCheck ${ROOT_LIBRARIES} glog::glog)
 target_link_libraries(QuasifreeClassificationBigger ${ROOT_LIBRARIES} glog::glog)
 target_link_libraries(QuasifreeClassificationSmaller ${ROOT_LIBRARIES} glog::glog)
 target_link_libraries(QuasifreeExcitationEnergy ${ROOT_LIBRARIES} glog::glog)

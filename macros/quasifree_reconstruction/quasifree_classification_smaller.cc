@@ -60,7 +60,7 @@ int main (int argc, char** argv) {
   SKColorScheme();
 
    /* ------- Reading Root Data -------- */
-  TString fileList = "/home/gabri/Analysis/s455/simulation/punch_through/writers/U238_Quasifree_560AMeV_NN_weighted.root";
+  TString fileList = "../SoKAI/macros/quasifree_reconstruction/files/U238_Quasifree_560AMeV_NN_test_chamber.root";
 
   TFile *eventFile;
   TTree* eventTree;
@@ -90,7 +90,9 @@ int main (int argc, char** argv) {
 
   int nEvents = eventTree->GetEntries();
   int counter = 0;
-  LOG(INFO)<<"Number of Samples : "<<nEvents<<endl;
+
+  LOG(INFO)<<"Number of Samples : "<<nSamples<<endl;
+
   Int_t fCounter_0 = 0 , fCounter_1 = 0 , fCounter_2 = 0 , fCounter_3 = 0;
 
 
@@ -280,6 +282,28 @@ Float_t vTotalCases[4] = {0.0};
     int highest_index_training = distance(output_vec.begin(),max_element(output_vec.begin(), output_vec.end()));
     int highest_index_label = distance(input_labels.at(sample_number).begin(),max_element(input_labels.at(sample_number).begin(), input_labels.at(sample_number).end()));
 
+    if(highest_index_label == highest_index_training)
+     fGoodClassification += 2.0;
+
+
+    if(highest_index_label != highest_index_training){
+
+    if((highest_index_label == 0 && highest_index_training == 1) || (highest_index_label == 0 && highest_index_training == 2))
+     fGoodClassification++;
+
+    if((highest_index_label == 3 && highest_index_training == 1) || (highest_index_label == 3 && highest_index_training == 2))
+     fGoodClassification++;
+
+    if((highest_index_label == 1 && highest_index_training == 0) || (highest_index_label == 1 && highest_index_training == 3))
+     fGoodClassification++;
+
+    if((highest_index_label == 2 && highest_index_training == 0) || (highest_index_label == 2 && highest_index_training == 3))
+     fGoodClassification++;
+
+    }
+
+
+
     if(highest_index_label == 0)
     fCounter_0++;
 
@@ -338,6 +362,7 @@ Float_t vTotalCases[4] = {0.0};
 LOG(INFO)<<"Test Cases. Class 0 : "<<fCounter_0<<" Class 1 : "<<fCounter_1<<" Class 2 : "<<fCounter_2<<" Class 3 : "<<fCounter_3;
 
 LOG(INFO)<<"Accuracy: "<<100*(mConfussionMatrix[0][0] + mConfussionMatrix[1][1] + mConfussionMatrix[2][2] + mConfussionMatrix[3][3])/nTestSize<<" %";
+LOG(INFO)<<"Accuracy (pair): "<<100*(fGoodClassification)/(2.0*nTestSize)<<" %";
 
 LOG(INFO)<<"Confussion Matrix : Rows trained, Columns labels ";
  for(int i = 0 ; i < 4 ; i ++){

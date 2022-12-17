@@ -40,15 +40,15 @@ Float_t exc_energy(Float_t fEnergy1, Float_t fEnergy2, Float_t fTheta1, Float_t 
                             TMath::Power(TMath::Sqrt((BEAMENERGY*238+URANIUMMASS*UMA)*(BEAMENERGY*238+URANIUMMASS*UMA)-URANIUMMASS*UMA*URANIUMMASS*UMA)-(fPz1+fPz2),2);
 
 
-           // cout<<"Invariant Mass : "<<fInvariantMass<<endl;
            fInvariantMass = TMath::Sqrt(fInvariantMass);
+           // cout<<"Invariant Mass : "<<fInvariantMass<<endl;
 
            fExcitationEnergy = fInvariantMass-PROTACTINIUMMASS*UMA;
            // cout<<"P1 : "<<fP1<<" fPx1 : "<<fPx1<<" fPy1 : "<<fPy1<<" fPz1 : "<<fPz1<<endl;
            // cout<<"P2 : "<<fP2<<" fPx2 : "<<fPx2<<" fPy2 : "<<fPy2<<" fPz2 : "<<fPz2<<endl;
            // cout<<"--------- End of Event -------- "<<endl;
-
-           //cout<<"Excitation Energy : "<<fExcitationEnergy<<endl;
+           //
+           // cout<<"Excitation Energy : "<<fExcitationEnergy<<endl;
 
            return fExcitationEnergy;
       }
