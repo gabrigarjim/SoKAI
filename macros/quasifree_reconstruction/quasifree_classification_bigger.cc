@@ -303,6 +303,27 @@ Float_t vTotalCases[4] = {0.0};
 
     vTotalCases[highest_index_label] += 1.0;
 
+    if(highest_index_label == highest_index_training)
+     fGoodClassification += 2.0;
+
+
+    if(highest_index_label != highest_index_training){
+
+    if((highest_index_label == 0 && highest_index_training == 1) || (highest_index_label == 0 && highest_index_training == 2))
+     fGoodClassification++;
+
+    if((highest_index_label == 3 && highest_index_training == 1) || (highest_index_label == 3 && highest_index_training == 2))
+     fGoodClassification++;
+
+    if((highest_index_label == 1 && highest_index_training == 0) || (highest_index_label == 1 && highest_index_training == 3))
+     fGoodClassification++;
+
+    if((highest_index_label == 2 && highest_index_training == 0) || (highest_index_label == 2 && highest_index_training == 3))
+     fGoodClassification++;
+
+    }
+
+
     if(highest_index_training == 0){
 
       hStopped_kinematics->Fill(TMath::RadToDeg()*fPolarMax*data_sample.at(sample_number).at(4),fClusterEnergyMax*data_sample.at(sample_number).at(0));
@@ -342,6 +363,7 @@ Float_t vTotalCases[4] = {0.0};
 
 
 LOG(INFO)<<"Accuracy: "<<100*(mConfussionMatrix[0][0] + mConfussionMatrix[1][1] + mConfussionMatrix[2][2] + mConfussionMatrix[3][3])/nTestSize<<" %";
+LOG(INFO)<<"Accuracy (pair): "<<100*(fGoodClassification)/(2.0*nTestSize)<<" %";
 
 LOG(INFO)<<"Confussion Matrix : Rows trained, Columns labels ";
  for(int i = 0 ; i < 4 ; i ++){
