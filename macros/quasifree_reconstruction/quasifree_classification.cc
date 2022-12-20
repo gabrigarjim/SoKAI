@@ -28,7 +28,7 @@ int main (int argc, char** argv) {
   int nSamples        = stoi(argv[2]);
   int nTrainingSize   = (7.0/10.0)*nSamples;
   int nTestSize       = (3.0/10.0)*nSamples;
-  int nMiniBatchSize  = stoi(argv[4]);;
+  int nMiniBatchSize  = stoi(argv[4]);
   float fLearningRate = stoi(argv[3])/1000.;
 
   real_start = clock();
@@ -61,7 +61,7 @@ int main (int argc, char** argv) {
   SKColorScheme();
 
    /* ------- Reading Root Data -------- */
-  TString fileList = "../SoKAI/macros/quasifree_reconstruction/files/U238_Quasifree_560AMeV_NN_test_chamber.root";
+  TString fileList = "../SoKAI/macros/quasifree_reconstruction/files/U238_Quasifree_560AMeV_NN_chamber_train_realistic_weights.root";
 
   TFile *eventFile;
   TTree* eventTree;
@@ -113,6 +113,9 @@ int main (int argc, char** argv) {
     data_instance.push_back(rAzimuthal[0]/fAzimuthalMax);
     data_instance.push_back(rAzimuthal[1]/fAzimuthalMax);
 
+    data_instance.push_back(rMotherCrystalEnergy[0]/rClusterEnergy[0]);
+    data_instance.push_back(rMotherCrystalEnergy[1]/rClusterEnergy[1]);
+
 
     label_instance.push_back(rPunched[0]);
     label_instance.push_back(rPunched[1]);
@@ -130,11 +133,11 @@ int main (int argc, char** argv) {
 
   /*------- The Model Itself -------*/
 
-  SKLayer   *layer_1 = new SKLayer(8,argv[7]);
-  SKWeights *weights_12 = new SKWeights(8,stoi(argv[5]));
-  SKWeights *gradients_12 = new SKWeights(8,stoi(argv[5]));
-  SKWeights *firstMoment_12 = new SKWeights(8,stoi(argv[5]));
-  SKWeights *secondMoment_12 = new SKWeights(8,stoi(argv[5]));
+  SKLayer   *layer_1 = new SKLayer(10,argv[7]);
+  SKWeights *weights_12 = new SKWeights(10,stoi(argv[5]));
+  SKWeights *gradients_12 = new SKWeights(10,stoi(argv[5]));
+  SKWeights *firstMoment_12 = new SKWeights(10,stoi(argv[5]));
+  SKWeights *secondMoment_12 = new SKWeights(10,stoi(argv[5]));
 
 
   SKLayer   *layer_2 = new SKLayer(stoi(argv[5]),argv[8]);
