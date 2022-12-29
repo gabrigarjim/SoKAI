@@ -85,16 +85,15 @@ public:
 
 
 
- float Accuracy();
+  float Accuracy();
 
- void SetLearningRate(float learningRate){nLearningRate=learningRate;};
+  void SetLearningRate(float learningRate){nLearningRate=learningRate;};
 
- void SetLossFunction(string lossFunc){sLossFunction=lossFunc;};
+  void SetLossFunction(string lossFunc){sLossFunction=lossFunc;};
 
+  void CheckDimensions();
 
- void CheckDimensions();
-
- TH2F * ShowMe();
+  TH2F * ShowMe();
 
 private:
 

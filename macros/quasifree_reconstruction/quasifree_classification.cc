@@ -61,7 +61,7 @@ int main (int argc, char** argv) {
   SKColorScheme();
 
    /* ------- Reading Root Data -------- */
-  TString fileList = "../SoKAI/macros/quasifree_reconstruction/files/U238_Quasifree_560AMeV_NN_chamber_train_realistic_weights.root";
+  TString fileList = "../SoKAI/macros/quasifree_reconstruction/files/U238_Quasifree_560AMeV_NN_chamber_train_realistic_weights_discrete.root";
 
   TFile *eventFile;
   TTree* eventTree;
@@ -110,13 +110,6 @@ int main (int argc, char** argv) {
     data_instance.push_back(rPolar[0]/fPolarMax);
     data_instance.push_back(rPolar[1]/fPolarMax);
 
-    data_instance.push_back(rAzimuthal[0]/fAzimuthalMax);
-    data_instance.push_back(rAzimuthal[1]/fAzimuthalMax);
-
-    data_instance.push_back(rMotherCrystalEnergy[0]/rClusterEnergy[0]);
-    data_instance.push_back(rMotherCrystalEnergy[1]/rClusterEnergy[1]);
-
-
     label_instance.push_back(rPunched[0]);
     label_instance.push_back(rPunched[1]);
     label_instance.push_back(rPunched[2]);
@@ -133,11 +126,11 @@ int main (int argc, char** argv) {
 
   /*------- The Model Itself -------*/
 
-  SKLayer   *layer_1 = new SKLayer(10,argv[7]);
-  SKWeights *weights_12 = new SKWeights(10,stoi(argv[5]));
-  SKWeights *gradients_12 = new SKWeights(10,stoi(argv[5]));
-  SKWeights *firstMoment_12 = new SKWeights(10,stoi(argv[5]));
-  SKWeights *secondMoment_12 = new SKWeights(10,stoi(argv[5]));
+  SKLayer   *layer_1 = new SKLayer(6,argv[7]);
+  SKWeights *weights_12 = new SKWeights(6,stoi(argv[5]));
+  SKWeights *gradients_12 = new SKWeights(6,stoi(argv[5]));
+  SKWeights *firstMoment_12 = new SKWeights(6,stoi(argv[5]));
+  SKWeights *secondMoment_12 = new SKWeights(6,stoi(argv[5]));
 
 
   SKLayer   *layer_2 = new SKLayer(stoi(argv[5]),argv[8]);
@@ -216,7 +209,7 @@ int main (int argc, char** argv) {
   LOG(INFO)<<"Model Training Hyper Parameters. Epochs : "<<argv[1]<<" Samples : "<<argv[2]<<" Learning Rate : "<<stoi(argv[3])/1000.0<<" Metric : "<<argv[11];
   LOG(INFO)<<"";
   LOG(INFO)<<"/* ---------- Model Structure -----------";
-  LOG(INFO)<<"L1 : "<<argv[7]<<" "<<"8";
+  LOG(INFO)<<"L1 : "<<argv[7]<<" "<<"6";
   LOG(INFO)<<"H1 : "<<argv[8]<<" "<<argv[5];
   LOG(INFO)<<"H2 : "<<argv[9]<<" "<<argv[6];
   LOG(INFO)<<"L4 : "<<argv[10]<<" "<<"4";

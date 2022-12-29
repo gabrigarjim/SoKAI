@@ -64,7 +64,7 @@ int main (int argc, char** argv) {
   SKColorScheme();
 
    /* ------- Reading Root Data -------- */
-  TString fileList = "/home/gabri/Analysis/s455/simulation/punch_through/writers/U238_Quasifree_560AMeV_NN.root";
+  TString fileList = "../SoKAI/macros/quasifree_reconstruction/files/U238_Quasifree_560AMeV_NN_chamber_train_realistic_weights_discrete.root";
 
   TFile *eventFile;
   TTree* eventTree;
@@ -117,19 +117,19 @@ int main (int argc, char** argv) {
 
   /* ------ Classification Model ------ */
 
-  SKLayer   *layer_1_class = new SKLayer(8,"LeakyReLU");
-  SKWeights *weights_12_class = new SKWeights(8,10);
-  SKWeights *gradients_12_class = new SKWeights(8,10);
+  SKLayer   *layer_1_class = new SKLayer(6,"LeakyReLU");
+  SKWeights *weights_12_class = new SKWeights(6,6);
+  SKWeights *gradients_12_class = new SKWeights(6,6);
 
 
-  SKLayer   *layer_2_class = new SKLayer(10,"LeakyReLU");
-  SKWeights *weights_23_class = new SKWeights(10,20);
-  SKWeights *gradients_23_class = new SKWeights(10,20);
+  SKLayer   *layer_2_class = new SKLayer(6,"LeakyReLU");
+  SKWeights *weights_23_class = new SKWeights(6,10);
+  SKWeights *gradients_23_class = new SKWeights(6,10);
 
+  SKLayer   *layer_3_class = new SKLayer(10,"LeakyReLU");
+  SKWeights *weights_34_class = new SKWeights(10,4);
+  SKWeights *gradients_34_class = new SKWeights(10,4);
 
-  SKLayer   *layer_3_class = new SKLayer(20,"LeakyReLU");
-  SKWeights *weights_34_class = new SKWeights(20,4);
-  SKWeights *gradients_34_class = new SKWeights(20,4);
 
   SKLayer   *layer_4_class = new SKLayer(4,"LeakyReLU");
 
@@ -170,7 +170,7 @@ int main (int argc, char** argv) {
   model_class->Init();
 
 
-  model_class->LoadWeights("/home/gabri/Analysis/s455/simulation/punch_through/analysis/nn_results/model_weights_classification_28.txt");
+  model_class->LoadWeights("model_weights_classification_127.txt");
 
 
   LOG(INFO)<<"Number of Samples : "<<nEvents<<endl;
@@ -194,10 +194,6 @@ int main (int argc, char** argv) {
 
     data_instance.push_back(rPolar[0]/fPolarMax);
     data_instance.push_back(rPolar[1]/fPolarMax);
-
-    data_instance.push_back(rAzimuthal[0]/fAzimuthalMax);
-    data_instance.push_back(rAzimuthal[1]/fAzimuthalMax);
-
 
     data_sample.push_back(data_instance);
 
@@ -264,32 +260,32 @@ int main (int argc, char** argv) {
 
 
 
-  int nTrainingSize   = (1.0/10.0)*data_sample_reconstruction.size();
-  int nTestSize       = (9.0/10.0)*data_sample_reconstruction.size();
+  int nTrainingSize   = (7.0/10.0)*data_sample_reconstruction.size();
+  int nTestSize       = (3.0/10.0)*data_sample_reconstruction.size();
 
 
 
   /*------- The Model Itself -------*/
 
-  SKLayer   *layer_1 = new SKLayer(9,argv[5]);
-  SKWeights *weights_12 = new SKWeights(9,stoi(argv[6]));
-  SKWeights *gradients_12 = new SKWeights(9,stoi(argv[6]));
-  SKWeights *firstMoment_12 = new SKWeights(9,stoi(argv[6]));
-  SKWeights *secondMoment_12 = new SKWeights(9,stoi(argv[6]));
+  SKLayer   *layer_1 = new SKLayer(7,argv[7]);
+  SKWeights *weights_12 = new SKWeights(7,stoi(argv[5]));
+  SKWeights *gradients_12 = new SKWeights(7,stoi(argv[5]));
+  SKWeights *firstMoment_12 = new SKWeights(7,stoi(argv[5]));
+  SKWeights *secondMoment_12 = new SKWeights(7,stoi(argv[5]));
 
 
-  SKLayer   *layer_2 = new SKLayer(stoi(argv[6]),argv[7]);
-  SKWeights *weights_23 = new SKWeights(stoi(argv[6]),stoi(argv[8]));
-  SKWeights *gradients_23 = new SKWeights(stoi(argv[6]),stoi(argv[8]));
-  SKWeights *firstMoment_23 = new SKWeights(stoi(argv[6]),stoi(argv[8]));
-  SKWeights *secondMoment_23 = new SKWeights(stoi(argv[6]),stoi(argv[8]));
+  SKLayer   *layer_2 = new SKLayer(stoi(argv[5]),argv[8]);
+  SKWeights *weights_23 = new SKWeights(stoi(argv[5]),stoi(argv[6]));
+  SKWeights *gradients_23 = new SKWeights(stoi(argv[5]),stoi(argv[6]));
+  SKWeights *firstMoment_23 = new SKWeights(stoi(argv[5]),stoi(argv[6]));
+  SKWeights *secondMoment_23 = new SKWeights(stoi(argv[5]),stoi(argv[6]));
 
 
-  SKLayer   *layer_3 = new SKLayer(stoi(argv[8]),argv[9]);
-  SKWeights *weights_34 = new SKWeights(stoi(argv[8]),1);
-  SKWeights *gradients_34 = new SKWeights(stoi(argv[8]),1);
-  SKWeights *firstMoment_34 = new SKWeights(stoi(argv[8]),1);
-  SKWeights *secondMoment_34 = new SKWeights(stoi(argv[8]),1);
+  SKLayer   *layer_3 = new SKLayer(stoi(argv[6]),argv[9]);
+  SKWeights *weights_34 = new SKWeights(stoi(argv[6]),1);
+  SKWeights *gradients_34 = new SKWeights(stoi(argv[6]),1);
+  SKWeights *firstMoment_34 = new SKWeights(stoi(argv[6]),1);
+  SKWeights *secondMoment_34 = new SKWeights(stoi(argv[6]),1);
 
   SKLayer   *layer_4 = new SKLayer(1,argv[10]);
 
@@ -352,9 +348,9 @@ int main (int argc, char** argv) {
   LOG(INFO)<<"Model Training Hyper Parameters. Epochs : "<<argv[1]<<" Samples : "<<argv[2]<<" Learning Rate : "<<stoi(argv[3])/1000.0<<" Metric : "<<argv[11];
   LOG(INFO)<<"";
   LOG(INFO)<<"/* ---------- Model Structure -----------";
-  LOG(INFO)<<"L1 : "<<argv[5]<<" "<<"9";
-  LOG(INFO)<<"H1 : "<<argv[7]<<" "<<argv[6];
-  LOG(INFO)<<"H2 : "<<argv[9]<<" "<<argv[8];
+  LOG(INFO)<<"L1 : "<<argv[7]<<" "<<"7";
+  LOG(INFO)<<"H1 : "<<argv[8]<<" "<<argv[5];
+  LOG(INFO)<<"H2 : "<<argv[9]<<" "<<argv[6];
   LOG(INFO)<<"L4 : "<<argv[10]<<" "<<"1";
 
   /* ---------- Pass Data Through Model ----------*/

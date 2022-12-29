@@ -377,7 +377,6 @@ void SKModel::Train(int n){
 }
 
 
-
 void SKModel::Backpropagate(){
 
   // First we calculate the gradient contribution for each path

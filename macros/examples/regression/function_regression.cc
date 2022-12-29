@@ -30,12 +30,12 @@ int main () {
   LOG(INFO)<<"#============================================================#";
 
   int seed            = 2022;
-  int epochs          = 4000;
+  int epochs          = 650;
   int nSamples        = 1024;
   int nTrainingSize   = (7.0/10.0)*nSamples;
   int nTestSize       = (3.0/10.0)*nSamples;
   int nMiniBatchSize  = 8;
-  float fLearningRate = 0.001;
+  float fLearningRate = 0.01;
 
   double time_1, time_2, time_3, time_4;
 
@@ -103,8 +103,7 @@ int main () {
 
    }
 
-  TH1F *hSampleDuration_histo = new TH1F("hSampleDuration_histo","Training time (per event, us) ",800,0,1500);
-  TH1F *hBatchDuration_histo = new TH1F("hBatchDuration_histo","Training time (per event, ms) ",800,0,600);
+  TH1F *hSampleDuration_histo = new TH1F("hSampleDuration_histo","Training time (per event, us) ",2000,0,0);
 
 
 
@@ -189,15 +188,19 @@ int main () {
   /* ---------- Pass Data Through Model ----------*/
 
    for (int i = 0 ; i < epochs ; i++){
-     auto begin_1 = high_resolution_clock::now();
-
      for (int j = 0 ; j < nTrainingSize ; j++){
 
+      auto begin = high_resolution_clock::now();
 
       // Using  7/10 of the dataset to train the network
       int sample_number = nTrainingSize*gen.Rndm();
 
       model->Train(j);
+
+      auto end = high_resolution_clock::now();
+      std::chrono::duration<float,std::micro> duration = end - begin;
+
+      hSampleDuration_histo->Fill(duration.count());
 
       loss =  model->QuadraticLoss();
 
@@ -206,7 +209,7 @@ int main () {
    }
 
 
-    if(i%100==0){
+    if(i%10==0){
 
      LOG(INFO)<<" Loss : "<<loss<<" . Epoch : "<<i;
      loss_vec.push_back(loss);
@@ -293,13 +296,10 @@ loss_graph->SetLineColor(0);
 
 
 TCanvas *performance_canvas = new TCanvas("performance_canvas","performance_canvas");
-performance_canvas->Divide(2,1);
 
-performance_canvas->cd(1);
+performance_canvas->cd();
 hSampleDuration_histo->Draw("");
 
-performance_canvas->cd(2);
-hBatchDuration_histo->Draw("");
 
 
 

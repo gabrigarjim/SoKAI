@@ -47,7 +47,7 @@ int main (int argc, char** argv) {
   SKColorScheme();
 
    /* ------- Reading Root Data -------- */
-  TString fileList = "/home/gabri/Analysis/s455/simulation/punch_through/writers/U238_Quasifree_560AMeV_NN_test_chamber.root";
+  TString fileList = "../SoKAI/macros/quasifree_reconstruction/files/U238_Quasifree_560AMeV_NN_chamber_train_realistic_weights_discrete.root";
 
   TFile *eventFile;
   TTree* eventTree;
@@ -85,9 +85,6 @@ int main (int argc, char** argv) {
 
   int nEvents = eventTree->GetEntries();
 
-  TH1F *hExcEnergy_nn     = new TH1F("hExcEnergy_nn","Excitation Energy : NN ",400,-200,200);
-
-
   TH2F **hCorr_classified_kinematics;
   hCorr_classified_kinematics = new TH2F*[8];
 
@@ -104,12 +101,12 @@ int main (int argc, char** argv) {
   for(int i = 0 ; i < 4 ; i++){
 
       sprintf(name, "hCorr_classified_kinematics_%i_0", i + 1);
-      hCorr_classified_kinematics[2*i] = new TH2F(name,name,100,18,70,100,0,400);
+      hCorr_classified_kinematics[2*i] = new TH2F(name,name,25,18,70,100,0,400);
       hCorr_classified_kinematics[2*i]->GetXaxis()->SetTitle("Polar Angle (degrees)");
       hCorr_classified_kinematics[2*i]->GetYaxis()->SetTitle("Energy (MeV)");
 
       sprintf(name, "hCorr_classified_kinematics_%i_1", i + 1);
-      hCorr_classified_kinematics[2*i+1] = new TH2F(name,name,100,18,70,100,0,400);
+      hCorr_classified_kinematics[2*i+1] = new TH2F(name,name,25,18,70,100,0,400);
       hCorr_classified_kinematics[2*i+1]->GetXaxis()->SetTitle("Polar Angle (degrees)");
       hCorr_classified_kinematics[2*i+1]->GetYaxis()->SetTitle("Energy (MeV)");
 
@@ -118,12 +115,12 @@ int main (int argc, char** argv) {
 for(int i = 0 ; i < 4 ; i++){
 
     sprintf(name, "hCorr_classified_kinematics_true_wrong_%i_0", i + 1);
-    hCorr_classified_kinematics_wrong[2*i] = new TH2F(name,name,100,18,70,100,0,400);
+    hCorr_classified_kinematics_wrong[2*i] = new TH2F(name,name,25,18,70,100,0,400);
     hCorr_classified_kinematics_wrong[2*i]->GetXaxis()->SetTitle("Polar Angle (degrees)");
     hCorr_classified_kinematics_wrong[2*i]->GetYaxis()->SetTitle("Energy (MeV)");
 
     sprintf(name, "hCorr_classified_kinematics_true_wrong_%i_1", i + 1);
-    hCorr_classified_kinematics_wrong[2*i+1] = new TH2F(name,name,100,18,70,100,0,400);
+    hCorr_classified_kinematics_wrong[2*i+1] = new TH2F(name,name,25,18,70,100,0,400);
     hCorr_classified_kinematics_wrong[2*i+1]->GetXaxis()->SetTitle("Polar Angle (degrees)");
     hCorr_classified_kinematics_wrong[2*i+1]->GetYaxis()->SetTitle("Energy (MeV)");
 
@@ -132,12 +129,12 @@ for(int i = 0 ; i < 4 ; i++){
 for(int i = 0 ; i < 4 ; i++){
 
     sprintf(name, "hCorr_classified_kinematics_true_good_%i_0", i + 1);
-    hCorr_classified_kinematics_good[2*i] = new TH2F(name,name,100,18,70,100,0,400);
+    hCorr_classified_kinematics_good[2*i] = new TH2F(name,name,25,18,70,100,0,400);
     hCorr_classified_kinematics_good[2*i]->GetXaxis()->SetTitle("Polar Angle (degrees)");
     hCorr_classified_kinematics_good[2*i]->GetYaxis()->SetTitle("Energy (MeV)");
 
     sprintf(name, "hCorr_classified_kinematics_true_good_%i_1", i + 1);
-    hCorr_classified_kinematics_good[2*i+1] = new TH2F(name,name,100,18,70,100,0,400);
+    hCorr_classified_kinematics_good[2*i+1] = new TH2F(name,name,25,18,70,100,0,400);
     hCorr_classified_kinematics_good[2*i+1]->GetXaxis()->SetTitle("Polar Angle (degrees)");
     hCorr_classified_kinematics_good[2*i+1]->GetYaxis()->SetTitle("Energy (MeV)");
 
@@ -150,26 +147,31 @@ for(int i = 0 ; i < 4 ; i++){
 
   /* ------ Classification Model ------ */
 
-  SKLayer   *layer_1_class = new SKLayer(8,"LeakyReLU");
-  SKWeights *weights_12_class = new SKWeights(8,10);
-  SKWeights *gradients_12_class = new SKWeights(8,10);
+  SKLayer   *layer_1_class = new SKLayer(6,"LeakyReLU");
+  SKWeights *weights_12_class = new SKWeights(6,6);
+  SKWeights *gradients_12_class = new SKWeights(6,6);
 
 
-  SKLayer   *layer_2_class = new SKLayer(10,"Sigmoid");
-  SKWeights *weights_23_class = new SKWeights(10,4);
-  SKWeights *gradients_23_class = new SKWeights(10,4);
+  SKLayer   *layer_2_class = new SKLayer(6,"LeakyReLU");
+  SKWeights *weights_23_class = new SKWeights(6,10);
+  SKWeights *gradients_23_class = new SKWeights(6,10);
+
+  SKLayer   *layer_3_class = new SKLayer(10,"LeakyReLU");
+  SKWeights *weights_34_class = new SKWeights(10,4);
+  SKWeights *gradients_34_class = new SKWeights(10,4);
 
 
-  SKLayer   *layer_3_class = new SKLayer(4,"LeakyReLU");
+  SKLayer   *layer_4_class = new SKLayer(4,"LeakyReLU");
 
   weights_12_class->Init(seed);
   gradients_12_class->InitGradients();
 
-  weights_12_class->Print();
-
   weights_23_class->Init(seed);
-
   gradients_23_class->InitGradients();
+
+  weights_34_class->Init(seed);
+  gradients_34_class->InitGradients();
+
 
   SKModel *model_class = new SKModel("Classification");
 
@@ -182,8 +184,11 @@ for(int i = 0 ; i < 4 ; i++){
   model_class->AddWeights(weights_23_class);
   model_class->AddGradients(gradients_23_class);
 
-
   model_class->AddLayer(layer_3_class);
+  model_class->AddWeights(weights_34_class);
+  model_class->AddGradients(gradients_34_class);
+
+  model_class->AddLayer(layer_4_class);
 
   model_class->SetInputSample(&data_sample);
 
@@ -192,9 +197,7 @@ for(int i = 0 ; i < 4 ; i++){
   model_class->Init();
 
 
-  model_class->LoadWeights("model_weights_classification_53.txt");
-
-  weights_12_class->Print();
+  model_class->LoadWeights("model_weights_classification_127.txt");
 
 
   LOG(INFO)<<"Number of Samples : "<<nEvents<<endl;
@@ -219,9 +222,6 @@ for(int i = 0 ; i < 4 ; i++){
     data_instance.push_back(rPolar[0]/fPolarMax);
     data_instance.push_back(rPolar[1]/fPolarMax);
 
-    data_instance.push_back(rAzimuthal[0]/fAzimuthalMax);
-    data_instance.push_back(rAzimuthal[1]/fAzimuthalMax);
-
     label_instance.push_back(rPunched[0]);
     label_instance.push_back(rPunched[1]);
     label_instance.push_back(rPunched[2]);
@@ -241,10 +241,6 @@ for(int i = 0 ; i < 4 ; i++){
 
     hCorr_classified_kinematics[2*highest_index_training]->Fill(TMath::RadToDeg()*fPolarMax*data_sample.at(data_sample.size()-1).at(4),fClusterEnergyMax*data_sample.at(data_sample.size()-1).at(0));
     hCorr_classified_kinematics[2*highest_index_training+1]->Fill(TMath::RadToDeg()*fPolarMax*data_sample.at(data_sample.size()-1).at(5),fClusterEnergyMax*data_sample.at(data_sample.size()-1).at(1));
-
-
-    if(highest_index_label == 0 &&  highest_index_training == 0)
-     hExcEnergy_nn->Fill(exc_energy(rClusterEnergy[0],rClusterEnergy[1],TMath::RadToDeg()*rPolar[0],TMath::RadToDeg()*rPolar[1],TMath::RadToDeg()*rAzimuthal[0],TMath::RadToDeg()*rAzimuthal[1]));
 
 
     if(highest_index_label == highest_index_training){
@@ -337,10 +333,6 @@ for(int i = 0 ; i < 4 ; i++){
 
 }
 
-
-
-
-
     data_instance.clear();
     label_instance.clear();
 
@@ -401,11 +393,6 @@ for(int i = 0 ; i < 4 ; i++){
 
 
  }
-
- TCanvas *excCanvas = new TCanvas("excCanvas","Exc Canvas");
- excCanvas->cd();
- hExcEnergy_nn->Draw();
-
 
 
 theApp->Run();
