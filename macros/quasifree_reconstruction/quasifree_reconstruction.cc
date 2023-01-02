@@ -4,6 +4,7 @@
 #include "SKPropagator.h"
 #include "SKModel.h"
 #include "SKColorScheme.h"
+
 using namespace std::chrono;
 
 int main (int argc, char** argv) {
@@ -37,18 +38,13 @@ int main (int argc, char** argv) {
   vector<double> data_instance;
   vector<double> label_instance;
 
-  vector<vector<double>> data_sample_reconstruction;
-
 
   /*---- For training results ----*/
   vector<double> loss_vec;
   vector<double> output_vec;
   vector<double> output_model;
 
-  vector<double> x_vec;
-  vector<double> target_vec;
   vector<double> epoch_vec;
-  vector<double> reconstruction_resolution_vec;
 
   double quadraticLoss = 0.0;
   double absoluteLoss = 0.0;
@@ -95,92 +91,16 @@ int main (int argc, char** argv) {
 
   int nEvents = eventTree->GetEntries();
 
-  TH2F **hCorr_classified_kinematics;
-  hCorr_classified_kinematics = new TH2F*[8];
+  if(nEvents < nSamples)
+  LOG(FATAL)<<"More number of samples than avalaible!!!";
 
-  char name [100];
-
-  for(int i = 0 ; i < 4 ; i++){
-
-      sprintf(name, "hCorr_classified_kinematics_%i_0", i + 1);
-      hCorr_classified_kinematics[2*i] = new TH2F(name,name,200,18,70,200,0,400);
-      hCorr_classified_kinematics[2*i]->GetXaxis()->SetTitle("Polar Angle (degrees)");
-      hCorr_classified_kinematics[2*i]->GetYaxis()->SetTitle("Energy (MeV)");
-
-      sprintf(name, "hCorr_classified_kinematics_%i_1", i + 1);
-      hCorr_classified_kinematics[2*i+1] = new TH2F(name,name,200,18,70,200,0,400);
-      hCorr_classified_kinematics[2*i+1]->GetXaxis()->SetTitle("Polar Angle (degrees)");
-      hCorr_classified_kinematics[2*i+1]->GetYaxis()->SetTitle("Energy (MeV)");
-
-  }
-
-
-  /* ------ Classification Model ------ */
-
-  SKLayer   *layer_1_class = new SKLayer(6,"LeakyReLU");
-  SKWeights *weights_12_class = new SKWeights(6,6);
-  SKWeights *gradients_12_class = new SKWeights(6,6);
-
-
-  SKLayer   *layer_2_class = new SKLayer(6,"LeakyReLU");
-  SKWeights *weights_23_class = new SKWeights(6,10);
-  SKWeights *gradients_23_class = new SKWeights(6,10);
-
-  SKLayer   *layer_3_class = new SKLayer(10,"LeakyReLU");
-  SKWeights *weights_34_class = new SKWeights(10,4);
-  SKWeights *gradients_34_class = new SKWeights(10,4);
-
-
-  SKLayer   *layer_4_class = new SKLayer(4,"LeakyReLU");
-
-  weights_12_class->Init(seed);
-  gradients_12_class->InitGradients();
-
-
-  weights_23_class->Init(seed);
-  gradients_23_class->InitGradients();
-
-
-  weights_34_class->Init(seed);
-  gradients_34_class->InitGradients();
-
-  SKModel *model_class = new SKModel("Classification");
-
-  model_class->AddLayer(layer_1_class);
-  model_class->AddWeights(weights_12_class);
-  model_class->AddGradients(gradients_12_class);
-
-
-  model_class->AddLayer(layer_2_class);
-  model_class->AddWeights(weights_23_class);
-  model_class->AddGradients(gradients_23_class);
-
-
-  model_class->AddLayer(layer_3_class);
-  model_class->AddWeights(weights_34_class);
-  model_class->AddGradients(gradients_34_class);
-
-
-  model_class->AddLayer(layer_4_class);
-
-  model_class->SetInputSample(&data_sample);
-
-  model_class->SetSummaryFile("test","30");
-
-  model_class->Init();
-
-
-  model_class->LoadWeights("model_weights_classification_127.txt");
-
-
-  LOG(INFO)<<"Number of Samples : "<<nEvents<<endl;
 
   for (Int_t j = 0; j<nSamples; j++) {
 
 
     eventTree->GetEvent(j);
 
-    if(!(j%10000))
+    if(!(j%1000))
      LOG(INFO)<<"Reading event "<<j<<" out of "<<nSamples<<" ("<<100.0*Float_t(j)/Float_t(nSamples)<<" % ) "<<endl;
 
     if(rClusterEnergy[0] < 30 || rClusterEnergy[1] < 30)
@@ -195,83 +115,56 @@ int main (int argc, char** argv) {
     data_instance.push_back(rPolar[0]/fPolarMax);
     data_instance.push_back(rPolar[1]/fPolarMax);
 
-    data_sample.push_back(data_instance);
 
-    output_vec = model_class->Propagate(data_sample.size()-1);
+    if(abs(rClusterEnergy[0] - rPrimaryEnergy[0]) > 25){
 
-    int highest_index_training = distance(output_vec.begin(),max_element(output_vec.begin(), output_vec.end()));
+      data_sample.push_back(data_instance);
 
-    hCorr_classified_kinematics[2*highest_index_training]->Fill(TMath::RadToDeg()*fPolarMax*data_sample.at(data_sample.size()-1).at(4),fClusterEnergyMax*data_sample.at(data_sample.size()-1).at(0));
-    hCorr_classified_kinematics[2*highest_index_training+1]->Fill(TMath::RadToDeg()*fPolarMax*data_sample.at(data_sample.size()-1).at(5),fClusterEnergyMax*data_sample.at(data_sample.size()-1).at(1));
+      label_instance.push_back(rPrimaryEnergy[0]/fPrimEnergyMax);
 
-
-    if(highest_index_training == 1){
-
-     data_instance.push_back(highest_index_training/4.0);
-     data_sample_reconstruction.push_back(data_instance);
-
-     label_instance.push_back(rPrimaryEnergy[1]/fPrimEnergyMax);
-
-     input_labels.push_back(label_instance);
+      input_labels.push_back(label_instance);
 
 
-    }
+     }
 
-    if(highest_index_training == 2){
-
-     data_instance.push_back(highest_index_training/4.0);
-     data_sample_reconstruction.push_back(data_instance);
-
-
-     label_instance.push_back(rPrimaryEnergy[0]/fPrimEnergyMax);
-
-     input_labels.push_back(label_instance);
-
-    }
-
-    if(highest_index_training == 3){
-
-     data_instance.push_back(highest_index_training/4.0);
-
-     data_sample_reconstruction.push_back(data_instance);
-
-     label_instance.push_back(rPrimaryEnergy[0]/fPrimEnergyMax);
-     input_labels.push_back(label_instance);
-
+   else if(abs(rClusterEnergy[1] - rPrimaryEnergy[1]) > 25){
 
      label_instance.clear();
-     data_sample_reconstruction.push_back(data_instance);
+
+     data_sample.push_back(data_instance);
 
      label_instance.push_back(rPrimaryEnergy[1]/fPrimEnergyMax);
+
      input_labels.push_back(label_instance);
 
 
-    }
-
+     }
 
 
     data_instance.clear();
-    model_class->Clear();
-    data_sample.clear();
     label_instance.clear();
 
-   }
+  }
 
 
+  cout<<"Sample sizes : "<<data_sample.size()<<" times "<<data_sample.at(0).size()<<endl;
+  cout<<"Label sizes : "<<input_labels.size()<<" times "<<input_labels.at(0).size()<<endl;
 
 
-  int nTrainingSize   = (7.0/10.0)*data_sample_reconstruction.size();
-  int nTestSize       = (3.0/10.0)*data_sample_reconstruction.size();
+  int nTrainingSize   = (7.0/10.0)*data_sample.size();
+  int nTestSize       = (3.0/10.0)*data_sample.size();
+
+  LOG(INFO)<<"Training Size : "<<data_sample.size()<<" events";
 
 
 
   /*------- The Model Itself -------*/
 
-  SKLayer   *layer_1 = new SKLayer(7,argv[7]);
-  SKWeights *weights_12 = new SKWeights(7,stoi(argv[5]));
-  SKWeights *gradients_12 = new SKWeights(7,stoi(argv[5]));
-  SKWeights *firstMoment_12 = new SKWeights(7,stoi(argv[5]));
-  SKWeights *secondMoment_12 = new SKWeights(7,stoi(argv[5]));
+  SKLayer   *layer_1 = new SKLayer(6,argv[7]);
+  SKWeights *weights_12 = new SKWeights(6,stoi(argv[5]));
+  SKWeights *gradients_12 = new SKWeights(6,stoi(argv[5]));
+  SKWeights *firstMoment_12 = new SKWeights(6,stoi(argv[5]));
+  SKWeights *secondMoment_12 = new SKWeights(6,stoi(argv[5]));
 
 
   SKLayer   *layer_2 = new SKLayer(stoi(argv[5]),argv[8]);
@@ -335,7 +228,7 @@ int main (int argc, char** argv) {
 
   model->AddLayer(layer_4);
 
-  model->SetInputSample(&data_sample_reconstruction);
+  model->SetInputSample(&data_sample);
   model->SetInputLabels(&input_labels);
 
   model->Init();
@@ -345,10 +238,10 @@ int main (int argc, char** argv) {
   /* ---- Number of processed inputs before updating gradients ---- */
   model->SetBatchSize(nMiniBatchSize);
 
-  LOG(INFO)<<"Model Training Hyper Parameters. Epochs : "<<argv[1]<<" Samples : "<<argv[2]<<" Learning Rate : "<<stoi(argv[3])/1000.0<<" Metric : "<<argv[11];
+  LOG(INFO)<<"Model Training Hyper Parameters. Epochs : "<<argv[1]<<" Samples : "<<data_sample.size()<<" Learning Rate : "<<stoi(argv[3])/1000.0<<" Metric : "<<argv[11];
   LOG(INFO)<<"";
   LOG(INFO)<<"/* ---------- Model Structure -----------";
-  LOG(INFO)<<"L1 : "<<argv[7]<<" "<<"7";
+  LOG(INFO)<<"L1 : "<<argv[7]<<" "<<"6";
   LOG(INFO)<<"H1 : "<<argv[8]<<" "<<argv[5];
   LOG(INFO)<<"H2 : "<<argv[9]<<" "<<argv[6];
   LOG(INFO)<<"L4 : "<<argv[10]<<" "<<"1";
@@ -361,11 +254,11 @@ int main (int argc, char** argv) {
 
       int sample_number = nTrainingSize*gen.Rndm();
 
-
        model->Train(j);
 
 
     if(i%10 == 0 && j == nTrainingSize-1){
+
        absoluteLoss  =  model->AbsoluteLoss();
        quadraticLoss =  model->QuadraticLoss();
 
@@ -393,10 +286,19 @@ LOG(INFO)<<"Total training time : "<<((float) real_end - real_start)/CLOCKS_PER_
 TH2F *hCorrReconstruction_energy = new TH2F("hCorrReconstruction_energy","Reconstructed Energy Difference Vs Energy",400,-400,400,400,0,600);
 TH2F *hCorrReconstruction_results = new TH2F("hCorrReconstruction_results","Reconstructed Energy Vs Primary Energy",400,-600,800,400,0,600);
 
+TH1F * hResolution_300_350 = new TH1F("hResolution_300_350","Resolution: 300 - 350 MeV ",200,-400,400);
+TH1F * hResolution_350_400 = new TH1F("hResolution_350_400","Resolution: 350 - 400 MeV ",200,-400,400);
+TH1F * hResolution_400_450 = new TH1F("hResolution_400_450","Resolution: 400 - 450 MeV ",200,-400,400);
+TH1F * hResolution_450_500 = new TH1F("hResolution_450_500","Resolution: 450 - 500 MeV ",200,-400,400);
+TH1F * hResolution_500_550 = new TH1F("hResolution_500_550","Resolution: 500 - 550 MeV ",200,-400,400);
+TH1F * hResolution_550_600 = new TH1F("hResolution_550_600","Resolution: 550 - 600 MeV ",200,-400,400);
+
+
+
+
+
   for (int j = 0 ; j < nTestSize ; j++){
 
-
-    // Using only 3/10 of the dataset to test the network
     int sample_number = nTrainingSize + nTestSize*gen.Rndm();
 
 
@@ -408,13 +310,48 @@ TH2F *hCorrReconstruction_results = new TH2F("hCorrReconstruction_results","Reco
 
     hCorrReconstruction_energy->Fill(fPrimEnergyMax*(output_vec.at(0))-fPrimEnergyMax*input_labels.at(sample_number).at(0),fPrimEnergyMax*input_labels.at(sample_number).at(0));
 
+    if(fPrimEnergyMax*input_labels.at(sample_number).at(0) > 300 && fPrimEnergyMax*input_labels.at(sample_number).at(0) < 350)
+     hResolution_300_350->Fill(fPrimEnergyMax*(output_vec.at(0))-fPrimEnergyMax*input_labels.at(sample_number).at(0));
+
+    if(fPrimEnergyMax*input_labels.at(sample_number).at(0) > 350 && fPrimEnergyMax*input_labels.at(sample_number).at(0) < 400)
+     hResolution_350_400->Fill(fPrimEnergyMax*(output_vec.at(0))-fPrimEnergyMax*input_labels.at(sample_number).at(0));
+
+    if(fPrimEnergyMax*input_labels.at(sample_number).at(0) > 400 && fPrimEnergyMax*input_labels.at(sample_number).at(0) < 450)
+     hResolution_400_450->Fill(fPrimEnergyMax*(output_vec.at(0))-fPrimEnergyMax*input_labels.at(sample_number).at(0));
+
+    if(fPrimEnergyMax*input_labels.at(sample_number).at(0) > 450 && fPrimEnergyMax*input_labels.at(sample_number).at(0) < 500)
+     hResolution_450_500->Fill(fPrimEnergyMax*(output_vec.at(0))-fPrimEnergyMax*input_labels.at(sample_number).at(0));
+
+    if(fPrimEnergyMax*input_labels.at(sample_number).at(0) > 500 && fPrimEnergyMax*input_labels.at(sample_number).at(0) < 550)
+     hResolution_500_550->Fill(fPrimEnergyMax*(output_vec.at(0))-fPrimEnergyMax*input_labels.at(sample_number).at(0));
+
+    if(fPrimEnergyMax*input_labels.at(sample_number).at(0) > 550 && fPrimEnergyMax*input_labels.at(sample_number).at(0) < 600)
+     hResolution_550_600->Fill(fPrimEnergyMax*(output_vec.at(0))-fPrimEnergyMax*input_labels.at(sample_number).at(0));
+
     model->Clear();
 
 
 }
 
+TF1 *myGaussian  = new TF1("gaus1","gaus(0)",-300,300);
 
+hResolution_300_350->Fit(myGaussian,"Q","",-300,300);
+LOG(INFO)<<"Resolution for 300 - 350 MeV (FWHM) : "<<235.48*myGaussian->GetParameter(2)/325.0;
 
+hResolution_350_400->Fit(myGaussian,"Q","",-300,300);
+LOG(INFO)<<"Resolution for 350 - 400 MeV (FWHM) : "<<235.48*myGaussian->GetParameter(2)/375.0;
+
+hResolution_400_450->Fit(myGaussian,"Q","",-300,300);
+LOG(INFO)<<"Resolution for 400 - 450 MeV (FWHM) : "<<235.48*myGaussian->GetParameter(2)/425.0;
+
+hResolution_450_500->Fit(myGaussian,"Q","",-300,300);
+LOG(INFO)<<"Resolution for 450 - 500 MeV (FWHM) : "<<235.48*myGaussian->GetParameter(2)/475.0;
+
+hResolution_500_550->Fit(myGaussian,"Q","",-300,300);
+LOG(INFO)<<"Resolution for 500 - 550 MeV (FWHM) : "<<235.48*myGaussian->GetParameter(2)/525.0;
+
+hResolution_550_600->Fit(myGaussian,"Q","",-300,300);
+LOG(INFO)<<"Resolution for 550 - 600 MeV (FWHM) : "<<235.48*myGaussian->GetParameter(2)/575.0;
 
 
 /* --------- Plots and so on ....... ------*/
@@ -454,6 +391,31 @@ summary_canvas->cd(2);
  loss_graph->Draw("AC");
 
 
+
+TCanvas *reso_canvas = new TCanvas("reso_canvas","Resolution Canvas");
+ reso_canvas->Divide(3,2);
+
+ reso_canvas->cd(1);
+  hResolution_300_350->Draw("");
+
+ reso_canvas->cd(2);
+  hResolution_350_400->Draw("");
+
+ reso_canvas->cd(3);
+  hResolution_400_450->Draw("");
+
+ reso_canvas->cd(4);
+  hResolution_450_500->Draw("");
+
+ reso_canvas->cd(5);
+  hResolution_500_550->Draw("");
+
+ reso_canvas->cd(6);
+  hResolution_550_600->Draw("");
+
+
+
+
 TString filename = "training_results_regression_";
  filename = filename + argv[12] + ".root";
 
@@ -463,24 +425,6 @@ TFile resultsFile(filename,"RECREATE");
  model_canvas->Write();
  summary_canvas->Write();
 
-
-
-
-  TCanvas *kinematics_canvas = new TCanvas("kinematics_canvas","Model");
-  kinematics_canvas->Divide(4,2);
-
-  for(int h = 0 ; h < 4 ; h ++){
-
-     kinematics_canvas->cd(h+1);
-
-     hCorr_classified_kinematics[2*h]->Draw("COLZ");
-
-     kinematics_canvas->cd(4 + h + 1);
-
-     hCorr_classified_kinematics[2*h + 1]->Draw("COLZ");
-
-
- }
 
 theApp->Run();
 
