@@ -106,17 +106,18 @@ int main (int argc, char** argv) {
     if(rClusterEnergy[0] < 30 || rClusterEnergy[1] < 30)
     continue;
 
-    data_instance.push_back(rClusterEnergy[0]/fClusterEnergyMax);
-    data_instance.push_back(rClusterEnergy[1]/fClusterEnergyMax);
-
-    data_instance.push_back(rMotherCrystalEnergy[0]/fSingleCrystalEnergyMax);
-    data_instance.push_back(rMotherCrystalEnergy[1]/fSingleCrystalEnergyMax);
-
-    data_instance.push_back(rPolar[0]/fPolarMax);
-    data_instance.push_back(rPolar[1]/fPolarMax);
 
 
     if(abs(rClusterEnergy[0] - rPrimaryEnergy[0]) > 25){
+
+      data_instance.push_back(rClusterEnergy[0]/fClusterEnergyMax);
+      data_instance.push_back(rMotherCrystalEnergy[0]/fSingleCrystalEnergyMax);
+      data_instance.push_back(rPolar[0]/fPolarMax);
+
+      data_instance.push_back(rClusterEnergy[1]/fClusterEnergyMax);
+      data_instance.push_back(rMotherCrystalEnergy[1]/fSingleCrystalEnergyMax);
+      data_instance.push_back(rPolar[1]/fPolarMax);
+
 
       data_sample.push_back(data_instance);
 
@@ -125,11 +126,22 @@ int main (int argc, char** argv) {
       input_labels.push_back(label_instance);
 
 
+      data_instance.clear();
+      label_instance.clear();
+
+
      }
 
    else if(abs(rClusterEnergy[1] - rPrimaryEnergy[1]) > 25){
 
-     label_instance.clear();
+     data_instance.push_back(rClusterEnergy[1]/fClusterEnergyMax);
+     data_instance.push_back(rMotherCrystalEnergy[1]/fSingleCrystalEnergyMax);
+     data_instance.push_back(rPolar[1]/fPolarMax);
+
+     data_instance.push_back(rClusterEnergy[0]/fClusterEnergyMax);
+     data_instance.push_back(rMotherCrystalEnergy[0]/fSingleCrystalEnergyMax);
+     data_instance.push_back(rPolar[0]/fPolarMax);
+
 
      data_sample.push_back(data_instance);
 
@@ -138,11 +150,11 @@ int main (int argc, char** argv) {
      input_labels.push_back(label_instance);
 
 
+     data_instance.clear();
+     label_instance.clear();
+
      }
 
-
-    data_instance.clear();
-    label_instance.clear();
 
   }
 
@@ -151,8 +163,8 @@ int main (int argc, char** argv) {
   cout<<"Label sizes : "<<input_labels.size()<<" times "<<input_labels.at(0).size()<<endl;
 
 
-  int nTrainingSize   = (7.0/10.0)*data_sample.size();
-  int nTestSize       = (3.0/10.0)*data_sample.size();
+  int nTrainingSize   = (1.0/10.0)*data_sample.size();
+  int nTestSize       = (9.0/10.0)*data_sample.size();
 
   LOG(INFO)<<"Training Size : "<<data_sample.size()<<" events";
 
@@ -293,6 +305,8 @@ TH1F * hResolution_450_500 = new TH1F("hResolution_450_500","Resolution: 450 - 5
 TH1F * hResolution_500_550 = new TH1F("hResolution_500_550","Resolution: 500 - 550 MeV ",200,-400,400);
 TH1F * hResolution_550_600 = new TH1F("hResolution_550_600","Resolution: 550 - 600 MeV ",200,-400,400);
 
+TH2F * hCorr_raw_kinematics = new TH2F("hCorr_raw_kinematics","Raw Kinematics",300,20,80,300,0,600);
+TH2F * hCorr_reconstructed_kinematics = new TH2F("hCorr_reconstructed_kinematics","Reconstructed Kinematics",300,20,80,300,0,600);
 
 
 
@@ -305,6 +319,11 @@ TH1F * hResolution_550_600 = new TH1F("hResolution_550_600","Resolution: 550 - 6
     output_vec.clear();
 
     output_vec = model->Propagate(sample_number);
+
+    hCorr_raw_kinematics->Fill(TMath::RadToDeg()*fPolarMax*data_sample.at(sample_number).at(2),fClusterEnergyMax*data_sample.at(sample_number).at(0));
+
+    hCorr_reconstructed_kinematics->Fill(TMath::RadToDeg()*fPolarMax*data_sample.at(sample_number).at(2),fPrimEnergyMax*(output_vec.at(0)));
+
 
     hCorrReconstruction_results->Fill(fPrimEnergyMax*(output_vec.at(0)),fPrimEnergyMax*input_labels.at(sample_number).at(0));
 
@@ -413,17 +432,28 @@ TCanvas *reso_canvas = new TCanvas("reso_canvas","Resolution Canvas");
  reso_canvas->cd(6);
   hResolution_550_600->Draw("");
 
+  TCanvas *kinematics_canvas = new TCanvas("kinematics_canvas","Kinematics Canvas");
+  kinematics_canvas->Divide(2,1);
+
+  kinematics_canvas->cd(1);
+   hCorr_raw_kinematics->Draw("COLZ");
+
+  kinematics_canvas->cd(2);
+   hCorr_reconstructed_kinematics->Draw("COLZ");
 
 
 
-TString filename = "training_results_regression_";
- filename = filename + argv[12] + ".root";
+
+  TString filename = "training_results_regression_";
+   filename = filename + argv[12] + ".root";
 
 TFile resultsFile(filename,"RECREATE");
 
 
  model_canvas->Write();
  summary_canvas->Write();
+ reso_canvas->Write();
+ kinematics_canvas->Write();
 
 
 theApp->Run();
