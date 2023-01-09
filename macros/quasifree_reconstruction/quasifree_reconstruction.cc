@@ -259,6 +259,8 @@ int main (int argc, char** argv) {
   LOG(INFO)<<"L4 : "<<argv[10]<<" "<<"1";
 
   /* ---------- Pass Data Through Model ----------*/
+   absoluteLoss = 0.0;
+   quadraticLoss = 0.0;
 
    for (int i = 0 ; i < epochs ; i++){
      for (int j = 0 ; j < nTrainingSize ; j++){
@@ -268,23 +270,20 @@ int main (int argc, char** argv) {
 
        model->Train(j);
 
+       absoluteLoss  = absoluteLoss  +  model->AbsoluteLoss();
+       quadraticLoss = quadraticLoss +  model->QuadraticLoss();
 
-    if(i%10 == 0 && j == nTrainingSize-1){
+       model->Clear();
+    }
 
-       absoluteLoss  =  model->AbsoluteLoss();
-       quadraticLoss =  model->QuadraticLoss();
+    if((i+1)%10==0){
 
-     }
+     LOG(INFO)<<" Quadratic Loss : "<<quadraticLoss/(10*nTrainingSize)<<" Absolute Loss : "<<absoluteLoss/(10*nTrainingSize)<<" Absolute Loss (MeV) : "<<fPrimEnergyMax*absoluteLoss/(10*nTrainingSize)<<". Epoch : "<<i+1;
+     loss_vec.push_back(quadraticLoss/(10*nTrainingSize));
+     epoch_vec.push_back(i+1);
 
-    model->Clear();
-
-}
-
-    if(i%10==0){
-
-     LOG(INFO)<<" Quadratic Loss : "<<quadraticLoss<<" Absolute Loss : "<<absoluteLoss<<" . Epoch : "<<i;
-     loss_vec.push_back(quadraticLoss);
-     epoch_vec.push_back(i);
+     quadraticLoss = 0.0;
+     absoluteLoss  = 0.0;
 
    }
 
