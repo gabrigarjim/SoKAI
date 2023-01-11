@@ -34,6 +34,10 @@ int main (int argc, char** argv) {
   vector<vector<double>> data_sample;
   vector<vector<double>> input_labels;
 
+  vector<vector<double>> data_sample_shuffled;
+  vector<vector<double>> input_labels_shuffled;
+
+
 
   vector<double> data_instance;
   vector<double> label_instance;
@@ -88,27 +92,96 @@ int main (int argc, char** argv) {
   TBranch  *primBranch = eventTree->GetBranch("ProtonEnergy");
   primBranch->SetAddress(&rPrimaryEnergy);
 
-
   int nEvents = eventTree->GetEntries();
 
   if(nEvents < nSamples)
   LOG(FATAL)<<"More number of samples than avalaible!!!";
 
+  Int_t nSamples_0 = 0, nSamples_1 = 0, nSamples_2 = 0, nSamples_3 = 0, nSamples_4 = 0, nSamples_5 = 0;
 
-  for (Int_t j = 0; j<nSamples; j++) {
+  Int_t eventCounter = 0;
+  Int_t acceptedEvents = 0;
+
+  int nTrainingSize   = (7.0/10.0)*nSamples*6;
+  int nTestSize       = (3.0/10.0)*nSamples*6;
 
 
-    eventTree->GetEvent(j);
+  while ( (nSamples_0 < nSamples || nSamples_1 < nSamples || nSamples_2 < nSamples || nSamples_3 < nSamples || nSamples_4 < nSamples || nSamples_5 < nSamples) && eventCounter < nEvents ){
 
-    if(!(j%1000))
-     LOG(INFO)<<"Reading event "<<j<<" out of "<<nSamples<<" ("<<100.0*Float_t(j)/Float_t(nSamples)<<" % ) "<<endl;
+
+    eventTree->GetEvent(eventCounter);
+
 
     if(rClusterEnergy[0] < 30 || rClusterEnergy[1] < 30)
     continue;
 
+    eventCounter++;
+
 
 
     if(abs(rClusterEnergy[0] - rPrimaryEnergy[0]) > 25){
+
+      Bool_t goForIt = 0;
+
+      Int_t eventClass = 999;
+
+
+      if ( rPrimaryEnergy[0] > 300 && rPrimaryEnergy[0] < 350)
+      eventClass = 0;
+
+      if ( rPrimaryEnergy[0] > 350 && rPrimaryEnergy[0] < 400)
+      eventClass = 1;
+
+      if ( rPrimaryEnergy[0] > 400 && rPrimaryEnergy[0] < 450)
+      eventClass = 2;
+
+      if ( rPrimaryEnergy[0] > 450 && rPrimaryEnergy[0] < 500)
+      eventClass = 3;
+
+      if ( rPrimaryEnergy[0] > 500 && rPrimaryEnergy[0] < 550)
+      eventClass = 4;
+
+      if ( rPrimaryEnergy[0] > 550 && rPrimaryEnergy[0] < 600)
+      eventClass = 5;
+
+
+
+      if(eventClass == 0 && nSamples_0 < nSamples){
+       goForIt = 1;
+       nSamples_0++;
+      }
+
+      if(eventClass == 1 && nSamples_1 < nSamples){
+       goForIt = 1;
+       nSamples_1++;
+      }
+
+
+      if(eventClass == 2 && nSamples_2 < nSamples){
+       goForIt = 1;
+       nSamples_2++;
+      }
+
+
+      if(eventClass == 3 && nSamples_3 < nSamples){
+       goForIt = 1;
+       nSamples_3++;
+      }
+
+
+      if(eventClass == 4 && nSamples_4 < nSamples){
+       goForIt = 1;
+       nSamples_4++;
+      }
+
+
+      if(eventClass == 5 && nSamples_5 < nSamples){
+       goForIt = 1;
+       nSamples_5++;
+      }
+
+
+     if(goForIt){
 
       data_instance.push_back(rClusterEnergy[0]/fClusterEnergyMax);
       data_instance.push_back(rMotherCrystalEnergy[0]/fSingleCrystalEnergyMax);
@@ -125,50 +198,120 @@ int main (int argc, char** argv) {
 
       input_labels.push_back(label_instance);
 
-
       data_instance.clear();
       label_instance.clear();
 
 
+      }
      }
 
    else if(abs(rClusterEnergy[1] - rPrimaryEnergy[1]) > 25){
 
-     data_instance.push_back(rClusterEnergy[1]/fClusterEnergyMax);
-     data_instance.push_back(rMotherCrystalEnergy[1]/fSingleCrystalEnergyMax);
-     data_instance.push_back(rPolar[1]/fPolarMax);
-
-     data_instance.push_back(rClusterEnergy[0]/fClusterEnergyMax);
-     data_instance.push_back(rMotherCrystalEnergy[0]/fSingleCrystalEnergyMax);
-     data_instance.push_back(rPolar[0]/fPolarMax);
+      Bool_t goForIt = 0;
+      Int_t eventClass = 999;
 
 
-     data_sample.push_back(data_instance);
+      if ( rPrimaryEnergy[1] > 300 && rPrimaryEnergy[1] < 350)
+      eventClass = 0;
 
-     label_instance.push_back(rPrimaryEnergy[1]/fPrimEnergyMax);
+      if ( rPrimaryEnergy[1] > 350 && rPrimaryEnergy[1] < 400)
+      eventClass = 1;
 
-     input_labels.push_back(label_instance);
+      if ( rPrimaryEnergy[1] > 400 && rPrimaryEnergy[1] < 450)
+      eventClass = 2;
+
+      if ( rPrimaryEnergy[1] > 450 && rPrimaryEnergy[1] < 500)
+      eventClass = 3;
+
+      if ( rPrimaryEnergy[1] > 500 && rPrimaryEnergy[1] < 550)
+      eventClass = 4;
+
+      if ( rPrimaryEnergy[1] > 550 && rPrimaryEnergy[1] < 600)
+      eventClass = 5;
 
 
-     data_instance.clear();
-     label_instance.clear();
+     if(eventClass == 0 && nSamples_0 < nSamples){
+       goForIt = 1;
+       nSamples_0++;
+      }
+
+      if(eventClass == 1 && nSamples_1 < nSamples){
+       goForIt = 1;
+       nSamples_1++;
+      }
+
+
+      if(eventClass == 2 && nSamples_2 < nSamples){
+       goForIt = 1;
+       nSamples_2++;
+      }
+
+
+      if(eventClass == 3 && nSamples_3 < nSamples){
+       goForIt = 1;
+       nSamples_3++;
+      }
+
+
+      if(eventClass == 4 && nSamples_4 < nSamples){
+       goForIt = 1;
+       nSamples_4++;
+      }
+
+
+      if(eventClass == 5 && nSamples_5 < nSamples){
+       goForIt = 1;
+       nSamples_5++;
+
+      }
+
+
+     if(goForIt){
+
+      data_instance.push_back(rClusterEnergy[1]/fClusterEnergyMax);
+      data_instance.push_back(rMotherCrystalEnergy[1]/fSingleCrystalEnergyMax);
+      data_instance.push_back(rPolar[1]/fPolarMax);
+
+      data_instance.push_back(rClusterEnergy[0]/fClusterEnergyMax);
+      data_instance.push_back(rMotherCrystalEnergy[0]/fSingleCrystalEnergyMax);
+      data_instance.push_back(rPolar[0]/fPolarMax);
+
+
+       data_sample.push_back(data_instance);
+
+       label_instance.push_back(rPrimaryEnergy[1]/fPrimEnergyMax);
+
+       input_labels.push_back(label_instance);
+
+       data_instance.clear();
+       label_instance.clear();
 
      }
 
+     }
+
+   cout<<"nSamples_0 : "<<nSamples_0<<" "<<" nSamples_1 : "<<nSamples_1<<" nSamples_2 : "<<nSamples_2<<" nSamples_3 : "<<nSamples_3<<" nSamples_4 : "<<nSamples_4<<" nSamples_5 : "<<nSamples_5<<endl;
 
   }
 
 
-  cout<<"Sample sizes : "<<data_sample.size()<<" times "<<data_sample.at(0).size()<<endl;
-  cout<<"Label sizes : "<<input_labels.size()<<" times "<<input_labels.at(0).size()<<endl;
 
 
-  int nTrainingSize   = (1.0/10.0)*data_sample.size();
-  int nTestSize       = (9.0/10.0)*data_sample.size();
 
   LOG(INFO)<<"Training Size : "<<data_sample.size()<<" events";
+  LOG(INFO)<<"Shuffle events! ";
 
+  for( int i = 0 ; i < data_sample.size(); i++){
 
+    int event = data_sample.size()*gen.Rndm();
+
+    data_sample_shuffled.push_back(data_sample.at(event));
+    input_labels_shuffled.push_back(input_labels.at(event));
+
+  }
+
+  cout<<"Sample sizes : "<<data_sample_shuffled.size()<<" times "<<data_sample_shuffled.at(0).size()<<endl;
+  cout<<"Label sizes : "<<input_labels_shuffled.size()<<" times "<<input_labels_shuffled.at(0).size()<<endl;
 
   /*------- The Model Itself -------*/
 
@@ -240,8 +383,8 @@ int main (int argc, char** argv) {
 
   model->AddLayer(layer_4);
 
-  model->SetInputSample(&data_sample);
-  model->SetInputLabels(&input_labels);
+  model->SetInputSample(&data_sample_shuffled);
+  model->SetInputLabels(&input_labels_shuffled);
 
   model->Init();
   model->SetLearningRate(fLearningRate);
@@ -262,11 +405,13 @@ int main (int argc, char** argv) {
    absoluteLoss = 0.0;
    quadraticLoss = 0.0;
 
+   LOG(INFO)<<"Training! (Eye of the tiger sounds on the background...)";
+
    for (int i = 0 ; i < epochs ; i++){
      for (int j = 0 ; j < nTrainingSize ; j++){
 
 
-      int sample_number = nTrainingSize*gen.Rndm();
+       int sample_number = nTrainingSize*gen.Rndm();
 
        model->Train(j);
 
@@ -312,39 +457,38 @@ TH2F * hCorr_reconstructed_kinematics = new TH2F("hCorr_reconstructed_kinematics
 
   for (int j = 0 ; j < nTestSize ; j++){
 
-    int sample_number = nTrainingSize + nTestSize*gen.Rndm();
-
+    int sample_number =  nTrainingSize + nTestSize*gen.Rndm();
 
     output_vec.clear();
 
     output_vec = model->Propagate(sample_number);
 
-    hCorr_raw_kinematics->Fill(TMath::RadToDeg()*fPolarMax*data_sample.at(sample_number).at(2),fClusterEnergyMax*data_sample.at(sample_number).at(0));
+    hCorr_raw_kinematics->Fill(TMath::RadToDeg()*fPolarMax*data_sample_shuffled.at(sample_number).at(2),fClusterEnergyMax*data_sample_shuffled.at(sample_number).at(0));
 
-    hCorr_reconstructed_kinematics->Fill(TMath::RadToDeg()*fPolarMax*data_sample.at(sample_number).at(2),fPrimEnergyMax*(output_vec.at(0)));
+    hCorr_reconstructed_kinematics->Fill(TMath::RadToDeg()*fPolarMax*data_sample_shuffled.at(sample_number).at(2),fPrimEnergyMax*(output_vec.at(0)));
 
 
-    hCorrReconstruction_results->Fill(fPrimEnergyMax*(output_vec.at(0)),fPrimEnergyMax*input_labels.at(sample_number).at(0));
+    hCorrReconstruction_results->Fill(fPrimEnergyMax*(output_vec.at(0)),fPrimEnergyMax*input_labels_shuffled.at(sample_number).at(0));
 
-    hCorrReconstruction_energy->Fill(fPrimEnergyMax*(output_vec.at(0))-fPrimEnergyMax*input_labels.at(sample_number).at(0),fPrimEnergyMax*input_labels.at(sample_number).at(0));
+    hCorrReconstruction_energy->Fill(fPrimEnergyMax*(output_vec.at(0))-fPrimEnergyMax*input_labels_shuffled.at(sample_number).at(0),fPrimEnergyMax*input_labels_shuffled.at(sample_number).at(0));
 
-    if(fPrimEnergyMax*input_labels.at(sample_number).at(0) > 300 && fPrimEnergyMax*input_labels.at(sample_number).at(0) < 350)
-     hResolution_300_350->Fill(fPrimEnergyMax*(output_vec.at(0))-fPrimEnergyMax*input_labels.at(sample_number).at(0));
+    if(fPrimEnergyMax*input_labels_shuffled.at(sample_number).at(0) > 300 && fPrimEnergyMax*input_labels_shuffled.at(sample_number).at(0) < 350)
+     hResolution_300_350->Fill(fPrimEnergyMax*(output_vec.at(0))-fPrimEnergyMax*input_labels_shuffled.at(sample_number).at(0));
 
-    if(fPrimEnergyMax*input_labels.at(sample_number).at(0) > 350 && fPrimEnergyMax*input_labels.at(sample_number).at(0) < 400)
-     hResolution_350_400->Fill(fPrimEnergyMax*(output_vec.at(0))-fPrimEnergyMax*input_labels.at(sample_number).at(0));
+    if(fPrimEnergyMax*input_labels_shuffled.at(sample_number).at(0) > 350 && fPrimEnergyMax*input_labels_shuffled.at(sample_number).at(0) < 400)
+     hResolution_350_400->Fill(fPrimEnergyMax*(output_vec.at(0))-fPrimEnergyMax*input_labels_shuffled.at(sample_number).at(0));
 
-    if(fPrimEnergyMax*input_labels.at(sample_number).at(0) > 400 && fPrimEnergyMax*input_labels.at(sample_number).at(0) < 450)
-     hResolution_400_450->Fill(fPrimEnergyMax*(output_vec.at(0))-fPrimEnergyMax*input_labels.at(sample_number).at(0));
+    if(fPrimEnergyMax*input_labels_shuffled.at(sample_number).at(0) > 400 && fPrimEnergyMax*input_labels_shuffled.at(sample_number).at(0) < 450)
+     hResolution_400_450->Fill(fPrimEnergyMax*(output_vec.at(0))-fPrimEnergyMax*input_labels_shuffled.at(sample_number).at(0));
 
-    if(fPrimEnergyMax*input_labels.at(sample_number).at(0) > 450 && fPrimEnergyMax*input_labels.at(sample_number).at(0) < 500)
-     hResolution_450_500->Fill(fPrimEnergyMax*(output_vec.at(0))-fPrimEnergyMax*input_labels.at(sample_number).at(0));
+    if(fPrimEnergyMax*input_labels_shuffled.at(sample_number).at(0) > 450 && fPrimEnergyMax*input_labels_shuffled.at(sample_number).at(0) < 500)
+     hResolution_450_500->Fill(fPrimEnergyMax*(output_vec.at(0))-fPrimEnergyMax*input_labels_shuffled.at(sample_number).at(0));
 
-    if(fPrimEnergyMax*input_labels.at(sample_number).at(0) > 500 && fPrimEnergyMax*input_labels.at(sample_number).at(0) < 550)
-     hResolution_500_550->Fill(fPrimEnergyMax*(output_vec.at(0))-fPrimEnergyMax*input_labels.at(sample_number).at(0));
+    if(fPrimEnergyMax*input_labels_shuffled.at(sample_number).at(0) > 500 && fPrimEnergyMax*input_labels_shuffled.at(sample_number).at(0) < 550)
+     hResolution_500_550->Fill(fPrimEnergyMax*(output_vec.at(0))-fPrimEnergyMax*input_labels_shuffled.at(sample_number).at(0));
 
-    if(fPrimEnergyMax*input_labels.at(sample_number).at(0) > 550 && fPrimEnergyMax*input_labels.at(sample_number).at(0) < 600)
-     hResolution_550_600->Fill(fPrimEnergyMax*(output_vec.at(0))-fPrimEnergyMax*input_labels.at(sample_number).at(0));
+    if(fPrimEnergyMax*input_labels_shuffled.at(sample_number).at(0) > 550 && fPrimEnergyMax*input_labels_shuffled.at(sample_number).at(0) < 600)
+     hResolution_550_600->Fill(fPrimEnergyMax*(output_vec.at(0))-fPrimEnergyMax*input_labels_shuffled.at(sample_number).at(0));
 
     model->Clear();
 
