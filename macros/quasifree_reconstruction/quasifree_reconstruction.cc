@@ -55,7 +55,7 @@ int main (int argc, char** argv) {
 
   TRandom3 gen(seed);
 
-  float fPolarMax = TMath::Pi();
+  float fPolarMax = TMath::Pi()/2.0;
   float fAzimuthalMax = 2*TMath::Pi();
   float fClusterEnergyMax = 400;
   float fSingleCrystalEnergyMax = 340;
@@ -64,7 +64,7 @@ int main (int argc, char** argv) {
   SKColorScheme();
 
    /* ------- Reading Root Data -------- */
-  TString fileList = "../SoKAI/macros/quasifree_reconstruction/files/U238_Quasifree_560AMeV_NN_chamber_train_realistic_weights_discrete.root";
+  TString fileList = "../SoKAI/macros/quasifree_reconstruction/files/U238_Quasifree_560AMeV_NN_chamber_train.root";
 
   TFile *eventFile;
   TTree* eventTree;
@@ -97,19 +97,12 @@ int main (int argc, char** argv) {
   if(nEvents < nSamples)
   LOG(FATAL)<<"More number of samples than avalaible!!!";
 
-  Int_t nSamples_0 = 0, nSamples_1 = 0, nSamples_2 = 0, nSamples_3 = 0, nSamples_4 = 0, nSamples_5 = 0;
 
   Int_t eventCounter = 0;
-  Int_t acceptedEvents = 0;
 
-  int nTrainingSize   = (7.0/10.0)*nSamples*6;
-  int nTestSize       = (3.0/10.0)*nSamples*6;
+  for(int i = 0 ; i < nSamples ; i++){
 
-
-  while ( (nSamples_0 < nSamples || nSamples_1 < nSamples || nSamples_2 < nSamples || nSamples_3 < nSamples || nSamples_4 < nSamples || nSamples_5 < nSamples) && eventCounter < nEvents ){
-
-
-    eventTree->GetEvent(eventCounter);
+    eventTree->GetEvent(i);
 
 
     if(rClusterEnergy[0] < 30 || rClusterEnergy[1] < 30)
@@ -119,69 +112,7 @@ int main (int argc, char** argv) {
 
 
 
-    if(abs(rClusterEnergy[0] - rPrimaryEnergy[0]) > 25){
-
-      Bool_t goForIt = 0;
-
-      Int_t eventClass = 999;
-
-
-      if ( rPrimaryEnergy[0] > 300 && rPrimaryEnergy[0] < 350)
-      eventClass = 0;
-
-      if ( rPrimaryEnergy[0] > 350 && rPrimaryEnergy[0] < 400)
-      eventClass = 1;
-
-      if ( rPrimaryEnergy[0] > 400 && rPrimaryEnergy[0] < 450)
-      eventClass = 2;
-
-      if ( rPrimaryEnergy[0] > 450 && rPrimaryEnergy[0] < 500)
-      eventClass = 3;
-
-      if ( rPrimaryEnergy[0] > 500 && rPrimaryEnergy[0] < 550)
-      eventClass = 4;
-
-      if ( rPrimaryEnergy[0] > 550 && rPrimaryEnergy[0] < 600)
-      eventClass = 5;
-
-
-
-      if(eventClass == 0 && nSamples_0 < nSamples){
-       goForIt = 1;
-       nSamples_0++;
-      }
-
-      if(eventClass == 1 && nSamples_1 < nSamples){
-       goForIt = 1;
-       nSamples_1++;
-      }
-
-
-      if(eventClass == 2 && nSamples_2 < nSamples){
-       goForIt = 1;
-       nSamples_2++;
-      }
-
-
-      if(eventClass == 3 && nSamples_3 < nSamples){
-       goForIt = 1;
-       nSamples_3++;
-      }
-
-
-      if(eventClass == 4 && nSamples_4 < nSamples){
-       goForIt = 1;
-       nSamples_4++;
-      }
-
-
-      if(eventClass == 5 && nSamples_5 < nSamples){
-       goForIt = 1;
-       nSamples_5++;
-      }
-
-
-     if(goForIt){
+    if(abs(rClusterEnergy[0] - rPrimaryEnergy[0]) > 50){
 
       data_instance.push_back(rClusterEnergy[0]/fClusterEnergyMax);
       data_instance.push_back(rMotherCrystalEnergy[0]/fSingleCrystalEnergyMax);
@@ -201,72 +132,10 @@ int main (int argc, char** argv) {
       data_instance.clear();
       label_instance.clear();
 
-
-      }
      }
 
-   else if(abs(rClusterEnergy[1] - rPrimaryEnergy[1]) > 25){
+    else if(abs(rClusterEnergy[1] - rPrimaryEnergy[1]) > 50){
 
-      Bool_t goForIt = 0;
-      Int_t eventClass = 999;
-
-
-      if ( rPrimaryEnergy[1] > 300 && rPrimaryEnergy[1] < 350)
-      eventClass = 0;
-
-      if ( rPrimaryEnergy[1] > 350 && rPrimaryEnergy[1] < 400)
-      eventClass = 1;
-
-      if ( rPrimaryEnergy[1] > 400 && rPrimaryEnergy[1] < 450)
-      eventClass = 2;
-
-      if ( rPrimaryEnergy[1] > 450 && rPrimaryEnergy[1] < 500)
-      eventClass = 3;
-
-      if ( rPrimaryEnergy[1] > 500 && rPrimaryEnergy[1] < 550)
-      eventClass = 4;
-
-      if ( rPrimaryEnergy[1] > 550 && rPrimaryEnergy[1] < 600)
-      eventClass = 5;
-
-
-     if(eventClass == 0 && nSamples_0 < nSamples){
-       goForIt = 1;
-       nSamples_0++;
-      }
-
-      if(eventClass == 1 && nSamples_1 < nSamples){
-       goForIt = 1;
-       nSamples_1++;
-      }
-
-
-      if(eventClass == 2 && nSamples_2 < nSamples){
-       goForIt = 1;
-       nSamples_2++;
-      }
-
-
-      if(eventClass == 3 && nSamples_3 < nSamples){
-       goForIt = 1;
-       nSamples_3++;
-      }
-
-
-      if(eventClass == 4 && nSamples_4 < nSamples){
-       goForIt = 1;
-       nSamples_4++;
-      }
-
-
-      if(eventClass == 5 && nSamples_5 < nSamples){
-       goForIt = 1;
-       nSamples_5++;
-
-      }
-
-
-     if(goForIt){
 
       data_instance.push_back(rClusterEnergy[1]/fClusterEnergyMax);
       data_instance.push_back(rMotherCrystalEnergy[1]/fSingleCrystalEnergyMax);
@@ -277,28 +146,25 @@ int main (int argc, char** argv) {
       data_instance.push_back(rPolar[0]/fPolarMax);
 
 
-       data_sample.push_back(data_instance);
+      data_sample.push_back(data_instance);
 
-       label_instance.push_back(rPrimaryEnergy[1]/fPrimEnergyMax);
+      label_instance.push_back(rPrimaryEnergy[1]/fPrimEnergyMax);
 
-       input_labels.push_back(label_instance);
+      input_labels.push_back(label_instance);
 
-       data_instance.clear();
-       label_instance.clear();
-
-     }
+      data_instance.clear();
+      label_instance.clear();
 
      }
-
-   cout<<"nSamples_0 : "<<nSamples_0<<" "<<" nSamples_1 : "<<nSamples_1<<" nSamples_2 : "<<nSamples_2<<" nSamples_3 : "<<nSamples_3<<" nSamples_4 : "<<nSamples_4<<" nSamples_5 : "<<nSamples_5<<endl;
-
-  }
+   }
 
 
 
 
+  int nTrainingSize   = (7.0/10.0)*data_sample.size();
+  int nTestSize       = (3.0/10.0)*data_sample.size();
 
-  LOG(INFO)<<"Training Size : "<<data_sample.size()<<" events";
+  LOG(INFO)<<"Training Size : "<<nTrainingSize<<" events. Test size : "<<nTestSize<<endl;
   LOG(INFO)<<"Shuffle events! ";
 
   for( int i = 0 ; i < data_sample.size(); i++){
@@ -405,7 +271,7 @@ int main (int argc, char** argv) {
    absoluteLoss = 0.0;
    quadraticLoss = 0.0;
 
-   LOG(INFO)<<"Training! (Eye of the tiger sounds on the background...)";
+   LOG(INFO)<<"Training! (Eye of the tiger sounds in the background...)";
 
    for (int i = 0 ; i < epochs ; i++){
      for (int j = 0 ; j < nTrainingSize ; j++){
@@ -540,7 +406,10 @@ TGraph *loss_graph = new TGraph(epoch_vec.size(),&epoch_vec[0],&loss_vec[0]);
 TH2F* model_histo;
 model_histo = (TH2F*)model->ShowMe();
 
-model->SaveWeights("weights_reconstruction_30.txt");
+string weight_filename = "model_weights_regression_";
+ weight_filename = weight_filename + argv[12] + ".txt";
+
+model->SaveWeights(weight_filename);
 
 TCanvas *summary_canvas = new TCanvas("summary_canvas","Model");
 summary_canvas->Divide(2,1);

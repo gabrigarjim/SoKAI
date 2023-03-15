@@ -1,6 +1,6 @@
 project(SoKAI)
 
-set (CMAKE_CXX_STANDARD 11)
+set (CMAKE_CXX_STANDARD 17)
 
 cmake_minimum_required(VERSION 2.6 FATAL_ERROR)
 find_package (glog 0.5.0 REQUIRED)
@@ -25,14 +25,20 @@ set(CMAKE_EXE_LINKER_FLAGS ${ROOT_LD_FLAGS})
 
 add_executable(SoKAI macros/examples/classification/SoKAI.cc ${sources} ${headers} )
 add_executable(FunctionRegression macros/examples/regression/function_regression.cc ${sources} ${headers} )
-add_executable(ProtonReconstruction macros/punch_through/proton_reconstruction.cc ${sources} ${headers} )
 add_executable(QuasifreeReconstruction macros/quasifree_reconstruction/quasifree_reconstruction.cc ${sources} ${headers} )
+add_executable(QuasifreeReconstructionSmaller macros/quasifree_reconstruction/quasifree_reconstruction_smaller.cc ${sources} ${headers} )
 add_executable(QuasifreeClassification macros/quasifree_reconstruction/quasifree_classification.cc ${sources} ${headers} )
 add_executable(QuasifreeClassificationBigger macros/quasifree_reconstruction/quasifree_classification_bigger.cc ${sources} ${headers} )
 add_executable(QuasifreeClassificationSmaller macros/quasifree_reconstruction/quasifree_classification_smaller.cc ${sources} ${headers} )
 add_executable(QuasifreeExcitationEnergy macros/quasifree_reconstruction/quasifree_exc_energy.cc ${sources} ${headers} )
 add_executable(DeltaFission macros/delta_fission/function_regression_eofx.cc ${sources} ${headers} )
 add_executable(QuasifreeClassificationCheck macros/quasifree_reconstruction/quasifree_classification_check.cc ${sources} ${headers} )
+add_executable(QuasifreeReconstructionCheck macros/quasifree_reconstruction/quasifree_reconstruction_check.cc ${sources} ${headers} )
+add_executable(ProtonReconstruction macros/quasifree_reconstruction/proton_reconstruction.cc ${sources} ${headers} )
+add_executable(QuasifreeExpReconstruction macros/quasifree_reconstruction/exp_data_full_reconstruction.cc ${sources} ${headers} )
+
+
+
 
 
 
@@ -40,9 +46,12 @@ target_link_libraries(SoKAI ${ROOT_LIBRARIES} glog::glog)
 target_link_libraries(FunctionRegression ${ROOT_LIBRARIES} glog::glog)
 target_link_libraries(ProtonReconstruction ${ROOT_LIBRARIES} glog::glog)
 target_link_libraries(QuasifreeReconstruction ${ROOT_LIBRARIES} glog::glog)
+target_link_libraries(QuasifreeReconstructionSmaller ${ROOT_LIBRARIES} glog::glog)
 target_link_libraries(QuasifreeClassification ${ROOT_LIBRARIES} glog::glog)
 target_link_libraries(QuasifreeClassificationCheck ${ROOT_LIBRARIES} glog::glog)
+target_link_libraries(QuasifreeReconstructionCheck ${ROOT_LIBRARIES} glog::glog)
 target_link_libraries(QuasifreeClassificationBigger ${ROOT_LIBRARIES} glog::glog)
 target_link_libraries(QuasifreeClassificationSmaller ${ROOT_LIBRARIES} glog::glog)
 target_link_libraries(QuasifreeExcitationEnergy ${ROOT_LIBRARIES} glog::glog)
 target_link_libraries(DeltaFission ${ROOT_LIBRARIES} glog::glog)
+target_link_libraries(QuasifreeExpReconstruction ${ROOT_LIBRARIES} glog::glog)

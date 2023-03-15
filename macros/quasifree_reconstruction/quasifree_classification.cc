@@ -37,6 +37,10 @@ int main (int argc, char** argv) {
   vector<vector<double>> data_sample;
   vector<vector<double>> input_labels;
 
+  vector<vector<double>> data_sample_shuffled;
+  vector<vector<double>> input_labels_shuffled;
+
+
   vector<double> data_instance;
   vector<double> label_instance;
 
@@ -61,7 +65,7 @@ int main (int argc, char** argv) {
   SKColorScheme();
 
    /* ------- Reading Root Data -------- */
-  TString fileList = "../SoKAI/macros/quasifree_reconstruction/files/U238_Quasifree_560AMeV_NN_chamber_train_realistic_weights_discrete.root";
+  TString fileList = "../SoKAI/macros/quasifree_reconstruction/files/U238_Quasifree_560AMeV_NN_chamber_train.root";
 
   TFile *eventFile;
   TTree* eventTree;
@@ -89,8 +93,10 @@ int main (int argc, char** argv) {
   TBranch  *punchedBranch = eventTree->GetBranch("Punched");
   punchedBranch->SetAddress(rPunched);
 
+
   int nEvents = eventTree->GetEntries();
 
+  int fClass_0 = 0 , fClass_1 = 0, fClass_2 = 0, fClass_3 = 0;
 
   LOG(INFO)<<"Number of Samples : "<<nEvents<<endl;
 
@@ -98,8 +104,10 @@ int main (int argc, char** argv) {
 
 
     eventTree->GetEvent(j);
-    if(!(j%100))
-     LOG(INFO)<<"Reading event "<<j<<" out of "<<nEvents<<" ("<<100.0*Float_t(j)/Float_t(nSamples)<<" % ) "<<endl;
+
+    if(!(j%1000))
+     LOG(INFO)<<"Reading event "<<j<<" out of "<<nEvents<<" ("<<100.0*Float_t(j)/Float_t(nEvents)<<" % ) "<<endl;
+
 
     data_instance.push_back(rClusterEnergy[0]/fClusterEnergyMax);
     data_instance.push_back(rClusterEnergy[1]/fClusterEnergyMax);
@@ -109,6 +117,7 @@ int main (int argc, char** argv) {
 
     data_instance.push_back(rPolar[0]/fPolarMax);
     data_instance.push_back(rPolar[1]/fPolarMax);
+
 
     label_instance.push_back(rPunched[0]);
     label_instance.push_back(rPunched[1]);
@@ -123,6 +132,10 @@ int main (int argc, char** argv) {
     label_instance.clear();
 
    }
+
+
+
+
 
   /*------- The Model Itself -------*/
 
@@ -217,26 +230,27 @@ int main (int argc, char** argv) {
   /* ---------- Pass Data Through Model ----------*/
 
    for (int i = 0 ; i < epochs ; i++){
+
+     crossEntropyLoss = 0.0;
+
      for (int j = 0 ; j < nTrainingSize ; j++){
 
 
       // Using  7/10 of the dataset to train the network
       int sample_number = nTrainingSize*gen.Rndm();
 
-      model->Train(j);
+      model->Train(sample_number);
 
-      if(i%10 == 0 && j == nTrainingSize-1){
-       crossEntropyLoss  =  model->CrossEntropyLoss();
+      crossEntropyLoss  +=  model->CrossEntropyLoss();
+
+      model->Clear();
 
      }
 
-      model->Clear();
-   }
-
     if(i%10==0){
 
-     LOG(INFO)<<" Cross Entropy Loss : "<<crossEntropyLoss<<" . Epoch : "<<i;
-     loss_vec.push_back(crossEntropyLoss);
+     LOG(INFO)<<" Cross Entropy Loss : "<<crossEntropyLoss/nTrainingSize<<" . Epoch : "<<i;
+     loss_vec.push_back(crossEntropyLoss/nTrainingSize);
      epoch_vec.push_back(i);
 
    }

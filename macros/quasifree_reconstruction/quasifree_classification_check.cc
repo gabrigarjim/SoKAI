@@ -43,11 +43,21 @@ int main (int argc, char** argv) {
   float fClusterEnergyMax = 400;
   float fSingleCrystalEnergyMax = 340;
   float fPrimEnergyMax = 700;
+  float fExcMax = 100;
 
   SKColorScheme();
 
    /* ------- Reading Root Data -------- */
-  TString fileList = "../SoKAI/macros/quasifree_reconstruction/files/U238_Quasifree_560AMeV_NN_chamber_train_realistic_weights_discrete.root";
+  TString fileList = "../SoKAI/macros/quasifree_reconstruction/files/U238_Quasifree_560AMeV_NN_chamber_train.root";
+  TString crystalString = "../SoKAI/macros/quasifree_reconstruction/files/angular_histograms.root";
+
+  TH2F *hCorr_crystal_distribution;
+
+  TFile *crystalFile;
+  crystalFile = TFile::Open(crystalString);
+
+  char name[100];
+  Double_t randTheta_1,randPhi_1,randTheta_2,randPhi_2;
 
   TFile *eventFile;
   TTree* eventTree;
@@ -77,7 +87,16 @@ int main (int argc, char** argv) {
 
   Float_t rPrimaryEnergy[2];
   TBranch  *primBranch = eventTree->GetBranch("ProtonEnergy");
-  primBranch->SetAddress(&rPrimaryEnergy);
+  primBranch->SetAddress(rPrimaryEnergy);
+
+  Int_t rMotherId[2];
+  TBranch *idBranch = eventTree->GetBranch("MotherId");
+  idBranch->SetAddress(rMotherId);
+
+  Float_t rExcitationEnergy;
+  TBranch  *excBranch = eventTree->GetBranch("ExcitationEnergy");
+  excBranch->SetAddress(&rExcitationEnergy);
+
 
 
 
@@ -96,17 +115,16 @@ int main (int argc, char** argv) {
 
 
 
-  char name [100];
 
   for(int i = 0 ; i < 4 ; i++){
 
       sprintf(name, "hCorr_classified_kinematics_%i_0", i + 1);
-      hCorr_classified_kinematics[2*i] = new TH2F(name,name,25,18,70,100,0,400);
+      hCorr_classified_kinematics[2*i] = new TH2F(name,name,250,18,70,200,0,400);
       hCorr_classified_kinematics[2*i]->GetXaxis()->SetTitle("Polar Angle (degrees)");
       hCorr_classified_kinematics[2*i]->GetYaxis()->SetTitle("Energy (MeV)");
 
       sprintf(name, "hCorr_classified_kinematics_%i_1", i + 1);
-      hCorr_classified_kinematics[2*i+1] = new TH2F(name,name,25,18,70,100,0,400);
+      hCorr_classified_kinematics[2*i+1] = new TH2F(name,name,250,18,70,200,0,400);
       hCorr_classified_kinematics[2*i+1]->GetXaxis()->SetTitle("Polar Angle (degrees)");
       hCorr_classified_kinematics[2*i+1]->GetYaxis()->SetTitle("Energy (MeV)");
 
@@ -115,12 +133,12 @@ int main (int argc, char** argv) {
 for(int i = 0 ; i < 4 ; i++){
 
     sprintf(name, "hCorr_classified_kinematics_true_wrong_%i_0", i + 1);
-    hCorr_classified_kinematics_wrong[2*i] = new TH2F(name,name,25,18,70,100,0,400);
+    hCorr_classified_kinematics_wrong[2*i] = new TH2F(name,name,250,18,70,200,0,400);
     hCorr_classified_kinematics_wrong[2*i]->GetXaxis()->SetTitle("Polar Angle (degrees)");
     hCorr_classified_kinematics_wrong[2*i]->GetYaxis()->SetTitle("Energy (MeV)");
 
     sprintf(name, "hCorr_classified_kinematics_true_wrong_%i_1", i + 1);
-    hCorr_classified_kinematics_wrong[2*i+1] = new TH2F(name,name,25,18,70,100,0,400);
+    hCorr_classified_kinematics_wrong[2*i+1] = new TH2F(name,name,250,18,70,200,0,400);
     hCorr_classified_kinematics_wrong[2*i+1]->GetXaxis()->SetTitle("Polar Angle (degrees)");
     hCorr_classified_kinematics_wrong[2*i+1]->GetYaxis()->SetTitle("Energy (MeV)");
 
@@ -129,12 +147,12 @@ for(int i = 0 ; i < 4 ; i++){
 for(int i = 0 ; i < 4 ; i++){
 
     sprintf(name, "hCorr_classified_kinematics_true_good_%i_0", i + 1);
-    hCorr_classified_kinematics_good[2*i] = new TH2F(name,name,25,18,70,100,0,400);
+    hCorr_classified_kinematics_good[2*i] = new TH2F(name,name,250,18,70,200,0,400);
     hCorr_classified_kinematics_good[2*i]->GetXaxis()->SetTitle("Polar Angle (degrees)");
     hCorr_classified_kinematics_good[2*i]->GetYaxis()->SetTitle("Energy (MeV)");
 
     sprintf(name, "hCorr_classified_kinematics_true_good_%i_1", i + 1);
-    hCorr_classified_kinematics_good[2*i+1] = new TH2F(name,name,25,18,70,100,0,400);
+    hCorr_classified_kinematics_good[2*i+1] = new TH2F(name,name,250,18,70,200,0,400);
     hCorr_classified_kinematics_good[2*i+1]->GetXaxis()->SetTitle("Polar Angle (degrees)");
     hCorr_classified_kinematics_good[2*i+1]->GetYaxis()->SetTitle("Energy (MeV)");
 
@@ -144,17 +162,16 @@ for(int i = 0 ; i < 4 ; i++){
 
 
 
-
   /* ------ Classification Model ------ */
 
-  SKLayer   *layer_1_class = new SKLayer(6,"LeakyReLU");
-  SKWeights *weights_12_class = new SKWeights(6,6);
-  SKWeights *gradients_12_class = new SKWeights(6,6);
+  SKLayer   *layer_1_class = new SKLayer(7,"LeakyReLU");
+  SKWeights *weights_12_class = new SKWeights(7,10);
+  SKWeights *gradients_12_class = new SKWeights(7,10);
 
 
-  SKLayer   *layer_2_class = new SKLayer(6,"LeakyReLU");
-  SKWeights *weights_23_class = new SKWeights(6,10);
-  SKWeights *gradients_23_class = new SKWeights(6,10);
+  SKLayer   *layer_2_class = new SKLayer(10,"Sigmoid");
+  SKWeights *weights_23_class = new SKWeights(10,10);
+  SKWeights *gradients_23_class = new SKWeights(10,10);
 
   SKLayer   *layer_3_class = new SKLayer(10,"LeakyReLU");
   SKWeights *weights_34_class = new SKWeights(10,4);
@@ -192,13 +209,14 @@ for(int i = 0 ; i < 4 ; i++){
 
   model_class->SetInputSample(&data_sample);
 
-  model_class->SetSummaryFile("test","53");
+  model_class->SetSummaryFile("test","1");
 
   model_class->Init();
 
 
-  model_class->LoadWeights("model_weights_classification_127.txt");
+  model_class->LoadWeights("model_weights_classification_1.txt");
 
+  Float_t fGoodClassification=0.0, fGoodClassificationCut=0.0;
 
   LOG(INFO)<<"Number of Samples : "<<nEvents<<endl;
 
@@ -207,7 +225,7 @@ for(int i = 0 ; i < 4 ; i++){
 
     eventTree->GetEvent(j);
 
-    if(!(j%10000))
+    if(!(j%1000))
      LOG(INFO)<<"Reading event "<<j<<" out of "<<nEvents<<" ("<<100.0*Float_t(j)/Float_t(nEvents)<<" % ) "<<endl;
 
     if(rClusterEnergy[0] < 30 || rClusterEnergy[1] < 30)
@@ -221,6 +239,8 @@ for(int i = 0 ; i < 4 ; i++){
 
     data_instance.push_back(rPolar[0]/fPolarMax);
     data_instance.push_back(rPolar[1]/fPolarMax);
+    data_instance.push_back(rExcitationEnergy/fExcMax);
+
 
     label_instance.push_back(rPunched[0]);
     label_instance.push_back(rPunched[1]);
@@ -230,6 +250,15 @@ for(int i = 0 ; i < 4 ; i++){
     input_labels.push_back(label_instance);
 
 
+    sprintf(name, "distributionCrystalID_%i",rMotherId[0]);
+
+    hCorr_crystal_distribution = (TH2F*)crystalFile->Get(name);
+    hCorr_crystal_distribution->GetRandom2(randPhi_1,randTheta_1);
+
+    sprintf(name, "distributionCrystalID_%i",(int)rMotherId[1]);
+
+    hCorr_crystal_distribution = (TH2F*)crystalFile->Get(name);
+    hCorr_crystal_distribution->GetRandom2(randPhi_2,randTheta_2);
 
 
     data_sample.push_back(data_instance);
@@ -239,14 +268,58 @@ for(int i = 0 ; i < 4 ; i++){
     int highest_index_training = distance(output_vec.begin(),max_element(output_vec.begin(), output_vec.end()));
     int highest_index_label = distance(input_labels.at(0).begin(),max_element(input_labels.at(0).begin(), input_labels.at(0).end()));
 
-    hCorr_classified_kinematics[2*highest_index_training]->Fill(TMath::RadToDeg()*fPolarMax*data_sample.at(data_sample.size()-1).at(4),fClusterEnergyMax*data_sample.at(data_sample.size()-1).at(0));
-    hCorr_classified_kinematics[2*highest_index_training+1]->Fill(TMath::RadToDeg()*fPolarMax*data_sample.at(data_sample.size()-1).at(5),fClusterEnergyMax*data_sample.at(data_sample.size()-1).at(1));
+    /*---- The gross cut ---- */
+    bool bPunchOne = (TMath::RadToDeg()*rPolar[0]) < 48.0 ;
+    bool bPunchTwo = (TMath::RadToDeg()*rPolar[1]) < 48.0 ;
+
+    if(bPunchOne && bPunchTwo) {
+     if(highest_index_label == 3)
+      fGoodClassificationCut += 2.0;
+
+     if(highest_index_label == 1 || highest_index_label == 2)
+      fGoodClassificationCut++;
+
+    }
+
+    if(!bPunchOne && !bPunchTwo) {
+     if(highest_index_label == 0)
+      fGoodClassificationCut += 2.0;
+
+     if(highest_index_label == 1 || highest_index_label == 2)
+      fGoodClassificationCut++;
+
+
+    }
+
+    if(!bPunchOne && bPunchTwo) {
+     if(highest_index_label == 1)
+      fGoodClassificationCut += 2.0;
+
+     if(highest_index_label == 0 || highest_index_label == 3)
+      fGoodClassificationCut++;
+
+
+    }
+
+    if(bPunchOne && !bPunchTwo) {
+     if(highest_index_label == 2)
+      fGoodClassificationCut += 2.0;
+
+    if(highest_index_label == 0 || highest_index_label == 3)
+     fGoodClassificationCut++;
+
+    }
+
+
+    hCorr_classified_kinematics[2*highest_index_training]->Fill(randTheta_1,fClusterEnergyMax*data_sample.at(data_sample.size()-1).at(0));
+    hCorr_classified_kinematics[2*highest_index_training+1]->Fill(randTheta_2,fClusterEnergyMax*data_sample.at(data_sample.size()-1).at(1));
 
 
     if(highest_index_label == highest_index_training){
 
-     hCorr_classified_kinematics_good[2*highest_index_training]->Fill(TMath::RadToDeg()*fPolarMax*data_sample.at(data_sample.size()-1).at(4),fClusterEnergyMax*data_sample.at(data_sample.size()-1).at(0));
-     hCorr_classified_kinematics_good[2*highest_index_training+1]->Fill(TMath::RadToDeg()*fPolarMax*data_sample.at(data_sample.size()-1).at(5),fClusterEnergyMax*data_sample.at(data_sample.size()-1).at(1));
+     hCorr_classified_kinematics_good[2*highest_index_training]->Fill(randTheta_1,fClusterEnergyMax*data_sample.at(data_sample.size()-1).at(0));
+     hCorr_classified_kinematics_good[2*highest_index_training+1]->Fill(randTheta_2,fClusterEnergyMax*data_sample.at(data_sample.size()-1).at(1));
+     fGoodClassification += 2.0;
    }
 
 
@@ -255,78 +328,93 @@ for(int i = 0 ; i < 4 ; i++){
 
       /*------ Class One ------ */
       if(highest_index_label == 0 && highest_index_training == 1){
-       hCorr_classified_kinematics_good[2*highest_index_training]->Fill(TMath::RadToDeg()*fPolarMax*data_sample.at(data_sample.size()-1).at(4),fClusterEnergyMax*data_sample.at(data_sample.size()-1).at(0));
-       hCorr_classified_kinematics_wrong[2*highest_index_training+1]->Fill(TMath::RadToDeg()*fPolarMax*data_sample.at(data_sample.size()-1).at(5),fClusterEnergyMax*data_sample.at(data_sample.size()-1).at(1));
+       hCorr_classified_kinematics_good[2*highest_index_training]->Fill(randTheta_1,fClusterEnergyMax*data_sample.at(data_sample.size()-1).at(0));
+       hCorr_classified_kinematics_wrong[2*highest_index_training+1]->Fill(randTheta_2,fClusterEnergyMax*data_sample.at(data_sample.size()-1).at(1));
+       fGoodClassification++;
       }
 
 
      if(highest_index_label == 0 && highest_index_training == 2){
-      hCorr_classified_kinematics_wrong[2*highest_index_training]->Fill(TMath::RadToDeg()*fPolarMax*data_sample.at(data_sample.size()-1).at(4),fClusterEnergyMax*data_sample.at(data_sample.size()-1).at(0));
-      hCorr_classified_kinematics_good[2*highest_index_training+1]->Fill(TMath::RadToDeg()*fPolarMax*data_sample.at(data_sample.size()-1).at(5),fClusterEnergyMax*data_sample.at(data_sample.size()-1).at(1));
+      hCorr_classified_kinematics_wrong[2*highest_index_training]->Fill(randTheta_1,fClusterEnergyMax*data_sample.at(data_sample.size()-1).at(0));
+      hCorr_classified_kinematics_good[2*highest_index_training+1]->Fill(randTheta_2,fClusterEnergyMax*data_sample.at(data_sample.size()-1).at(1));
+      fGoodClassification++;
+
      }
 
      if(highest_index_label == 0 && highest_index_training == 3){
-      hCorr_classified_kinematics_wrong[2*highest_index_training]->Fill(TMath::RadToDeg()*fPolarMax*data_sample.at(data_sample.size()-1).at(4),fClusterEnergyMax*data_sample.at(data_sample.size()-1).at(0));
-      hCorr_classified_kinematics_wrong[2*highest_index_training+1]->Fill(TMath::RadToDeg()*fPolarMax*data_sample.at(data_sample.size()-1).at(5),fClusterEnergyMax*data_sample.at(data_sample.size()-1).at(1));
+      hCorr_classified_kinematics_wrong[2*highest_index_training]->Fill(randTheta_1,fClusterEnergyMax*data_sample.at(data_sample.size()-1).at(0));
+      hCorr_classified_kinematics_wrong[2*highest_index_training+1]->Fill(randTheta_2,fClusterEnergyMax*data_sample.at(data_sample.size()-1).at(1));
      }
 
 
 
      /* ------ Class Two ------ */
     if(highest_index_label == 1 && highest_index_training == 0){
-     hCorr_classified_kinematics_good[2*highest_index_training]->Fill(TMath::RadToDeg()*fPolarMax*data_sample.at(data_sample.size()-1).at(4),fClusterEnergyMax*data_sample.at(data_sample.size()-1).at(0));
-     hCorr_classified_kinematics_wrong[2*highest_index_training+1]->Fill(TMath::RadToDeg()*fPolarMax*data_sample.at(data_sample.size()-1).at(5),fClusterEnergyMax*data_sample.at(data_sample.size()-1).at(1));
+     hCorr_classified_kinematics_good[2*highest_index_training]->Fill(randTheta_1,fClusterEnergyMax*data_sample.at(data_sample.size()-1).at(0));
+     hCorr_classified_kinematics_wrong[2*highest_index_training+1]->Fill(randTheta_2,fClusterEnergyMax*data_sample.at(data_sample.size()-1).at(1));
+     fGoodClassification++;
+
     }
 
 
     if(highest_index_label == 1 && highest_index_training == 2){
-     hCorr_classified_kinematics_wrong[2*highest_index_training]->Fill(TMath::RadToDeg()*fPolarMax*data_sample.at(data_sample.size()-1).at(4),fClusterEnergyMax*data_sample.at(data_sample.size()-1).at(0));
-     hCorr_classified_kinematics_wrong[2*highest_index_training+1]->Fill(TMath::RadToDeg()*fPolarMax*data_sample.at(data_sample.size()-1).at(5),fClusterEnergyMax*data_sample.at(data_sample.size()-1).at(1));
+     hCorr_classified_kinematics_wrong[2*highest_index_training]->Fill(randTheta_1,fClusterEnergyMax*data_sample.at(data_sample.size()-1).at(0));
+     hCorr_classified_kinematics_wrong[2*highest_index_training+1]->Fill(randTheta_2,fClusterEnergyMax*data_sample.at(data_sample.size()-1).at(1));
+
     }
 
 
     if(highest_index_label == 1 && highest_index_training == 3){
-     hCorr_classified_kinematics_wrong[2*highest_index_training]->Fill(TMath::RadToDeg()*fPolarMax*data_sample.at(data_sample.size()-1).at(4),fClusterEnergyMax*data_sample.at(data_sample.size()-1).at(0));
-     hCorr_classified_kinematics_good[2*highest_index_training+1]->Fill(TMath::RadToDeg()*fPolarMax*data_sample.at(data_sample.size()-1).at(5),fClusterEnergyMax*data_sample.at(data_sample.size()-1).at(1));
+     hCorr_classified_kinematics_wrong[2*highest_index_training]->Fill(randTheta_1,fClusterEnergyMax*data_sample.at(data_sample.size()-1).at(0));
+     hCorr_classified_kinematics_good[2*highest_index_training+1]->Fill(randTheta_2,fClusterEnergyMax*data_sample.at(data_sample.size()-1).at(1));
+     fGoodClassification++;
+
     }
 
 
     /* ------ Class Three ------ */
    if(highest_index_label == 2 && highest_index_training == 0){
-    hCorr_classified_kinematics_wrong[2*highest_index_training]->Fill(TMath::RadToDeg()*fPolarMax*data_sample.at(data_sample.size()-1).at(4),fClusterEnergyMax*data_sample.at(data_sample.size()-1).at(0));
-    hCorr_classified_kinematics_good[2*highest_index_training+1]->Fill(TMath::RadToDeg()*fPolarMax*data_sample.at(data_sample.size()-1).at(5),fClusterEnergyMax*data_sample.at(data_sample.size()-1).at(1));
+    hCorr_classified_kinematics_wrong[2*highest_index_training]->Fill(randTheta_1,fClusterEnergyMax*data_sample.at(data_sample.size()-1).at(0));
+    hCorr_classified_kinematics_good[2*highest_index_training+1]->Fill(randTheta_2,fClusterEnergyMax*data_sample.at(data_sample.size()-1).at(1));
+    fGoodClassification++;
+
    }
 
 
    if(highest_index_label == 2 && highest_index_training == 1){
-    hCorr_classified_kinematics_wrong[2*highest_index_training]->Fill(TMath::RadToDeg()*fPolarMax*data_sample.at(data_sample.size()-1).at(4),fClusterEnergyMax*data_sample.at(data_sample.size()-1).at(0));
-    hCorr_classified_kinematics_wrong[2*highest_index_training+1]->Fill(TMath::RadToDeg()*fPolarMax*data_sample.at(data_sample.size()-1).at(5),fClusterEnergyMax*data_sample.at(data_sample.size()-1).at(1));
+    hCorr_classified_kinematics_wrong[2*highest_index_training]->Fill(randTheta_1,fClusterEnergyMax*data_sample.at(data_sample.size()-1).at(0));
+    hCorr_classified_kinematics_wrong[2*highest_index_training+1]->Fill(randTheta_2,fClusterEnergyMax*data_sample.at(data_sample.size()-1).at(1));
    }
 
 
    if(highest_index_label == 2 && highest_index_training == 3){
-    hCorr_classified_kinematics_good[2*highest_index_training]->Fill(TMath::RadToDeg()*fPolarMax*data_sample.at(data_sample.size()-1).at(4),fClusterEnergyMax*data_sample.at(data_sample.size()-1).at(0));
-    hCorr_classified_kinematics_wrong[2*highest_index_training+1]->Fill(TMath::RadToDeg()*fPolarMax*data_sample.at(data_sample.size()-1).at(5),fClusterEnergyMax*data_sample.at(data_sample.size()-1).at(1));
+    hCorr_classified_kinematics_good[2*highest_index_training]->Fill(randTheta_1,fClusterEnergyMax*data_sample.at(data_sample.size()-1).at(0));
+    hCorr_classified_kinematics_wrong[2*highest_index_training+1]->Fill(randTheta_2,fClusterEnergyMax*data_sample.at(data_sample.size()-1).at(1));
+    fGoodClassification++;
+
    }
 
 
    /* ----- Class Four ----- */
 
    if(highest_index_label == 3 && highest_index_training == 0){
-    hCorr_classified_kinematics_wrong[2*highest_index_training]->Fill(TMath::RadToDeg()*fPolarMax*data_sample.at(data_sample.size()-1).at(4),fClusterEnergyMax*data_sample.at(data_sample.size()-1).at(0));
-    hCorr_classified_kinematics_wrong[2*highest_index_training+1]->Fill(TMath::RadToDeg()*fPolarMax*data_sample.at(data_sample.size()-1).at(5),fClusterEnergyMax*data_sample.at(data_sample.size()-1).at(1));
+    hCorr_classified_kinematics_wrong[2*highest_index_training]->Fill(randTheta_1,fClusterEnergyMax*data_sample.at(data_sample.size()-1).at(0));
+    hCorr_classified_kinematics_wrong[2*highest_index_training+1]->Fill(randTheta_2,fClusterEnergyMax*data_sample.at(data_sample.size()-1).at(1));
    }
 
 
    if(highest_index_label == 3 && highest_index_training == 1){
-    hCorr_classified_kinematics_wrong[2*highest_index_training]->Fill(TMath::RadToDeg()*fPolarMax*data_sample.at(data_sample.size()-1).at(4),fClusterEnergyMax*data_sample.at(data_sample.size()-1).at(0));
-    hCorr_classified_kinematics_good[2*highest_index_training+1]->Fill(TMath::RadToDeg()*fPolarMax*data_sample.at(data_sample.size()-1).at(5),fClusterEnergyMax*data_sample.at(data_sample.size()-1).at(1));
+    hCorr_classified_kinematics_wrong[2*highest_index_training]->Fill(randTheta_1,fClusterEnergyMax*data_sample.at(data_sample.size()-1).at(0));
+    hCorr_classified_kinematics_good[2*highest_index_training+1]->Fill(randTheta_2,fClusterEnergyMax*data_sample.at(data_sample.size()-1).at(1));
+    fGoodClassification++;
+
    }
 
 
    if(highest_index_label == 3 && highest_index_training == 2){
-    hCorr_classified_kinematics_good[2*highest_index_training]->Fill(TMath::RadToDeg()*fPolarMax*data_sample.at(data_sample.size()-1).at(4),fClusterEnergyMax*data_sample.at(data_sample.size()-1).at(0));
-    hCorr_classified_kinematics_wrong[2*highest_index_training+1]->Fill(TMath::RadToDeg()*fPolarMax*data_sample.at(data_sample.size()-1).at(5),fClusterEnergyMax*data_sample.at(data_sample.size()-1).at(1));
+    hCorr_classified_kinematics_good[2*highest_index_training]->Fill(randTheta_1,fClusterEnergyMax*data_sample.at(data_sample.size()-1).at(0));
+    hCorr_classified_kinematics_wrong[2*highest_index_training+1]->Fill(randTheta_2,fClusterEnergyMax*data_sample.at(data_sample.size()-1).at(1));
+    fGoodClassification++;
 
   }
 
@@ -343,6 +431,9 @@ for(int i = 0 ; i < 4 ; i++){
    }
 
 /* --------- Plots and so on ....... ------*/
+LOG(INFO)<<"Accuracy (pair): "<<100*(fGoodClassification)/(2.0*nEvents)<<" %";
+LOG(INFO)<<"Accuracy Cut (pair): "<<100*(fGoodClassificationCut)/(2.0*nEvents)<<" %";
+
 
 
   TCanvas *kinematics_canvas = new TCanvas("kinematics_canvas","Model");
