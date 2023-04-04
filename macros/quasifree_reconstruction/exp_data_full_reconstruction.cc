@@ -117,6 +117,10 @@ int main (int argc, char** argv) {
   TH1F *hRaw_excitation_energy = new TH1F("hRaw_excitation_energy","Raw Excitation Energy",400,-100,100);
   TH1F *hReconstructed_excitation_energy = new TH1F("hReconstructed_excitation_energy","Reconstructed Excitation Energy",400,-100,100);
 
+  TH2F *hCorr_exc_reconstructed_opening = new TH2F("hCorr_exc_reconstructed_opening","Exc Energy Vs Opening Angle",400,10,100,400,-100,100);
+  TH2F *hCorr_exc_raw_opening = new TH2F("hCorr_exc_raw_opening","Exc Energy (Raw) Vs Opening Angle",400,10,100,400,-100,100);
+
+
 
   /* ------ Classification Model ------ */
 
@@ -175,21 +179,21 @@ int main (int argc, char** argv) {
 
   /* ----- Reconstruction Model ----- */
 
-  SKLayer   *layer_1_reco = new SKLayer(6,"LeakyReLU");
-  SKWeights *weights_12_reco = new SKWeights(6,12);
-  SKWeights *gradients_12_reco = new SKWeights(6,12);
+  SKLayer   *layer_1_reco = new SKLayer(6,"Sigmoid");
+  SKWeights *weights_12_reco = new SKWeights(6,4);
+  SKWeights *gradients_12_reco = new SKWeights(6,4);
 
 
-  SKLayer   *layer_2_reco = new SKLayer(12,"Sigmoid");
-  SKWeights *weights_23_reco = new SKWeights(12,12);
-  SKWeights *gradients_23_reco = new SKWeights(12,12);
+  SKLayer   *layer_2_reco = new SKLayer(4,"Sigmoid");
+  SKWeights *weights_23_reco = new SKWeights(4,4);
+  SKWeights *gradients_23_reco = new SKWeights(4,4);
 
-  SKLayer   *layer_3_reco = new SKLayer(12,"LeakyReLU");
-  SKWeights *weights_34_reco = new SKWeights(12,1);
-  SKWeights *gradients_34_reco = new SKWeights(12,1);
+  SKLayer   *layer_3_reco = new SKLayer(4,"Sigmoid");
+  SKWeights *weights_34_reco = new SKWeights(4,1);
+  SKWeights *gradients_34_reco = new SKWeights(4,1);
 
 
-  SKLayer   *layer_4_reco = new SKLayer(1,"LeakyReLU");
+  SKLayer   *layer_4_reco = new SKLayer(1,"Sigmoid");
 
   weights_12_reco->Init(seed);
   gradients_12_reco->InitGradients();
@@ -225,7 +229,7 @@ int main (int argc, char** argv) {
   model_reco->Init();
 
 
-  model_reco->LoadWeights("weights_reconstruction_30.txt");
+  model_reco->LoadWeights("model_weights_regression_201.txt");
 
 
 
@@ -275,12 +279,19 @@ int main (int argc, char** argv) {
 
     output_vec.clear();
 
+    Float_t openingAngle = TMath::Sin(rPolar[0])*TMath::Sin(rPolar[1])*TMath::Cos(rAzimuthal[1] - rAzimuthal[0]) + TMath::Cos(rPolar[0])*TMath::Cos(rPolar[1]);
+    openingAngle = TMath::RadToDeg()*TMath::ACos(openingAngle);
+
+    hCorr_exc_raw_opening->Fill(openingAngle,exc_energy(rClusterEnergy[0],rClusterEnergy[1],TMath::RadToDeg()*rPolar[0],TMath::RadToDeg()*rPolar[1],TMath::RadToDeg()*rAzimuthal[0],TMath::RadToDeg()*rAzimuthal[1]));
+
     if(highest_index_training == 0){
 
      hCorr_stopped->Fill(randTheta_1,fClusterEnergyMax*data_sample.at(data_sample.size()-1).at(0));
      hCorr_stopped->Fill(randTheta_2,fClusterEnergyMax*data_sample.at(data_sample.size()-1).at(1));
 
      hReconstructed_excitation_energy->Fill(exc_energy(rClusterEnergy[0],rClusterEnergy[1],TMath::RadToDeg()*rPolar[0],TMath::RadToDeg()*rPolar[1],TMath::RadToDeg()*rAzimuthal[0],TMath::RadToDeg()*rAzimuthal[1]));
+     hCorr_exc_reconstructed_opening->Fill(openingAngle,exc_energy(rClusterEnergy[0],rClusterEnergy[1],TMath::RadToDeg()*rPolar[0],TMath::RadToDeg()*rPolar[1],TMath::RadToDeg()*rAzimuthal[0],TMath::RadToDeg()*rAzimuthal[1]));
+
      hCorr_final_kinematics->Fill(randTheta_1,rClusterEnergy[0]);
      hCorr_final_kinematics->Fill(randTheta_2,rClusterEnergy[1]);
 
@@ -309,8 +320,8 @@ int main (int argc, char** argv) {
      output_vec = model_reco->Propagate(0);
 
      hCorr_final_kinematics->Fill(randTheta_2,fPrimEnergyMax*output_vec.at(0));
-     hReconstructed_excitation_energy->Fill(exc_energy(rClusterEnergy[0],fPrimEnergyMax*output_vec.at(0),TMath::RadToDeg()*rPolar[0],TMath::RadToDeg()*rPolar[1],TMath::RadToDeg()*rAzimuthal[0],TMath::RadToDeg()*rAzimuthal[1]));
-
+     // hReconstructed_excitation_energy->Fill(exc_energy(rClusterEnergy[0],fPrimEnergyMax*output_vec.at(0),TMath::RadToDeg()*rPolar[0],TMath::RadToDeg()*rPolar[1],TMath::RadToDeg()*rAzimuthal[0],TMath::RadToDeg()*rAzimuthal[1]));
+     hCorr_exc_reconstructed_opening->Fill(openingAngle,exc_energy(rClusterEnergy[0],fPrimEnergyMax*output_vec.at(0),TMath::RadToDeg()*rPolar[0],TMath::RadToDeg()*rPolar[1],TMath::RadToDeg()*rAzimuthal[0],TMath::RadToDeg()*rAzimuthal[1]));
 
     }
 
@@ -337,8 +348,8 @@ int main (int argc, char** argv) {
      output_vec = model_reco->Propagate(0);
 
      hCorr_final_kinematics->Fill(randTheta_1,fPrimEnergyMax*output_vec.at(0));
-     hReconstructed_excitation_energy->Fill(exc_energy(fPrimEnergyMax*output_vec.at(0),rClusterEnergy[0],TMath::RadToDeg()*rPolar[0],TMath::RadToDeg()*rPolar[1],TMath::RadToDeg()*rAzimuthal[0],TMath::RadToDeg()*rAzimuthal[1]));
-
+     // hReconstructed_excitation_energy->Fill(exc_energy(fPrimEnergyMax*output_vec.at(0),rClusterEnergy[0],TMath::RadToDeg()*rPolar[0],TMath::RadToDeg()*rPolar[1],TMath::RadToDeg()*rAzimuthal[0],TMath::RadToDeg()*rAzimuthal[1]));
+     hCorr_exc_reconstructed_opening->Fill(openingAngle,exc_energy(fPrimEnergyMax*output_vec.at(0),rClusterEnergy[0],TMath::RadToDeg()*rPolar[0],TMath::RadToDeg()*rPolar[1],TMath::RadToDeg()*rAzimuthal[0],TMath::RadToDeg()*rAzimuthal[1]));
 
 
 
@@ -390,8 +401,8 @@ int main (int argc, char** argv) {
 
      hCorr_final_kinematics->Fill(randTheta_2,fPrimEnergyMax*secondEnergy);
 
-     hReconstructed_excitation_energy->Fill(exc_energy(fPrimEnergyMax*firstEnergy,fPrimEnergyMax*secondEnergy,TMath::RadToDeg()*rPolar[0],TMath::RadToDeg()*rPolar[1],TMath::RadToDeg()*rAzimuthal[0],TMath::RadToDeg()*rAzimuthal[1]));
-
+     // hReconstructed_excitation_energy->Fill(exc_energy(fPrimEnergyMax*firstEnergy,fPrimEnergyMax*secondEnergy,TMath::RadToDeg()*rPolar[0],TMath::RadToDeg()*rPolar[1],TMath::RadToDeg()*rAzimuthal[0],TMath::RadToDeg()*rAzimuthal[1]));
+     hCorr_exc_reconstructed_opening->Fill(openingAngle,exc_energy(fPrimEnergyMax*firstEnergy,fPrimEnergyMax*secondEnergy,TMath::RadToDeg()*rPolar[0],TMath::RadToDeg()*rPolar[1],TMath::RadToDeg()*rAzimuthal[0],TMath::RadToDeg()*rAzimuthal[1]));
 
     }
 
@@ -459,6 +470,14 @@ int main (int argc, char** argv) {
   final_exc_canvas->cd(2);
   hReconstructed_excitation_energy->Draw("COLZ");
 
+  TCanvas *exc_corr_canvas = new TCanvas("exc_corr_canvas","Model");
+  exc_corr_canvas->Divide(2,1);
+
+  exc_corr_canvas->cd(1);
+  hCorr_exc_raw_opening->Draw("COLZ");
+
+  exc_corr_canvas->cd(2);
+  hCorr_exc_reconstructed_opening->Draw("COLZ");
 
 
 

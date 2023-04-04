@@ -60,11 +60,14 @@ int main (int argc, char** argv) {
   float fClusterEnergyMax = 400;
   float fSingleCrystalEnergyMax = 340;
   float fPrimEnergyMax = 700;
+  float fNfMax = 200;
+  float fNsMax = 230;
+  float fAngularDeviationMax = 0.25;
 
   SKColorScheme();
 
    /* ------- Reading Root Data -------- */
-  TString fileList = "../SoKAI/macros/quasifree_reconstruction/files/U238_Quasifree_560AMeV_NN_chamber_train.root";
+  TString fileList = "../../SoKAI/macros/quasifree_reconstruction/files/U238_Fission_560AMeV_NN_train.root";
 
   TFile *eventFile;
   TTree* eventTree;
@@ -92,6 +95,19 @@ int main (int argc, char** argv) {
   TBranch  *primBranch = eventTree->GetBranch("ProtonEnergy");
   primBranch->SetAddress(&rPrimaryEnergy);
 
+  Float_t rMotherNf[2];
+  TBranch  *nfBranch = eventTree->GetBranch("MotherCrystalNf");
+  nfBranch->SetAddress(&rMotherNf);
+
+  Float_t rMotherNs[2];
+  TBranch  *nsBranch = eventTree->GetBranch("MotherCrystalNs");
+  nsBranch->SetAddress(&rMotherNs);
+
+  Float_t rAngularDeviation[2];
+  TBranch  *angBranch = eventTree->GetBranch("AngularDeviation");
+  angBranch->SetAddress(&rAngularDeviation);
+
+
   int nEvents = eventTree->GetEntries();
 
   if(nEvents < nSamples)
@@ -111,16 +127,29 @@ int main (int argc, char** argv) {
     eventCounter++;
 
 
+    Float_t fFirstSigma,fSecondSigma;
 
-    if(abs(rClusterEnergy[0] - rPrimaryEnergy[0]) > 50){
+    fFirstSigma  = rPrimaryEnergy[0]/235;
+    fSecondSigma = rPrimaryEnergy[1]/235;
+
+
+    if(TMath::Abs(rClusterEnergy[0] - rPrimaryEnergy[0]) > 3.0*fFirstSigma){
 
       data_instance.push_back(rClusterEnergy[0]/fClusterEnergyMax);
       data_instance.push_back(rMotherCrystalEnergy[0]/fSingleCrystalEnergyMax);
       data_instance.push_back(rPolar[0]/fPolarMax);
+      data_instance.push_back(rAzimuthal[0]/fAzimuthalMax);
+      data_instance.push_back(rMotherNf[0]/fNfMax);
+      data_instance.push_back(rMotherNs[0]/fNsMax);
+      data_instance.push_back(rAngularDeviation[0]/fAngularDeviationMax);
 
       data_instance.push_back(rClusterEnergy[1]/fClusterEnergyMax);
       data_instance.push_back(rMotherCrystalEnergy[1]/fSingleCrystalEnergyMax);
       data_instance.push_back(rPolar[1]/fPolarMax);
+      data_instance.push_back(rAzimuthal[1]/fAzimuthalMax);
+      data_instance.push_back(rMotherNf[1]/fNfMax);
+      data_instance.push_back(rMotherNs[1]/fNsMax);
+      data_instance.push_back(rAngularDeviation[1]/fAngularDeviationMax);
 
 
       data_sample.push_back(data_instance);
@@ -134,16 +163,26 @@ int main (int argc, char** argv) {
 
      }
 
-    else if(abs(rClusterEnergy[1] - rPrimaryEnergy[1]) > 50){
+    else if(TMath::Abs(rClusterEnergy[1] - rPrimaryEnergy[1]) > 3.0*fSecondSigma){
 
 
       data_instance.push_back(rClusterEnergy[1]/fClusterEnergyMax);
       data_instance.push_back(rMotherCrystalEnergy[1]/fSingleCrystalEnergyMax);
       data_instance.push_back(rPolar[1]/fPolarMax);
+      data_instance.push_back(rAzimuthal[1]/fAzimuthalMax);
+      data_instance.push_back(rMotherNf[1]/fNfMax);
+      data_instance.push_back(rMotherNs[1]/fNsMax);
+      data_instance.push_back(rAngularDeviation[1]/fAngularDeviationMax);
+
 
       data_instance.push_back(rClusterEnergy[0]/fClusterEnergyMax);
       data_instance.push_back(rMotherCrystalEnergy[0]/fSingleCrystalEnergyMax);
       data_instance.push_back(rPolar[0]/fPolarMax);
+      data_instance.push_back(rAzimuthal[0]/fAzimuthalMax);
+      data_instance.push_back(rMotherNf[0]/fNfMax);
+      data_instance.push_back(rMotherNs[0]/fNsMax);
+      data_instance.push_back(rAngularDeviation[0]/fAngularDeviationMax);
+
 
 
       data_sample.push_back(data_instance);
@@ -181,11 +220,11 @@ int main (int argc, char** argv) {
 
   /*------- The Model Itself -------*/
 
-  SKLayer   *layer_1 = new SKLayer(6,argv[7]);
-  SKWeights *weights_12 = new SKWeights(6,stoi(argv[5]));
-  SKWeights *gradients_12 = new SKWeights(6,stoi(argv[5]));
-  SKWeights *firstMoment_12 = new SKWeights(6,stoi(argv[5]));
-  SKWeights *secondMoment_12 = new SKWeights(6,stoi(argv[5]));
+  SKLayer   *layer_1 = new SKLayer(14,argv[7]);
+  SKWeights *weights_12 = new SKWeights(14,stoi(argv[5]));
+  SKWeights *gradients_12 = new SKWeights(14,stoi(argv[5]));
+  SKWeights *firstMoment_12 = new SKWeights(14,stoi(argv[5]));
+  SKWeights *secondMoment_12 = new SKWeights(14,stoi(argv[5]));
 
 
   SKLayer   *layer_2 = new SKLayer(stoi(argv[5]),argv[8]);
@@ -224,7 +263,7 @@ int main (int argc, char** argv) {
   SKModel *model = new SKModel("Regression");
 
   model->SetOptimizer("Adam");
-  model->SetSummaryFile("summary_test",argv[12]);
+  model->SetSummaryFile("summary_konckout_regression_",argv[12]);
 
   model->AddLayer(layer_1);
   model->AddWeights(weights_12);
@@ -262,7 +301,7 @@ int main (int argc, char** argv) {
   LOG(INFO)<<"Model Training Hyper Parameters. Epochs : "<<argv[1]<<" Samples : "<<data_sample.size()<<" Learning Rate : "<<stoi(argv[3])/1000.0<<" Metric : "<<argv[11];
   LOG(INFO)<<"";
   LOG(INFO)<<"/* ---------- Model Structure -----------";
-  LOG(INFO)<<"L1 : "<<argv[7]<<" "<<"6";
+  LOG(INFO)<<"L1 : "<<argv[7]<<" "<<"14";
   LOG(INFO)<<"H1 : "<<argv[8]<<" "<<argv[5];
   LOG(INFO)<<"H2 : "<<argv[9]<<" "<<argv[6];
   LOG(INFO)<<"L4 : "<<argv[10]<<" "<<"1";
@@ -406,8 +445,8 @@ TGraph *loss_graph = new TGraph(epoch_vec.size(),&epoch_vec[0],&loss_vec[0]);
 TH2F* model_histo;
 model_histo = (TH2F*)model->ShowMe();
 
-string weight_filename = "model_weights_regression_";
- weight_filename = weight_filename + argv[12] + ".txt";
+string weight_filename = "model_weights_knockout_regression_";
+weight_filename = weight_filename + argv[12] + ".txt";
 
 model->SaveWeights(weight_filename);
 
@@ -456,7 +495,7 @@ TCanvas *reso_canvas = new TCanvas("reso_canvas","Resolution Canvas");
 
 
 
-  TString filename = "training_results_regression_";
+  TString filename = "training_results_knockout_regression_";
    filename = filename + argv[12] + ".root";
 
 TFile resultsFile(filename,"RECREATE");

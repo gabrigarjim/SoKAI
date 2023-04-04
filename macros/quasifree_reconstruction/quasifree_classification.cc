@@ -65,7 +65,7 @@ int main (int argc, char** argv) {
   SKColorScheme();
 
    /* ------- Reading Root Data -------- */
-  TString fileList = "../SoKAI/macros/quasifree_reconstruction/files/U238_Quasifree_560AMeV_NN_chamber_train.root";
+  TString fileList = "../../SoKAI/macros/quasifree_reconstruction/files/U238_Fission_560AMeV_NN_train.root";
 
   TFile *eventFile;
   TTree* eventTree;
@@ -110,13 +110,15 @@ int main (int argc, char** argv) {
 
 
     data_instance.push_back(rClusterEnergy[0]/fClusterEnergyMax);
-    data_instance.push_back(rClusterEnergy[1]/fClusterEnergyMax);
-
+    data_instance.push_back(rPolar[0]/fPolarMax);
+    data_instance.push_back(rAzimuthal[0]/fPolarMax);
     data_instance.push_back(rMotherCrystalEnergy[0]/fSingleCrystalEnergyMax);
+
+    data_instance.push_back(rClusterEnergy[1]/fClusterEnergyMax);
+    data_instance.push_back(rPolar[1]/fPolarMax);
+    data_instance.push_back(rAzimuthal[1]/fPolarMax);
     data_instance.push_back(rMotherCrystalEnergy[1]/fSingleCrystalEnergyMax);
 
-    data_instance.push_back(rPolar[0]/fPolarMax);
-    data_instance.push_back(rPolar[1]/fPolarMax);
 
 
     label_instance.push_back(rPunched[0]);
@@ -139,11 +141,11 @@ int main (int argc, char** argv) {
 
   /*------- The Model Itself -------*/
 
-  SKLayer   *layer_1 = new SKLayer(6,argv[7]);
-  SKWeights *weights_12 = new SKWeights(6,stoi(argv[5]));
-  SKWeights *gradients_12 = new SKWeights(6,stoi(argv[5]));
-  SKWeights *firstMoment_12 = new SKWeights(6,stoi(argv[5]));
-  SKWeights *secondMoment_12 = new SKWeights(6,stoi(argv[5]));
+  SKLayer   *layer_1 = new SKLayer(8,argv[7]);
+  SKWeights *weights_12 = new SKWeights(8,stoi(argv[5]));
+  SKWeights *gradients_12 = new SKWeights(8,stoi(argv[5]));
+  SKWeights *firstMoment_12 = new SKWeights(8,stoi(argv[5]));
+  SKWeights *secondMoment_12 = new SKWeights(8,stoi(argv[5]));
 
 
   SKLayer   *layer_2 = new SKLayer(stoi(argv[5]),argv[8]);
@@ -184,7 +186,7 @@ int main (int argc, char** argv) {
   SKModel *model = new SKModel("Classification");
 
   model->SetOptimizer("Adam");
-  model->SetSummaryFile("model_architecture",argv[12]);
+  model->SetSummaryFile("model_architecture_knockout",argv[12]);
 
   model->AddLayer(layer_1);
   model->AddWeights(weights_12);
@@ -317,32 +319,32 @@ Float_t vTotalCases[4] = {0.0};
 
     if(highest_index_training == 0){
 
-      hStopped_kinematics->Fill(TMath::RadToDeg()*fPolarMax*data_sample.at(sample_number).at(4),fClusterEnergyMax*data_sample.at(sample_number).at(0));
-      hStopped_kinematics->Fill(TMath::RadToDeg()*fPolarMax*data_sample.at(sample_number).at(5),fClusterEnergyMax*data_sample.at(sample_number).at(1));
+      hStopped_kinematics->Fill(TMath::RadToDeg()*fPolarMax*data_sample.at(sample_number).at(1),fClusterEnergyMax*data_sample.at(sample_number).at(0));
+      hStopped_kinematics->Fill(TMath::RadToDeg()*fPolarMax*data_sample.at(sample_number).at(5),fClusterEnergyMax*data_sample.at(sample_number).at(4));
 
     }
 
 
     if(highest_index_training == 1){
 
-      hStopped_kinematics->Fill(TMath::RadToDeg()*fPolarMax*data_sample.at(sample_number).at(4),fClusterEnergyMax*data_sample.at(sample_number).at(0));
-      hPunched_kinematics->Fill(TMath::RadToDeg()*fPolarMax*data_sample.at(sample_number).at(5),fClusterEnergyMax*data_sample.at(sample_number).at(1));
+      hStopped_kinematics->Fill(TMath::RadToDeg()*fPolarMax*data_sample.at(sample_number).at(1),fClusterEnergyMax*data_sample.at(sample_number).at(0));
+      hPunched_kinematics->Fill(TMath::RadToDeg()*fPolarMax*data_sample.at(sample_number).at(5),fClusterEnergyMax*data_sample.at(sample_number).at(4));
 
     }
 
 
     if(highest_index_training == 2){
 
-      hPunched_kinematics->Fill(TMath::RadToDeg()*fPolarMax*data_sample.at(sample_number).at(4),fClusterEnergyMax*data_sample.at(sample_number).at(0));
-      hStopped_kinematics->Fill(TMath::RadToDeg()*fPolarMax*data_sample.at(sample_number).at(5),fClusterEnergyMax*data_sample.at(sample_number).at(1));
+      hPunched_kinematics->Fill(TMath::RadToDeg()*fPolarMax*data_sample.at(sample_number).at(1),fClusterEnergyMax*data_sample.at(sample_number).at(0));
+      hStopped_kinematics->Fill(TMath::RadToDeg()*fPolarMax*data_sample.at(sample_number).at(5),fClusterEnergyMax*data_sample.at(sample_number).at(4));
 
     }
 
 
     if(highest_index_training == 3){
 
-      hPunched_kinematics->Fill(TMath::RadToDeg()*fPolarMax*data_sample.at(sample_number).at(4),fClusterEnergyMax*data_sample.at(sample_number).at(0));
-      hPunched_kinematics->Fill(TMath::RadToDeg()*fPolarMax*data_sample.at(sample_number).at(5),fClusterEnergyMax*data_sample.at(sample_number).at(1));
+      hPunched_kinematics->Fill(TMath::RadToDeg()*fPolarMax*data_sample.at(sample_number).at(1),fClusterEnergyMax*data_sample.at(sample_number).at(0));
+      hPunched_kinematics->Fill(TMath::RadToDeg()*fPolarMax*data_sample.at(sample_number).at(5),fClusterEnergyMax*data_sample.at(sample_number).at(4));
 
     }
 
@@ -385,7 +387,7 @@ model_histo = (TH2F*)model->ShowMe();
 
 /* ------ Writing weights ------ */
 
-string weight_filename = "model_weights_classification_";
+string weight_filename = "model_weights_classification_knockout";
  weight_filename = weight_filename + argv[12] + ".txt";
 
 model->SaveWeights(weight_filename);
@@ -406,7 +408,25 @@ TCanvas *results_canvas = new TCanvas("results_canvas","Model");
 
  hTraining_results->Draw("COLZ");
 
+/*
+Héctor Álvarez Pol
+Antía Graña González
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+*/
 TCanvas *kinematics_canvas = new TCanvas("kinematics_canvas","Model");
 kinematics_canvas->Divide(2,1);
 
@@ -418,7 +438,7 @@ hStopped_kinematics->Draw("COLZ");
 
 
 
-TString name = "training_results_classification_";
+TString name = "training_results_classification_knockout_";
  name = name + argv[12] + ".root";
 
 TFile resultsFile(name,"RECREATE");
