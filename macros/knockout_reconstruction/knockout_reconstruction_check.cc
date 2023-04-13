@@ -12,6 +12,8 @@ using namespace std::chrono;
 int main (int argc, char** argv) {
 
  FLAGS_alsologtostderr = 1;
+setenv("GLOG_logtostderr", "1", 0);
+    setenv("GLOG_colorlogtostderr", "1", 0);
  google::InitGoogleLogging("Knockout Reconstruction Check");
 
  TApplication* theApp = new TApplication("Reconstruction_check", 0, 0);
@@ -39,12 +41,12 @@ int main (int argc, char** argv) {
 
   float fPolarMax = TMath::Pi()/2.0;
   float fAzimuthalMax = 2*TMath::Pi();
-  float fClusterEnergyMax = 400;
-  float fSingleCrystalEnergyMax = 340;
-  float fPrimEnergyMax = 800;
-  float fNfMax = 200;
-  float fNsMax = 230;
-  float fAngularDeviationMax = 0.25;
+  float fClusterEnergyMax = 600;
+  float fSingleCrystalEnergyMax = 360;
+  float fPrimEnergyMax = 1200;
+  float fNfMax = 210;
+  float fNsMax = 240;
+  float fAngularDeviationMax = 0.20;
 
  SKColorScheme();
 
@@ -119,18 +121,23 @@ int main (int argc, char** argv) {
   /* ------ Reconstruction Model ------ */
 
   SKLayer   *layer_1_reco = new SKLayer(14,"LeakyReLU");
-  SKWeights *weights_12_reco = new SKWeights(14,20);
-  SKWeights *gradients_12_reco = new SKWeights(14,20);
+  SKWeights *weights_12_reco = new SKWeights(14,8);
+  SKWeights *gradients_12_reco = new SKWeights(14,8);
 
-  SKLayer   *layer_2_reco = new SKLayer(20,"LeakyReLU");
-  SKWeights *weights_23_reco = new SKWeights(20,20);
-  SKWeights *gradients_23_reco = new SKWeights(20,20);
+  SKLayer   *layer_2_reco = new SKLayer(8,"LeakyReLU");
+  SKWeights *weights_23_reco = new SKWeights(8,12);
+  SKWeights *gradients_23_reco = new SKWeights(8,12);
 
-  SKLayer   *layer_3_reco = new SKLayer(20,"LeakyReLU");
-  SKWeights *weights_34_reco = new SKWeights(20,1);
-  SKWeights *gradients_34_reco = new SKWeights(20,1);
+  SKLayer   *layer_3_reco = new SKLayer(12,"LeakyReLU");
+  SKWeights *weights_34_reco = new SKWeights(12,8);
+  SKWeights *gradients_34_reco = new SKWeights(12,8);
 
-  SKLayer   *layer_4_reco = new SKLayer(1,"LeakyReLU");
+  SKLayer   *layer_4_reco = new SKLayer(8,"LeakyReLU");
+  SKWeights *weights_45_reco = new SKWeights(8,1);
+  SKWeights *gradients_45_reco = new SKWeights(8,1);
+
+  SKLayer   *layer_5_reco = new SKLayer(1,"LeakyReLU");
+
 
 
 
@@ -142,6 +149,10 @@ int main (int argc, char** argv) {
 
   weights_34_reco->Init(seed);
   gradients_34_reco->InitGradients();
+
+  weights_45_reco->Init(seed);
+  gradients_45_reco->InitGradients();
+
 
 
   SKModel *model_reco = new SKModel("Regression");
@@ -160,6 +171,11 @@ int main (int argc, char** argv) {
   model_reco->AddGradients(gradients_34_reco);
 
   model_reco->AddLayer(layer_4_reco);
+  model_reco->AddWeights(weights_45_reco);
+  model_reco->AddGradients(gradients_45_reco);
+
+
+  model_reco->AddLayer(layer_5_reco);
 
   model_reco->SetInputSample(&data_sample);
 
@@ -168,7 +184,7 @@ int main (int argc, char** argv) {
   model_reco->Init();
 
 
-  model_reco->LoadWeights("/home/gabri/Analysis/s455/nn_results/knockout_reconstruction/model_weights_knockout_regression_3.txt");
+  model_reco->LoadWeights("/home/gabri/Analysis/s455/nn_results/knockout_reconstruction/model_weights_knockout_regression_5.txt");
 
   Int_t nEvents = eventTree->GetEntries();
 
@@ -179,6 +195,8 @@ int main (int argc, char** argv) {
   TH2F * hCorr_raw_kinematics = new TH2F("hCorr_raw_kinematics","Raw Kinematics",300,20,80,300,0,650);
   TH2F * hCorr_reconstructed_kinematics = new TH2F("hCorr_reconstructed_kinematics","Reconstructed Kinematics",300,20,80,300,0,650);
   TH2F * hCorr_perfect_kinematics = new TH2F("hCorr_perfect_kinematics","Perfect Kinematics",300,20,80,300,0,650);
+  TH2F * hCorrReconstruction_energy = new TH2F("hCorrReconstruction_energy","Reconstructed Energy Vs Primary Energy",400,-600,800,400,0,600);
+  TH2F * hCorrReconstruction_results = new TH2F("hCorrReconstruction_results","Reconstructed Energy Difference Vs Energy",400,-400,400,400,0,600);
 
   TH1F * hResolution_300_350 = new TH1F("hResolution_300_350","Resolution: 300 - 350 MeV ",200,-400,400);
   TH1F * hResolution_350_400 = new TH1F("hResolution_350_400","Resolution: 350 - 400 MeV ",200,-400,400);
@@ -215,7 +233,7 @@ int main (int argc, char** argv) {
     exc_energy_primary = exc_energy(rPrimaryEnergy[0],rPrimaryEnergy[1],TMath::RadToDeg()*rProtonPolar[0],TMath::RadToDeg()*rProtonPolar[1],TMath::RadToDeg()*rProtonAzimuthal[0],TMath::RadToDeg()*rProtonAzimuthal[1]);
     hRaw_exc_energy->Fill(exc_energy_raw-exc_energy_primary);
 
-      if(abs(rClusterEnergy[0] - rPrimaryEnergy[0]) > 3.0*fFirstSigma){
+      if(abs(rClusterEnergy[0] - rPrimaryEnergy[0]) > 10.0*fFirstSigma){
 
       data_instance.push_back(rClusterEnergy[0]/fClusterEnergyMax);
       data_instance.push_back(rMotherCrystalEnergy[0]/fSingleCrystalEnergyMax);
@@ -280,7 +298,7 @@ int main (int argc, char** argv) {
        }
 
 
-      if(abs(rClusterEnergy[1] - rPrimaryEnergy[1]) > 3.0*fSecondSigma){
+      if(abs(rClusterEnergy[1] - rPrimaryEnergy[1]) > 10.0*fSecondSigma){
 
        data_instance.push_back(rClusterEnergy[1]/fClusterEnergyMax);
        data_instance.push_back(rMotherCrystalEnergy[1]/fSingleCrystalEnergyMax);
@@ -340,12 +358,18 @@ int main (int argc, char** argv) {
 
        }
 
-       if( (abs(rClusterEnergy[1] - rPrimaryEnergy[1]) > 3.0*fSecondSigma) || (abs(rClusterEnergy[0] - rPrimaryEnergy[0]) > 3.0*fFirstSigma) ){
-         cout<<"Cluster Energies : "<<rClusterEnergy[0]<<" "<<rClusterEnergy[1]<<" Reconstructed: "<<finalEnergy_1<<" "<<finalEnergy_2<<endl;
+       if( (abs(rClusterEnergy[1] - rPrimaryEnergy[1]) > 10.0*fSecondSigma) || (abs(rClusterEnergy[0] - rPrimaryEnergy[0]) > 10.0*fFirstSigma) ){
 
          exc_energy_reco = exc_energy(finalEnergy_1,finalEnergy_2,TMath::RadToDeg()*rPolar[0],TMath::RadToDeg()*rPolar[1],TMath::RadToDeg()*rAzimuthal[0],TMath::RadToDeg()*rAzimuthal[1]);
          hReconstructed_exc_energy->Fill(exc_energy_reco-exc_energy_primary);
 
+         if( (abs(rClusterEnergy[1] - rPrimaryEnergy[1]) > 10.0*fSecondSigma) && (abs(rClusterEnergy[0] - rPrimaryEnergy[0]) > 10.0*fFirstSigma) ) {
+          hCorrReconstruction_energy->Fill(finalEnergy_1,rPrimaryEnergy[0]);
+          hCorrReconstruction_energy->Fill(finalEnergy_2,rPrimaryEnergy[1]);
+          hCorrReconstruction_results->Fill(finalEnergy_1 - rPrimaryEnergy[0], rPrimaryEnergy[0]);
+          hCorrReconstruction_results->Fill(finalEnergy_2 - rPrimaryEnergy[1], rPrimaryEnergy[1]);
+
+          }
         }
        }
 
@@ -415,6 +439,20 @@ int main (int argc, char** argv) {
 
     exc_energy_canvas->cd(2);
     hReconstructed_exc_energy->Draw("");
+
+    TCanvas *model_canvas = new TCanvas("model_canvas","Model");
+    model_canvas->Divide(2,1);
+
+    model_canvas->cd(1);
+    hCorrReconstruction_results->Draw("COLZ");
+    hCorrReconstruction_results->GetXaxis()->SetTitle("Reconstructed Energy");
+    hCorrReconstruction_results->GetYaxis()->SetTitle("Primary Energy (MeV)");
+
+    model_canvas->cd(2);
+    hCorrReconstruction_energy->Draw("COLZ");
+    hCorrReconstruction_energy->GetXaxis()->SetTitle("Reconstructed Energy - Primary Energy (MeV)");
+    hCorrReconstruction_energy->GetYaxis()->SetTitle("Primary Energy (MeV)");
+
 
 
 

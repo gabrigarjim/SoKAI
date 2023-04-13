@@ -15,7 +15,6 @@ int main (int argc, char** argv) {
 
   TApplication* theApp = new TApplication("Reconstruction", 0, 0);
 
-
   clock_t start, end,real_start,real_end;
 
   LOG(INFO)<<"#============================================================#";
