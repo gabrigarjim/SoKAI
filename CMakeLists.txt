@@ -37,6 +37,7 @@ add_executable(KnockoutReconstruction macros/knockout_reconstruction/knockout_re
 add_executable(KnockoutReconstructionCheck macros/knockout_reconstruction/knockout_reconstruction_check.cc ${sources} ${headers} )
 add_executable(KnockoutClassification macros/knockout_reconstruction/knockout_classification.cc ${sources} ${headers} )
 add_executable(KnockoutExpReconstruction macros/knockout_reconstruction/exp_data_full_reconstruction.cc ${sources} ${headers} )
+add_executable(CrossSectionPrediction macros/cross_sections_fission/cross_sections_prediction.cc ${sources} ${headers} )
 
 
 
@@ -54,6 +55,8 @@ target_link_libraries(KnockoutClassification ${ROOT_LIBRARIES} glog::glog)
 target_link_libraries(KnockoutReconstruction ${ROOT_LIBRARIES} glog::glog)
 target_link_libraries(KnockoutReconstructionCheck ${ROOT_LIBRARIES} glog::glog)
 target_link_libraries(KnockoutExpReconstruction ${ROOT_LIBRARIES} glog::glog)
+target_link_libraries(CrossSectionPrediction ${ROOT_LIBRARIES} glog::glog)
+
 
 
 
