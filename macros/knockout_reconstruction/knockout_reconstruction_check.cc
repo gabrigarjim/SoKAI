@@ -124,7 +124,7 @@ setenv("GLOG_logtostderr", "1", 0);
   SKWeights *weights_12_reco = new SKWeights(14,8);
   SKWeights *gradients_12_reco = new SKWeights(14,8);
 
-  SKLayer   *layer_2_reco = new SKLayer(8,"LeakyReLU");
+  SKLayer   *layer_2_reco = new SKLayer(8,"Sigmoid");
   SKWeights *weights_23_reco = new SKWeights(8,12);
   SKWeights *gradients_23_reco = new SKWeights(8,12);
 
@@ -184,7 +184,7 @@ setenv("GLOG_logtostderr", "1", 0);
   model_reco->Init();
 
 
-  model_reco->LoadWeights("/home/gabri/Analysis/s455/nn_results/knockout_reconstruction/model_weights_knockout_regression_5.txt");
+  model_reco->LoadWeights("/home/gabri/Analysis/s455/nn_results/knockout_reconstruction/model_weights_knockout_regression_11.txt");
 
   Int_t nEvents = eventTree->GetEntries();
 
@@ -198,12 +198,14 @@ setenv("GLOG_logtostderr", "1", 0);
   TH2F * hCorrReconstruction_energy = new TH2F("hCorrReconstruction_energy","Reconstructed Energy Vs Primary Energy",400,-600,800,400,0,600);
   TH2F * hCorrReconstruction_results = new TH2F("hCorrReconstruction_results","Reconstructed Energy Difference Vs Energy",400,-400,400,400,0,600);
 
-  TH1F * hResolution_300_350 = new TH1F("hResolution_300_350","Resolution: 300 - 350 MeV ",200,-400,400);
-  TH1F * hResolution_350_400 = new TH1F("hResolution_350_400","Resolution: 350 - 400 MeV ",200,-400,400);
-  TH1F * hResolution_400_450 = new TH1F("hResolution_400_450","Resolution: 400 - 450 MeV ",200,-400,400);
-  TH1F * hResolution_450_500 = new TH1F("hResolution_450_500","Resolution: 450 - 500 MeV ",200,-400,400);
-  TH1F * hResolution_500_550 = new TH1F("hResolution_500_550","Resolution: 500 - 550 MeV ",200,-400,400);
-  TH1F * hResolution_550_600 = new TH1F("hResolution_550_600","Resolution: 550 - 600 MeV ",200,-400,400);
+  TH1F * hResolution_250_300 = new TH1F("hResolution_250_300","Resolution: 250 - 300 MeV ",400,-400,400);
+  TH1F * hResolution_300_350 = new TH1F("hResolution_300_350","Resolution: 300 - 350 MeV ",400,-400,400);
+  TH1F * hResolution_350_400 = new TH1F("hResolution_350_400","Resolution: 350 - 400 MeV ",400,-400,400);
+  TH1F * hResolution_400_450 = new TH1F("hResolution_400_450","Resolution: 400 - 450 MeV ",400,-400,400);
+  TH1F * hResolution_450_500 = new TH1F("hResolution_450_500","Resolution: 450 - 500 MeV ",400,-400,400);
+  TH1F * hResolution_500_550 = new TH1F("hResolution_500_550","Resolution: 500 - 550 MeV ",400,-400,400);
+  TH1F * hResolution_550_600 = new TH1F("hResolution_550_600","Resolution: 550 - 600 MeV ",400,-400,400);
+  TH1F * hResolution_600_650 = new TH1F("hResolution_600_650","Resolution: 600 - 650 MeV ",400,-400,400);
 
   TH1F * hRaw_exc_energy = new TH1F("hRaw_exc_energy","Raw E*",400,-300,300);
   TH1F * hReconstructed_exc_energy = new TH1F("hReconstructed_exc_energy","Reconstructed E*",400,-300,300);
@@ -257,23 +259,30 @@ setenv("GLOG_logtostderr", "1", 0);
       output_vec = model_reco->Propagate(0);
       finalEnergy_1 = output_vec.at(0)*fPrimEnergyMax;
 
+        if ( rPrimaryEnergy[0] > 250 && rPrimaryEnergy[0] < 300)
+         hResolution_250_300->Fill(rPrimaryEnergy[0] -fPrimEnergyMax*output_vec.at(0));
+
         if ( rPrimaryEnergy[0] > 300 && rPrimaryEnergy[0] < 350)
-         hResolution_300_350->Fill(fPrimEnergyMax*output_vec.at(0)-rPrimaryEnergy[0]);
+         hResolution_300_350->Fill(rPrimaryEnergy[0] -fPrimEnergyMax*output_vec.at(0));
 
         if ( rPrimaryEnergy[0] > 350 && rPrimaryEnergy[0] < 400)
-         hResolution_350_400->Fill(fPrimEnergyMax*output_vec.at(0)-rPrimaryEnergy[0]);
+         hResolution_350_400->Fill(rPrimaryEnergy[0] -fPrimEnergyMax*output_vec.at(0));
 
         if ( rPrimaryEnergy[0] > 400 && rPrimaryEnergy[0] < 450)
-         hResolution_400_450->Fill(fPrimEnergyMax*output_vec.at(0)-rPrimaryEnergy[0]);
+         hResolution_400_450->Fill(rPrimaryEnergy[0] -fPrimEnergyMax*output_vec.at(0));
 
         if ( rPrimaryEnergy[0] > 450 && rPrimaryEnergy[0] < 500)
-         hResolution_450_500->Fill(fPrimEnergyMax*output_vec.at(0)-rPrimaryEnergy[0]);
+         hResolution_450_500->Fill(rPrimaryEnergy[0] -fPrimEnergyMax*output_vec.at(0));
 
         if ( rPrimaryEnergy[0] > 500 && rPrimaryEnergy[0] < 550)
-         hResolution_500_550->Fill(fPrimEnergyMax*output_vec.at(0)-rPrimaryEnergy[0]);
+         hResolution_500_550->Fill(rPrimaryEnergy[0] -fPrimEnergyMax*output_vec.at(0));
 
         if ( rPrimaryEnergy[0] > 550 && rPrimaryEnergy[0] < 600)
-         hResolution_550_600->Fill(fPrimEnergyMax*output_vec.at(0)-rPrimaryEnergy[0]);
+         hResolution_550_600->Fill(rPrimaryEnergy[0] -fPrimEnergyMax*output_vec.at(0));
+
+        if ( rPrimaryEnergy[0] > 600 && rPrimaryEnergy[0] < 650)
+         hResolution_600_650->Fill(rPrimaryEnergy[0] -fPrimEnergyMax*output_vec.at(0));
+
 
 
         sprintf(name, "distributionCrystalID_%i",rMotherId[0]);
@@ -281,10 +290,11 @@ setenv("GLOG_logtostderr", "1", 0);
         hCorr_crystal_distribution = (TH2F*)crystalFile->Get(name);
         hCorr_crystal_distribution->GetRandom2(randPhi,randTheta);
 
+       if(randTheta >= 26){
         hCorr_raw_kinematics->Fill(randTheta,fClusterEnergyMax*data_instance.at(0));
         hCorr_reconstructed_kinematics->Fill(randTheta,fPrimEnergyMax*output_vec.at(0));
         hCorr_perfect_kinematics->Fill(randTheta,rPrimaryEnergy[0]);
-
+        }
 
 
 
@@ -322,34 +332,41 @@ setenv("GLOG_logtostderr", "1", 0);
         output_vec = model_reco->Propagate(0);
         finalEnergy_2= output_vec.at(0)*fPrimEnergyMax;
 
+        if ( rPrimaryEnergy[1] > 250 && rPrimaryEnergy[1] < 300)
+         hResolution_250_300->Fill(rPrimaryEnergy[1] - fPrimEnergyMax*(output_vec.at(0)));
 
         if ( rPrimaryEnergy[1] > 300 && rPrimaryEnergy[1] < 350)
-         hResolution_300_350->Fill(fPrimEnergyMax*(output_vec.at(0))- rPrimaryEnergy[1]);
+         hResolution_300_350->Fill(rPrimaryEnergy[1] -fPrimEnergyMax*(output_vec.at(0)));
 
         if ( rPrimaryEnergy[1] > 350 && rPrimaryEnergy[1] < 400)
-         hResolution_350_400->Fill(fPrimEnergyMax*(output_vec.at(0))- rPrimaryEnergy[1]);
+         hResolution_350_400->Fill(rPrimaryEnergy[1] -fPrimEnergyMax*(output_vec.at(0)));
 
         if ( rPrimaryEnergy[1] > 400 && rPrimaryEnergy[1] < 450)
-         hResolution_400_450->Fill(fPrimEnergyMax*(output_vec.at(0))- rPrimaryEnergy[1]);
+         hResolution_400_450->Fill(rPrimaryEnergy[1] -fPrimEnergyMax*(output_vec.at(0)));
 
         if ( rPrimaryEnergy[1] > 450 && rPrimaryEnergy[1] < 500)
-         hResolution_450_500->Fill(fPrimEnergyMax*(output_vec.at(0))- rPrimaryEnergy[1]);
+         hResolution_450_500->Fill(rPrimaryEnergy[1] -fPrimEnergyMax*(output_vec.at(0)));
 
         if ( rPrimaryEnergy[1] > 500 && rPrimaryEnergy[1] < 550)
-         hResolution_500_550->Fill(fPrimEnergyMax*(output_vec.at(0))- rPrimaryEnergy[1]);
+         hResolution_500_550->Fill(rPrimaryEnergy[1] -fPrimEnergyMax*(output_vec.at(0)));
 
         if ( rPrimaryEnergy[1] > 550 && rPrimaryEnergy[1] < 600)
-         hResolution_550_600->Fill(fPrimEnergyMax*(output_vec.at(0))- rPrimaryEnergy[1]);
+         hResolution_550_600->Fill(rPrimaryEnergy[1] -fPrimEnergyMax*(output_vec.at(0)));
+
+        if ( rPrimaryEnergy[1] > 600 && rPrimaryEnergy[1] < 650)
+         hResolution_600_650->Fill(rPrimaryEnergy[1] -fPrimEnergyMax*(output_vec.at(0)));
+
 
         sprintf(name, "distributionCrystalID_%i",rMotherId[1]);
 
         hCorr_crystal_distribution = (TH2F*)crystalFile->Get(name);
         hCorr_crystal_distribution->GetRandom2(randPhi,randTheta);
 
-        hCorr_raw_kinematics->Fill(randTheta,fClusterEnergyMax*data_instance.at(0));
-        hCorr_reconstructed_kinematics->Fill(randTheta,fPrimEnergyMax*output_vec.at(0));
-        hCorr_perfect_kinematics->Fill(randTheta,rPrimaryEnergy[1]);
-
+        if(randTheta >= 26){
+         hCorr_raw_kinematics->Fill(randTheta,fClusterEnergyMax*data_instance.at(0));
+         hCorr_reconstructed_kinematics->Fill(randTheta,fPrimEnergyMax*output_vec.at(0));
+         hCorr_perfect_kinematics->Fill(randTheta,rPrimaryEnergy[1]);
+        }
         data_instance.clear();
         model_reco->Clear();
         data_sample.clear();
@@ -377,46 +394,52 @@ setenv("GLOG_logtostderr", "1", 0);
 
     TF1 *myGaussian  = new TF1("gaus1","gaus(0)",-300,300);
 
-    hResolution_300_350->Fit(myGaussian,"Q","",-300,300);
+    // hResolution_300_350->Fit(myGaussian,"Q","",-300,300);
     LOG(INFO)<<"Resolution for 300 - 350 MeV (FWHM) : "<<235.48*myGaussian->GetParameter(2)/325.0;
 
-    hResolution_350_400->Fit(myGaussian,"Q","",-300,300);
+    // hResolution_350_400->Fit(myGaussian,"Q","",-300,300);
     LOG(INFO)<<"Resolution for 350 - 400 MeV (FWHM) : "<<235.48*myGaussian->GetParameter(2)/375.0;
 
-    hResolution_400_450->Fit(myGaussian,"Q","",-300,300);
+    // hResolution_400_450->Fit(myGaussian,"Q","",-300,300);
     LOG(INFO)<<"Resolution for 400 - 450 MeV (FWHM) : "<<235.48*myGaussian->GetParameter(2)/425.0;
 
-    hResolution_450_500->Fit(myGaussian,"Q","",-300,300);
+    // hResolution_450_500->Fit(myGaussian,"Q","",-300,300);
     LOG(INFO)<<"Resolution for 450 - 500 MeV (FWHM) : "<<235.48*myGaussian->GetParameter(2)/475.0;
 
-    hResolution_500_550->Fit(myGaussian,"Q","",-300,300);
+    // hResolution_500_550->Fit(myGaussian,"Q","",-300,300);
     LOG(INFO)<<"Resolution for 500 - 550 MeV (FWHM) : "<<235.48*myGaussian->GetParameter(2)/525.0;
 
-    hResolution_550_600->Fit(myGaussian,"Q","",-300,300);
+    // hResolution_550_600->Fit(myGaussian,"Q","",-300,300);
     LOG(INFO)<<"Resolution for 550 - 600 MeV (FWHM) : "<<235.48*myGaussian->GetParameter(2)/575.0;
 
 
 
   TCanvas *reso_canvas = new TCanvas("reso_canvas","Resolution Canvas");
-   reso_canvas->Divide(3,2);
+   reso_canvas->Divide(4,2);
 
-   reso_canvas->cd(1);
-    hResolution_300_350->Draw("");
+  reso_canvas->cd(1);
+   hResolution_250_300->Draw("");
 
-   reso_canvas->cd(2);
-    hResolution_350_400->Draw("");
+  reso_canvas->cd(2);
+   hResolution_300_350->Draw("");
 
-   reso_canvas->cd(3);
-    hResolution_400_450->Draw("");
+  reso_canvas->cd(3);
+   hResolution_350_400->Draw("");
 
-   reso_canvas->cd(4);
-    hResolution_450_500->Draw("");
+  reso_canvas->cd(4);
+   hResolution_400_450->Draw("");
 
-   reso_canvas->cd(5);
-    hResolution_500_550->Draw("");
+  reso_canvas->cd(5);
+   hResolution_450_500->Draw("");
 
-   reso_canvas->cd(6);
-    hResolution_550_600->Draw("");
+  reso_canvas->cd(6);
+   hResolution_500_550->Draw("");
+
+  reso_canvas->cd(7);
+   hResolution_550_600->Draw("");
+
+  reso_canvas->cd(8);
+   hResolution_600_650->Draw("");
 
 
     TCanvas *kinematics_canvas = new TCanvas("kinematics_canvas","Kinematics Canvas");
@@ -452,6 +475,22 @@ setenv("GLOG_logtostderr", "1", 0);
     hCorrReconstruction_energy->Draw("COLZ");
     hCorrReconstruction_energy->GetXaxis()->SetTitle("Reconstructed Energy - Primary Energy (MeV)");
     hCorrReconstruction_energy->GetYaxis()->SetTitle("Primary Energy (MeV)");
+
+    TFile *resolution_file = new TFile("resolution_file.root","RECREATE");
+
+
+
+   hResolution_300_350->Write();
+
+   hResolution_350_400->Write();
+
+   hResolution_400_450->Write();
+
+   hResolution_450_500->Write();
+
+   hResolution_500_550->Write();
+
+   hResolution_550_600->Write();
 
 
 

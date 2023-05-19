@@ -164,18 +164,18 @@ for(int i = 0 ; i < 4 ; i++){
 
   /* ------ Classification Model ------ */
 
-  SKLayer   *layer_1_class = new SKLayer(7,"LeakyReLU");
-  SKWeights *weights_12_class = new SKWeights(7,10);
-  SKWeights *gradients_12_class = new SKWeights(7,10);
+  SKLayer   *layer_1_class = new SKLayer(8,"LeakyReLU");
+  SKWeights *weights_12_class = new SKWeights(8,8);
+  SKWeights *gradients_12_class = new SKWeights(8,8);
 
 
-  SKLayer   *layer_2_class = new SKLayer(10,"Sigmoid");
-  SKWeights *weights_23_class = new SKWeights(10,10);
-  SKWeights *gradients_23_class = new SKWeights(10,10);
+  SKLayer   *layer_2_class = new SKLayer(8,"LeakyReLU");
+  SKWeights *weights_23_class = new SKWeights(8,8);
+  SKWeights *gradients_23_class = new SKWeights(8,8);
 
-  SKLayer   *layer_3_class = new SKLayer(10,"LeakyReLU");
-  SKWeights *weights_34_class = new SKWeights(10,4);
-  SKWeights *gradients_34_class = new SKWeights(10,4);
+  SKLayer   *layer_3_class = new SKLayer(8,"LeakyReLU");
+  SKWeights *weights_34_class = new SKWeights(8,4);
+  SKWeights *gradients_34_class = new SKWeights(8,4);
 
 
   SKLayer   *layer_4_class = new SKLayer(4,"LeakyReLU");
@@ -214,7 +214,7 @@ for(int i = 0 ; i < 4 ; i++){
   model_class->Init();
 
 
-  model_class->LoadWeights("model_weights_classification_1.txt");
+  model_class->LoadWeights("model_weights_classification_knockout_1.txt");
 
   Float_t fGoodClassification=0.0, fGoodClassificationCut=0.0;
 
@@ -232,14 +232,14 @@ for(int i = 0 ; i < 4 ; i++){
     continue;
 
     data_instance.push_back(rClusterEnergy[0]/fClusterEnergyMax);
-    data_instance.push_back(rClusterEnergy[1]/fClusterEnergyMax);
-
-    data_instance.push_back((rMotherCrystalEnergy[0])/fSingleCrystalEnergyMax);
-    data_instance.push_back((rMotherCrystalEnergy[1])/fSingleCrystalEnergyMax);
-
     data_instance.push_back(rPolar[0]/fPolarMax);
+    data_instance.push_back(rAzimuthal[0]/fPolarMax);
+    data_instance.push_back(rMotherCrystalEnergy[0]/fSingleCrystalEnergyMax);
+
+    data_instance.push_back(rClusterEnergy[1]/fClusterEnergyMax);
     data_instance.push_back(rPolar[1]/fPolarMax);
-    data_instance.push_back(rExcitationEnergy/fExcMax);
+    data_instance.push_back(rAzimuthal[1]/fPolarMax);
+    data_instance.push_back(rMotherCrystalEnergy[1]/fSingleCrystalEnergyMax);
 
 
     label_instance.push_back(rPunched[0]);
@@ -312,13 +312,13 @@ for(int i = 0 ; i < 4 ; i++){
 
 
     hCorr_classified_kinematics[2*highest_index_training]->Fill(randTheta_1,fClusterEnergyMax*data_sample.at(data_sample.size()-1).at(0));
-    hCorr_classified_kinematics[2*highest_index_training+1]->Fill(randTheta_2,fClusterEnergyMax*data_sample.at(data_sample.size()-1).at(1));
+    hCorr_classified_kinematics[2*highest_index_training+1]->Fill(randTheta_2,fClusterEnergyMax*data_sample.at(data_sample.size()-1).at(4));
 
 
     if(highest_index_label == highest_index_training){
 
      hCorr_classified_kinematics_good[2*highest_index_training]->Fill(randTheta_1,fClusterEnergyMax*data_sample.at(data_sample.size()-1).at(0));
-     hCorr_classified_kinematics_good[2*highest_index_training+1]->Fill(randTheta_2,fClusterEnergyMax*data_sample.at(data_sample.size()-1).at(1));
+     hCorr_classified_kinematics_good[2*highest_index_training+1]->Fill(randTheta_2,fClusterEnergyMax*data_sample.at(data_sample.size()-1).at(4));
      fGoodClassification += 2.0;
    }
 
@@ -329,21 +329,21 @@ for(int i = 0 ; i < 4 ; i++){
       /*------ Class One ------ */
       if(highest_index_label == 0 && highest_index_training == 1){
        hCorr_classified_kinematics_good[2*highest_index_training]->Fill(randTheta_1,fClusterEnergyMax*data_sample.at(data_sample.size()-1).at(0));
-       hCorr_classified_kinematics_wrong[2*highest_index_training+1]->Fill(randTheta_2,fClusterEnergyMax*data_sample.at(data_sample.size()-1).at(1));
+       hCorr_classified_kinematics_wrong[2*highest_index_training+1]->Fill(randTheta_2,fClusterEnergyMax*data_sample.at(data_sample.size()-1).at(4));
        fGoodClassification++;
       }
 
 
      if(highest_index_label == 0 && highest_index_training == 2){
       hCorr_classified_kinematics_wrong[2*highest_index_training]->Fill(randTheta_1,fClusterEnergyMax*data_sample.at(data_sample.size()-1).at(0));
-      hCorr_classified_kinematics_good[2*highest_index_training+1]->Fill(randTheta_2,fClusterEnergyMax*data_sample.at(data_sample.size()-1).at(1));
+      hCorr_classified_kinematics_good[2*highest_index_training+1]->Fill(randTheta_2,fClusterEnergyMax*data_sample.at(data_sample.size()-1).at(4));
       fGoodClassification++;
 
      }
 
      if(highest_index_label == 0 && highest_index_training == 3){
       hCorr_classified_kinematics_wrong[2*highest_index_training]->Fill(randTheta_1,fClusterEnergyMax*data_sample.at(data_sample.size()-1).at(0));
-      hCorr_classified_kinematics_wrong[2*highest_index_training+1]->Fill(randTheta_2,fClusterEnergyMax*data_sample.at(data_sample.size()-1).at(1));
+      hCorr_classified_kinematics_wrong[2*highest_index_training+1]->Fill(randTheta_2,fClusterEnergyMax*data_sample.at(data_sample.size()-1).at(4));
      }
 
 
@@ -351,7 +351,7 @@ for(int i = 0 ; i < 4 ; i++){
      /* ------ Class Two ------ */
     if(highest_index_label == 1 && highest_index_training == 0){
      hCorr_classified_kinematics_good[2*highest_index_training]->Fill(randTheta_1,fClusterEnergyMax*data_sample.at(data_sample.size()-1).at(0));
-     hCorr_classified_kinematics_wrong[2*highest_index_training+1]->Fill(randTheta_2,fClusterEnergyMax*data_sample.at(data_sample.size()-1).at(1));
+     hCorr_classified_kinematics_wrong[2*highest_index_training+1]->Fill(randTheta_2,fClusterEnergyMax*data_sample.at(data_sample.size()-1).at(4));
      fGoodClassification++;
 
     }
@@ -359,14 +359,14 @@ for(int i = 0 ; i < 4 ; i++){
 
     if(highest_index_label == 1 && highest_index_training == 2){
      hCorr_classified_kinematics_wrong[2*highest_index_training]->Fill(randTheta_1,fClusterEnergyMax*data_sample.at(data_sample.size()-1).at(0));
-     hCorr_classified_kinematics_wrong[2*highest_index_training+1]->Fill(randTheta_2,fClusterEnergyMax*data_sample.at(data_sample.size()-1).at(1));
+     hCorr_classified_kinematics_wrong[2*highest_index_training+1]->Fill(randTheta_2,fClusterEnergyMax*data_sample.at(data_sample.size()-1).at(4));
 
     }
 
 
     if(highest_index_label == 1 && highest_index_training == 3){
      hCorr_classified_kinematics_wrong[2*highest_index_training]->Fill(randTheta_1,fClusterEnergyMax*data_sample.at(data_sample.size()-1).at(0));
-     hCorr_classified_kinematics_good[2*highest_index_training+1]->Fill(randTheta_2,fClusterEnergyMax*data_sample.at(data_sample.size()-1).at(1));
+     hCorr_classified_kinematics_good[2*highest_index_training+1]->Fill(randTheta_2,fClusterEnergyMax*data_sample.at(data_sample.size()-1).at(4));
      fGoodClassification++;
 
     }
@@ -375,7 +375,7 @@ for(int i = 0 ; i < 4 ; i++){
     /* ------ Class Three ------ */
    if(highest_index_label == 2 && highest_index_training == 0){
     hCorr_classified_kinematics_wrong[2*highest_index_training]->Fill(randTheta_1,fClusterEnergyMax*data_sample.at(data_sample.size()-1).at(0));
-    hCorr_classified_kinematics_good[2*highest_index_training+1]->Fill(randTheta_2,fClusterEnergyMax*data_sample.at(data_sample.size()-1).at(1));
+    hCorr_classified_kinematics_good[2*highest_index_training+1]->Fill(randTheta_2,fClusterEnergyMax*data_sample.at(data_sample.size()-1).at(4));
     fGoodClassification++;
 
    }
@@ -383,13 +383,13 @@ for(int i = 0 ; i < 4 ; i++){
 
    if(highest_index_label == 2 && highest_index_training == 1){
     hCorr_classified_kinematics_wrong[2*highest_index_training]->Fill(randTheta_1,fClusterEnergyMax*data_sample.at(data_sample.size()-1).at(0));
-    hCorr_classified_kinematics_wrong[2*highest_index_training+1]->Fill(randTheta_2,fClusterEnergyMax*data_sample.at(data_sample.size()-1).at(1));
+    hCorr_classified_kinematics_wrong[2*highest_index_training+1]->Fill(randTheta_2,fClusterEnergyMax*data_sample.at(data_sample.size()-1).at(4));
    }
 
 
    if(highest_index_label == 2 && highest_index_training == 3){
     hCorr_classified_kinematics_good[2*highest_index_training]->Fill(randTheta_1,fClusterEnergyMax*data_sample.at(data_sample.size()-1).at(0));
-    hCorr_classified_kinematics_wrong[2*highest_index_training+1]->Fill(randTheta_2,fClusterEnergyMax*data_sample.at(data_sample.size()-1).at(1));
+    hCorr_classified_kinematics_wrong[2*highest_index_training+1]->Fill(randTheta_2,fClusterEnergyMax*data_sample.at(data_sample.size()-1).at(4));
     fGoodClassification++;
 
    }
@@ -399,13 +399,13 @@ for(int i = 0 ; i < 4 ; i++){
 
    if(highest_index_label == 3 && highest_index_training == 0){
     hCorr_classified_kinematics_wrong[2*highest_index_training]->Fill(randTheta_1,fClusterEnergyMax*data_sample.at(data_sample.size()-1).at(0));
-    hCorr_classified_kinematics_wrong[2*highest_index_training+1]->Fill(randTheta_2,fClusterEnergyMax*data_sample.at(data_sample.size()-1).at(1));
+    hCorr_classified_kinematics_wrong[2*highest_index_training+1]->Fill(randTheta_2,fClusterEnergyMax*data_sample.at(data_sample.size()-1).at(4));
    }
 
 
    if(highest_index_label == 3 && highest_index_training == 1){
     hCorr_classified_kinematics_wrong[2*highest_index_training]->Fill(randTheta_1,fClusterEnergyMax*data_sample.at(data_sample.size()-1).at(0));
-    hCorr_classified_kinematics_good[2*highest_index_training+1]->Fill(randTheta_2,fClusterEnergyMax*data_sample.at(data_sample.size()-1).at(1));
+    hCorr_classified_kinematics_good[2*highest_index_training+1]->Fill(randTheta_2,fClusterEnergyMax*data_sample.at(data_sample.size()-1).at(4));
     fGoodClassification++;
 
    }
@@ -413,7 +413,7 @@ for(int i = 0 ; i < 4 ; i++){
 
    if(highest_index_label == 3 && highest_index_training == 2){
     hCorr_classified_kinematics_good[2*highest_index_training]->Fill(randTheta_1,fClusterEnergyMax*data_sample.at(data_sample.size()-1).at(0));
-    hCorr_classified_kinematics_wrong[2*highest_index_training+1]->Fill(randTheta_2,fClusterEnergyMax*data_sample.at(data_sample.size()-1).at(1));
+    hCorr_classified_kinematics_wrong[2*highest_index_training+1]->Fill(randTheta_2,fClusterEnergyMax*data_sample.at(data_sample.size()-1).at(4));
     fGoodClassification++;
 
   }

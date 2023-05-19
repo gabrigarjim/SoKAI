@@ -107,6 +107,28 @@ int main (int argc, char** argv) {
   TBranch  *angBranch = eventTree->GetBranch("AngularDeviation");
   angBranch->SetAddress(&rAngularDeviation);
 
+  std::vector<Float_t> myVec;
+  TBranch  *neuBranch = eventTree->GetBranch("AngularDeviation");
+  angBranch->SetAddress(&myVec);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
   int nEvents = eventTree->GetEntries();
 

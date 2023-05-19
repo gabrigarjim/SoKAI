@@ -65,6 +65,8 @@ int main (int argc, char** argv) {
   TFile *eventFile;
   TTree* eventTree;
 
+
+
   eventFile = TFile::Open(fileList);
   eventTree = (TTree*)eventFile->Get("evt");
 
@@ -169,7 +171,7 @@ int main (int argc, char** argv) {
   model_reco->Init();
 
 
-  model_reco->LoadWeights("/home/gabri/Analysis/s455/nn_results/knockout_reconstruction/model_weights_knockout_regression_15.txt");
+  model_reco->LoadWeights("/home/gabri/Analysis/s455/nn_results/knockout_reconstruction/model_weights_knockout_regression_12.txt");
 
   Int_t nEvents = eventTree->GetEntries();
 
@@ -192,7 +194,7 @@ int main (int argc, char** argv) {
 
     eventTree->GetEvent(j);
 
-    if(!(j%1000))
+    if(!(j%10000))
      LOG(INFO)<<"Reading event "<<j<<" out of "<<nEvents<<" ("<<100.0*Float_t(j)/Float_t(nEvents)<<" % ) "<<endl;
 
     if(rClusterEnergy[0] < 30 || rClusterEnergy[1] < 30)
@@ -262,6 +264,8 @@ int main (int argc, char** argv) {
     output_vec = model_reco->Propagate(0);
     finalEnergy_2= output_vec.at(0)*fPrimEnergyMax;
 
+    // if(TMath::RadToDeg()*(rPolar[0] + rPolar[1]) < 75 || TMath::RadToDeg()*(rPolar[0] + rPolar[1]) > 85)
+    // continue;
 
     sprintf(name, "distributionCrystalID_%i",rMotherId[1]-2432);
 

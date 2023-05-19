@@ -47,8 +47,8 @@ int main (int argc, char** argv) {
   SKColorScheme();
 
    /* ------- Reading Root Data -------- */
-  TString fileList = "../SoKAI/macros/quasifree_reconstruction/files/238U_Quasifree_Exp_Data.root";
-  TString crystalString = "../SoKAI/macros/quasifree_reconstruction/files/angular_histograms.root";
+  TString fileList = "/home/gabri/CODE/SoKAI/macros/quasifree_reconstruction/files/238U_Quasifree_Exp_Data.root";
+  TString crystalString = "/home/gabri/CODE/SoKAI/macros/quasifree_reconstruction/files/angular_histograms.root";
 
   TH2F *hCorr_crystal_distribution;
 
