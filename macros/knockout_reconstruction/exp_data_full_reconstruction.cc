@@ -288,6 +288,24 @@ int main (int argc, char** argv) {
      }
 
 
+    /* ------- Getting Fission Probabilities -------- */
+    TH1F *hSlice_histogram;
+    /*300, -200,500*/
+    vector<Double_t> vExcEnergies;
+    vector<Double_t> vProb;
+    int multiplier = 20;
+
+    for (int i = 0 ; i < 15 ; i++){
+
+     hSlice_histogram = (TH1F*)hCorr_exc_energy_charges->ProjectionY("name",multiplier*i,multiplier*i+multiplier,"");
+     vExcEnergies.push_back(hCorr_exc_energy_charges->GetXaxis()->GetBinCenter( (multiplier*i + multiplier*i+multiplier)/2.0) );
+     vProb.push_back(hSlice_histogram->GetEntries()/hCorr_exc_energy_charges->GetEntries());
+    }
+
+    TGraph *gProbability = new TGraph(vExcEnergies.size(), &(vExcEnergies.at(0)),&(vProb.at(0)));
+    gProbability->SetTitle("Fission Probability");
+    gProbability->GetXaxis()->SetTitle("Excitation Energy, 46 MeV Slice");
+    gProbability->GetYaxis()->SetTitle("Probability (Slice Counts / Total Counts)");
 
     TCanvas *kinematics_canvas = new TCanvas("kinematics_canvas","Kinematics Canvas");
     kinematics_canvas->Divide(2,1);
@@ -312,6 +330,10 @@ int main (int argc, char** argv) {
     exc_charges_canvas->cd();
 
     hCorr_exc_energy_charges->Draw("COLZ");
+
+    TCanvas *myCanvas = new TCanvas("canvas_prob","canvas_prob");
+    myCanvas->cd();
+    gProbability->Draw("AC*");
 
 
     theApp->Run();
