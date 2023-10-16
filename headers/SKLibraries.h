@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <stdlib.h>
 #include "TH1.h"
+#include "TCutG.h"
 #include "TRandom3.h"
 #include <glog/logging.h>
 #include <fstream>

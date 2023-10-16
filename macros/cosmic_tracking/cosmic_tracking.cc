@@ -61,7 +61,7 @@ int main (int argc, char** argv) {
   float fCrystalAzimuthalMax = 190.;
   float fCrystalPolarMax = 140.;
 
-  int nMaxCrystals = 50;
+  int nMaxCrystals = 4;
 
   SKColorScheme();
 

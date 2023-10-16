@@ -184,7 +184,7 @@ setenv("GLOG_logtostderr", "1", 0);
   model_reco->Init();
 
 
-  model_reco->LoadWeights("/home/gabri/Analysis/s455/nn_results/knockout_reconstruction/model_weights_knockout_regression_11.txt");
+  model_reco->LoadWeights("/home/gabri/Analysis/s455/nn_results/knockout_reconstruction/model_weights_knockout_regression_12.txt");
 
   Int_t nEvents = eventTree->GetEntries();
 
@@ -208,7 +208,7 @@ setenv("GLOG_logtostderr", "1", 0);
   TH1F * hResolution_600_650 = new TH1F("hResolution_600_650","Resolution: 600 - 650 MeV ",400,-400,400);
 
   TH1F * hRaw_exc_energy = new TH1F("hRaw_exc_energy","Raw E*",400,-300,300);
-  TH1F * hReconstructed_exc_energy = new TH1F("hReconstructed_exc_energy","Reconstructed E*",400,-300,300);
+  TH2F * hReconstructed_exc_energy = new TH2F("hReconstructed_exc_energy","Reconstructed E* Residues Vs Real E*",400,-100,100,400,-50,400);
 
 
 
@@ -378,7 +378,7 @@ setenv("GLOG_logtostderr", "1", 0);
        if( (abs(rClusterEnergy[1] - rPrimaryEnergy[1]) > 10.0*fSecondSigma) || (abs(rClusterEnergy[0] - rPrimaryEnergy[0]) > 10.0*fFirstSigma) ){
 
          exc_energy_reco = exc_energy(finalEnergy_1,finalEnergy_2,TMath::RadToDeg()*rPolar[0],TMath::RadToDeg()*rPolar[1],TMath::RadToDeg()*rAzimuthal[0],TMath::RadToDeg()*rAzimuthal[1]);
-         hReconstructed_exc_energy->Fill(exc_energy_reco-exc_energy_primary);
+         hReconstructed_exc_energy->Fill(exc_energy_reco-exc_energy_primary,exc_energy_primary);
 
          if( (abs(rClusterEnergy[1] - rPrimaryEnergy[1]) > 10.0*fSecondSigma) && (abs(rClusterEnergy[0] - rPrimaryEnergy[0]) > 10.0*fFirstSigma) ) {
           hCorrReconstruction_energy->Fill(finalEnergy_1,rPrimaryEnergy[0]);
@@ -455,13 +455,13 @@ setenv("GLOG_logtostderr", "1", 0);
      hCorr_perfect_kinematics->Draw("COLZ");
 
     TCanvas *exc_energy_canvas = new TCanvas("exc_energy_canvas","exc_energy_canvas");
-    exc_energy_canvas->Divide(2,1);
+    // exc_energy_canvas->Divide(2,1);
+    //
+    // exc_energy_canvas->cd(1);
+    // hRaw_exc_energy->Draw("");
 
-    exc_energy_canvas->cd(1);
-    hRaw_exc_energy->Draw("");
-
-    exc_energy_canvas->cd(2);
-    hReconstructed_exc_energy->Draw("");
+    exc_energy_canvas->cd();
+    hReconstructed_exc_energy->Draw("COLZ");
 
     TCanvas *model_canvas = new TCanvas("model_canvas","Model");
     model_canvas->Divide(2,1);
