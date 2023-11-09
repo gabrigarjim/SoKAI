@@ -6,7 +6,15 @@
 #include "SKColorScheme.h"
 #include "exc_energy.h"
 
+int return_mass_index(Float_t mass){
 
+  if(mass > 238)
+  return -1;
+
+  else
+  return int(238-mass);
+
+ }
 
 using namespace std::chrono;
 
@@ -65,12 +73,6 @@ int main (int argc, char** argv) {
 
   TFile *eventFile;
   TTree* eventTree;
-
-  TFile* thefile = new TFile("exc_energy_masses_trampeado.root");
-  TCutG *mycutg ;
-  thefile->GetObject("CUTG",mycutg);
-
-
 
   eventFile = TFile::Open(fileList);
   eventTree = (TTree*)eventFile->Get("evt");
@@ -201,7 +203,6 @@ int main (int argc, char** argv) {
   TH2F * hCorr_exc_energy_charges = new TH2F("hCorr_exc_energy_charges","Excitation Energy Vs Charges",300,-200,500,300,20,90);
   TH2F * hCorr_exc_energy_masses = new TH2F("hCorr_exc_energy_masses","Excitation Energy Vs Masses",300,-200,500,300,40,180);
 
-  TH1F * hFissioning_system = new TH1F("hFissioning_system","Z1 + Z2*",400,60,100);
   TH2F * hCorr_exc_energy_mass_sum = new TH2F("hCorr_exc_energy_mass_sum","Excitation Energy Vs Mass Sum",300,190,250,300,-200,500);
 
   TH2F * hCorr_charges_mass_sum = new TH2F("hCorr_charges_mass_sum","Charges Vs Mass Sum",300,20,90,300,190,250);
@@ -232,26 +233,7 @@ int main (int argc, char** argv) {
   TH1F * hFragmentCharges_6 = new TH1F("hFragmentCharges_6","Fragment Charges : E* -> (230,280)",400,25,65);
   TH1F * hFragmentCharges_7 = new TH1F("hFragmentCharges_7","Fragment Charges : E* -> (280,330)",400,25,65);
 
-  TH1F * hFragmentCharges_Mass_Cut = new TH1F("hFragmentCharges_Mass_Cut","Fragment Charges : M = 236",400,25,65);
-  TH1F * hExcitationEnergy = new TH1F("hExcitationEnergy","Excitation Energy : M = 236 ",100,-200,500);
 
-  hFragmentCharges_Mass_Cut->SetLineColor(1);
-  hExcitationEnergy->SetLineColor(1);
-
-  hFragmentCharges_Mass_Cut->GetXaxis()->SetTitle("Fission Fragment Charges (Z Units)");
-  hExcitationEnergy->GetXaxis()->SetTitle("Reconstructed E* (MeV)");
-
-  // std::vector<int> vMasses = {220,221,222,223,224,225,226,227,228,229,230,231,232,233,234,235,236,237};
-  std::vector<int> vMasses = {220};
-
-  Float_t polarFActor = 4*0.017453293;
-  Float_t nFissions;
-
-  std::vector<Double_t> vExc_energy;
-  std::vector<Double_t> vFissions;
-
-
-  for(int p = 0 ; p < vMasses.size() ; p++){
 
 
    for (Int_t j = 0; j<nEvents; j++) {
@@ -262,14 +244,14 @@ int main (int argc, char** argv) {
     if(!(j%10000))
      LOG(INFO)<<"Reading event "<<j<<" out of "<<nEvents<<" ("<<100.0*Float_t(j)/Float_t(nEvents)<<" % ) "<<endl;
 
-    if(rClusterEnergy[0] < 30 || rClusterEnergy[1] < 30)
+    if(rClusterEnergy[0] < 50 || rClusterEnergy[1] < 50)
     continue;
 
     Double_t finalEnergy_1 = rClusterEnergy[0];
     Double_t finalEnergy_2 = rClusterEnergy[1];
 
     exc_energy_raw = exc_energy(finalEnergy_1,finalEnergy_2,TMath::RadToDeg()*rPolar[0],TMath::RadToDeg()*rPolar[1],TMath::RadToDeg()*rAzimuthal[0],TMath::RadToDeg()*rAzimuthal[1]);
-    // hRaw_exc_energy->Fill(exc_energy_raw);
+    hRaw_exc_energy->Fill(exc_energy_raw);
 
     data_instance.push_back(rClusterEnergy[0]/fClusterEnergyMax);
     data_instance.push_back(rMotherCrystalEnergy[0]/fSingleCrystalEnergyMax);
@@ -346,7 +328,7 @@ int main (int argc, char** argv) {
     data_sample.clear();
     output_vec.clear();
 
-    exc_energy_reco = exc_energy(finalEnergy_1,finalEnergy_2,TMath::RadToDeg()*rPolar[0] -2,TMath::RadToDeg()*rPolar[1]-2,TMath::RadToDeg()*rAzimuthal[0],TMath::RadToDeg()*rAzimuthal[1]);
+    exc_energy_reco = exc_energy(finalEnergy_1,finalEnergy_2,TMath::RadToDeg()*rPolar[0],TMath::RadToDeg()*rPolar[1],TMath::RadToDeg()*rAzimuthal[0],TMath::RadToDeg()*rAzimuthal[1]);
     hReconstructed_exc_energy->Fill(exc_energy_reco);
 
     hCorr_exc_energy_charges->Fill(exc_energy_reco,rFissionCharges[0]);
@@ -354,28 +336,15 @@ int main (int argc, char** argv) {
 
     hCorr_exc_energy_masses->Fill(exc_energy_reco,rFissionMasses[0]);
     hCorr_exc_energy_masses->Fill(exc_energy_reco,rFissionMasses[1]);
-    hFissioning_system->Fill(rFissionCharges[1] + rFissionCharges[0]);
 
     hCorr_exc_energy_opening->Fill(openingAngle,exc_energy_reco);
 
-    if( (rFissionMasses[0] + rFissionMasses[1]) > 220 && (rFissionMasses[0] + rFissionMasses[1]) < 237){
-     hCorr_charges_mass_sum->Fill(rFissionCharges[1],rFissionMasses[0] + rFissionMasses[1]);
-     hCorr_charges_mass_sum->Fill(rFissionCharges[0],rFissionMasses[0] + rFissionMasses[1]);
-   }
+    hCorr_charges_mass_sum->Fill(rFissionCharges[1],rFissionMasses[0] + rFissionMasses[1]);
+    hCorr_charges_mass_sum->Fill(rFissionCharges[0],rFissionMasses[0] + rFissionMasses[1]);
 
-    // if(mycutg->IsInside(rFissionMasses[0] + rFissionMasses[1] , exc_energy_reco))
 
-    if(openingAngle>78)
     hCorr_exc_energy_mass_sum->Fill(rFissionMasses[0] + rFissionMasses[1] , exc_energy_reco);
 
-
-    if((rFissionMasses[0] + rFissionMasses[1]) > vMasses.at(p) - 1 && (rFissionMasses[0] + rFissionMasses[1]) < vMasses.at(p) + 1){
-
-      hFragmentCharges_Mass_Cut->Fill(round(rFissionCharges[0]));
-      hFragmentCharges_Mass_Cut->Fill(round(rFissionCharges[1]));
-      hExcitationEnergy->Fill(exc_energy_reco);
-
-    }
 
     if(exc_energy_reco > -20 && exc_energy_reco < 30){
 
@@ -464,173 +433,108 @@ int main (int argc, char** argv) {
      hMassSum_7->Fill(rFissionMasses[0] + rFissionMasses[1]);
 
     }
-
-
-
-     }
-
-      Double_t calib = 13233.5 -105.87 * vMasses.at(p) + 0.211144 *  vMasses.at(p) *  vMasses.at(p);
-
-      TString s = "Fission Charges : M = " + to_string(vMasses.at(p)) + " , <E*> = " + to_string(calib);
-      hFragmentCharges_Mass_Cut->SetTitle(s);
-
-      // TCanvas *c = new TCanvas("canvas","canvas",1000,1000);
-      // hFragmentCharges_Mass_Cut->Draw("");
-      //
-      // TString sp = "/home/gabri/Escritorio/fission_charges_M_" + to_string(vMasses.at(p)) + ".png";
-      // c->Print(sp);
-
-      vExc_energy.push_back(calib);
-      vFissions.push_back(hFragmentCharges_Mass_Cut->GetEntries());
-      nFissions += hFragmentCharges_Mass_Cut->GetEntries();
-
-      // s = "hCharges_" + to_string(vMasses.at(p));
-      // hFragmentCharges_Mass_Cut->SetName(s);
-      // hFragmentCharges_Mass_Cut->Write();
-      //
-      hFragmentCharges_Mass_Cut->Reset("ICESM");
-      hExcitationEnergy->Reset("ICESM");
-
-      // delete c;
    }
 
-    // /* ------- Getting Fission Probabilities -------- */
-    // TH1F *hSlice_histogram;
-    // /*300, -200,500*/
-    // vector<Double_t> vExcEnergies;
-    // vector<Double_t> vProb;
-    // int multiplier = 20;
-    //
-    // for (int i = 0 ; i < 15 ; i++){
-    //
-    //  hSlice_histogram = (TH1F*)hCorr_exc_energy_charges->ProjectionY("name",multiplier*i,multiplier*i+multiplier,"");
-    //  vExcEnergies.push_back(hCorr_exc_energy_charges->GetXaxis()->GetBinCenter( (multiplier*i + multiplier*i+multiplier)/2.0) );
-    //  vProb.push_back(hSlice_histogram->GetEntries()/hCorr_exc_energy_charges->GetEntries());
-    // }
-    //
+    TCanvas *kinematics_canvas = new TCanvas("kinematics_canvas","Kinematics Canvas");
+    kinematics_canvas->Divide(2,1);
 
-     for(int p = 0 ; p < vFissions.size() ; p++)
-      vFissions.at(p) = vFissions.at(p) / nFissions;
+    kinematics_canvas->cd(1);
+     hCorr_raw_kinematics->Draw("COLZ");
 
-     TGraph *gProbability = new TGraph(vExc_energy.size(), &(vExc_energy.at(0)),&(vFissions.at(0)));
-     gProbability->SetTitle("Fission Probability");
-     gProbability->GetXaxis()->SetTitle("Excitation Energy");
-     gProbability->GetYaxis()->SetTitle("Probability (Counts / Total Counts)");
-    //
-    // TCanvas *kinematics_canvas = new TCanvas("kinematics_canvas","Kinematics Canvas");
-    // kinematics_canvas->Divide(2,1);
-    //
-    // kinematics_canvas->cd(1);
-    //  hCorr_raw_kinematics->Draw("COLZ");
-    //
-    // kinematics_canvas->cd(2);
-    //  hCorr_reconstructed_kinematics->Draw("COLZ");
-    //
-    //
-    // TCanvas *exc_energy_canvas = new TCanvas("exc_energy_canvas","exc_energy_canvas");
-    // exc_energy_canvas->Divide(2,1);
-    //
-    // exc_energy_canvas->cd(1);
-    // hRaw_exc_energy->Draw("");
-    //
-    // exc_energy_canvas->cd(2);
-    // hReconstructed_exc_energy->Draw("");
-    //
-    // TCanvas *exc_charges_canvas = new TCanvas("exc_charges_canvas","exc_charges_canvas");
-    // exc_charges_canvas->Divide(2,1);
-    //
-    // exc_charges_canvas->cd(1);
-    // hCorr_exc_energy_charges->Draw("COLZ");
-    //
-    // exc_charges_canvas->cd(2);
-    // hCorr_exc_energy_masses->Draw("COLZ");
-    //
-    TCanvas *myCanvas = new TCanvas("canvas_prob","canvas_prob",1000,800);
-    // // myCanvas->Divide(2,1);
-    // //
-    myCanvas->cd();
-    hCorr_charges_mass_sum->Draw("COLZ");
-    //
-    // myCanvas->cd();
-    // hCorr_exc_energy_mass_sum->Draw("COLZ");
-    //
-    // TCanvas *cut_canvas = new TCanvas("cut_canvas","cut_canvas");
-    // cut_canvas->Divide(2,1);
-    //
-    // cut_canvas->cd(1);
-    // hFragmentCharges_Mass_Cut->Draw("");
-    //
-    // cut_canvas->cd(2);
-    // hExcitationEnergy->Draw("");
-    //
-    //
-    // cout<<"Mean Excitation Energy : "<<hExcitationEnergy->GetMean()<<endl;
-    //
-    // TCanvas *all_canvas = new TCanvas("all_canvas","all_canvas");
-    // all_canvas->Divide(7,3);
-    //
-    // all_canvas->cd(1);
-    // hFragmentMasses_1->Draw("");
-    //
-    // all_canvas->cd(2);
-    // hFragmentMasses_2->Draw("");
-    //
-    // all_canvas->cd(3);
-    // hFragmentMasses_3->Draw("");
-    //
-    // all_canvas->cd(4);
-    // hFragmentMasses_4->Draw("");
-    //
-    // all_canvas->cd(5);
-    // hFragmentMasses_5->Draw("");
-    //
-    // all_canvas->cd(6);
-    // hFragmentMasses_6->Draw("");
-    //
-    // all_canvas->cd(7);
-    // hFragmentMasses_7->Draw("");
-    //
-    // all_canvas->cd(8);
-    // hMassSum_1->Draw("");
-    //
-    // all_canvas->cd(9);
-    // hMassSum_2->Draw("");
-    //
-    // all_canvas->cd(10);
-    // hMassSum_3->Draw("");
-    //
-    // all_canvas->cd(11);
-    // hMassSum_4->Draw("");
-    //
-    // all_canvas->cd(12);
-    // hMassSum_5->Draw("");
-    //
-    // all_canvas->cd(13);
-    // hMassSum_6->Draw("");
-    //
-    // all_canvas->cd(14);
-    // hMassSum_7->Draw("");
-    //
-    // all_canvas->cd(15);
-    // hFragmentCharges_1->Draw("");
-    //
-    // all_canvas->cd(16);
-    // hFragmentCharges_2->Draw("");
-    //
-    // all_canvas->cd(17);
-    // hFragmentCharges_3->Draw("");
-    //
-    // all_canvas->cd(18);
-    // hFragmentCharges_4->Draw("");
-    //
-    // all_canvas->cd(19);
-    // hFragmentCharges_5->Draw("");
-    //
-    // all_canvas->cd(20);
-    // hFragmentCharges_6->Draw("");
-    //
-    // all_canvas->cd(21);
-    // hFragmentCharges_7->Draw("");
+    kinematics_canvas->cd(2);
+     hCorr_reconstructed_kinematics->Draw("COLZ");
+
+
+    TCanvas *exc_energy_canvas = new TCanvas("exc_energy_canvas","exc_energy_canvas");
+    exc_energy_canvas->Divide(2,1);
+
+    exc_energy_canvas->cd(1);
+    hRaw_exc_energy->Draw("");
+
+    exc_energy_canvas->cd(2);
+    hReconstructed_exc_energy->Draw("");
+
+    TCanvas *exc_charges_canvas = new TCanvas("exc_charges_canvas","exc_charges_canvas");
+    exc_charges_canvas->Divide(2,1);
+
+    exc_charges_canvas->cd(1);
+    hCorr_exc_energy_charges->Draw("COLZ");
+
+    exc_charges_canvas->cd(2);
+    hCorr_exc_energy_masses->Draw("COLZ");
+
+
+    TCanvas *all_canvas = new TCanvas("all_canvas","all_canvas");
+    all_canvas->Divide(7,3);
+
+    all_canvas->cd(1);
+    hFragmentMasses_1->Draw("");
+
+    all_canvas->cd(2);
+    hFragmentMasses_2->Draw("");
+
+    all_canvas->cd(3);
+    hFragmentMasses_3->Draw("");
+
+    all_canvas->cd(4);
+    hFragmentMasses_4->Draw("");
+
+    all_canvas->cd(5);
+    hFragmentMasses_5->Draw("");
+
+    all_canvas->cd(6);
+    hFragmentMasses_6->Draw("");
+
+    all_canvas->cd(7);
+    hFragmentMasses_7->Draw("");
+
+    all_canvas->cd(8);
+    hMassSum_1->Draw("");
+
+    all_canvas->cd(9);
+    hMassSum_2->Draw("");
+
+    all_canvas->cd(10);
+    hMassSum_3->Draw("");
+
+    all_canvas->cd(11);
+    hMassSum_4->Draw("");
+
+    all_canvas->cd(12);
+    hMassSum_5->Draw("");
+
+    all_canvas->cd(13);
+    hMassSum_6->Draw("");
+
+    all_canvas->cd(14);
+    hMassSum_7->Draw("");
+
+    all_canvas->cd(15);
+    hFragmentCharges_1->Draw("");
+
+    all_canvas->cd(16);
+    hFragmentCharges_2->Draw("");
+
+    all_canvas->cd(17);
+    hFragmentCharges_3->Draw("");
+
+    all_canvas->cd(18);
+    hFragmentCharges_4->Draw("");
+
+    all_canvas->cd(19);
+    hFragmentCharges_5->Draw("");
+
+    all_canvas->cd(20);
+    hFragmentCharges_6->Draw("");
+
+    all_canvas->cd(21);
+    hFragmentCharges_7->Draw("");
+
+
+   TCanvas *mass_canvas = new TCanvas("mass_canvas","mass_canvas");
+   mass_canvas->cd();
+   hCorr_exc_energy_mass_sum->Draw("COLZ");
+
 
 
     theApp->Run();

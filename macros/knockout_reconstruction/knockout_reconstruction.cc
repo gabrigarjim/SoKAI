@@ -113,23 +113,6 @@ int main (int argc, char** argv) {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
   int nEvents = eventTree->GetEntries();
 
   if(nEvents < nSamples)
@@ -339,8 +322,8 @@ int main (int argc, char** argv) {
     data_sample_shuffled.push_back(data_sample.at(event));
     input_labels_shuffled.push_back(input_labels.at(event));
 
-    // data_sample.erase(data_sample.begin() + event);
-    // input_labels.erase(input_labels.begin() + event);
+    data_sample.erase(data_sample.begin() + event);
+    input_labels.erase(input_labels.begin() + event);
   }
 
   cout<<"Sample sizes : "<<data_sample_shuffled.size()<<" times "<<data_sample_shuffled.at(0).size()<<endl;
@@ -670,21 +653,20 @@ TCanvas *reso_canvas = new TCanvas("reso_canvas","Resolution Canvas");
 
 
 
-  TString filename = "training_results_knockout_regression_";
-   filename = filename + argv[14] + ".root";
+ TString filename = "training_results_knockout_regression_";
+  filename = filename + argv[14] + ".root";
 
-TFile resultsFile(filename,"RECREATE");
-
-
- model_canvas->Write();
- summary_canvas->Write();
- reso_canvas->Write();
- kinematics_canvas->Write();
+ TFile resultsFile(filename,"RECREATE");
 
 
-theApp->Run();
+  model_canvas->Write();
+  summary_canvas->Write();
+  reso_canvas->Write();
+  kinematics_canvas->Write();
 
-return 0;
+  resultsFile.Close();
+
+  return 0;
 
 
 

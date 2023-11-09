@@ -40,6 +40,7 @@ add_executable(KnockoutExpReconstruction macros/knockout_reconstruction/exp_data
 add_executable(CrossSectionPrediction macros/cross_sections_fission/cross_sections_prediction.cc ${sources} ${headers} )
 add_executable(CosmicTracking macros/cosmic_tracking/cosmic_tracking.cc ${sources} ${headers} )
 add_executable(MassReconstruction macros/mass_reconstruction/mass_reconstruction.cc ${sources} ${headers} )
+add_executable(MassReconstructionCheck macros/mass_reconstruction/check_reconstruction.cc ${sources} ${headers} )
 
 
 
@@ -61,6 +62,7 @@ target_link_libraries(KnockoutExpReconstruction ${ROOT_LIBRARIES} glog::glog)
 target_link_libraries(CrossSectionPrediction ${ROOT_LIBRARIES} glog::glog)
 target_link_libraries(CosmicTracking ${ROOT_LIBRARIES} glog::glog)
 target_link_libraries(MassReconstruction ${ROOT_LIBRARIES} glog::glog)
+target_link_libraries(MassReconstructionCheck ${ROOT_LIBRARIES} glog::glog)
 
 
 
@@ -109,7 +111,7 @@ set_target_properties(CosmicTracking
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/CosmicBinaries"
 )
 
-set_target_properties(MassReconstruction
+set_target_properties(MassReconstruction MassReconstructionCheck
     PROPERTIES
     ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib"
     LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib"
