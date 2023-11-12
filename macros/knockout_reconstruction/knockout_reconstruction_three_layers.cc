@@ -309,10 +309,6 @@ int main (int argc, char** argv) {
 
 
 
-  int nTrainingSize   = (7.0/10.0)*data_sample.size();
-  int nTestSize       = (3.0/10.0)*data_sample.size();
-
-  LOG(INFO)<<"Training Size : "<<nTrainingSize<<" events. Test size : "<<nTestSize<<endl;
   LOG(INFO)<<"Shuffle events! ";
 
   for( int i = 0 ; i < data_sample.size(); i++){
@@ -329,35 +325,29 @@ int main (int argc, char** argv) {
   cout<<"Sample sizes : "<<data_sample_shuffled.size()<<" times "<<data_sample_shuffled.at(0).size()<<endl;
   cout<<"Label sizes : "<<input_labels_shuffled.size()<<" times "<<input_labels_shuffled.at(0).size()<<endl;
 
+  int nTrainingSize   = (7.0/10.0)*data_sample_shuffled.size();
+  int nTestSize       = (3.0/10.0)*data_sample_shuffled.size();
+
+  LOG(INFO)<<"Training Size : "<<nTrainingSize<<" events. Test size : "<<nTestSize<<endl;
+
+
   /*------- The Model Itself -------*/
 
-  SKLayer   *layer_1 = new SKLayer(14,argv[8]);
+  SKLayer   *layer_1 = new SKLayer(14,argv[6]);
   SKWeights *weights_12 = new SKWeights(14,stoi(argv[5]));
   SKWeights *gradients_12 = new SKWeights(14,stoi(argv[5]));
   SKWeights *firstMoment_12 = new SKWeights(14,stoi(argv[5]));
   SKWeights *secondMoment_12 = new SKWeights(14,stoi(argv[5]));
 
 
-  SKLayer   *layer_2 = new SKLayer(stoi(argv[5]),argv[9]);
-  SKWeights *weights_23 = new SKWeights(stoi(argv[5]),stoi(argv[6]));
-  SKWeights *gradients_23 = new SKWeights(stoi(argv[5]),stoi(argv[6]));
-  SKWeights *firstMoment_23 = new SKWeights(stoi(argv[5]),stoi(argv[6]));
-  SKWeights *secondMoment_23 = new SKWeights(stoi(argv[5]),stoi(argv[6]));
+  SKLayer   *layer_2 = new SKLayer(stoi(argv[5]),argv[7]);
+  SKWeights *weights_23 = new SKWeights(stoi(argv[5]),1);
+  SKWeights *gradients_23 = new SKWeights(stoi(argv[5]),1);
+  SKWeights *firstMoment_23 = new SKWeights(stoi(argv[5]),1);
+  SKWeights *secondMoment_23 = new SKWeights(stoi(argv[5]),1);
 
 
-  SKLayer   *layer_3 = new SKLayer(stoi(argv[6]),argv[10]);
-  SKWeights *weights_34 = new SKWeights(stoi(argv[6]),stoi(argv[7]));
-  SKWeights *gradients_34 = new SKWeights(stoi(argv[6]),stoi(argv[7]));
-  SKWeights *firstMoment_34 = new SKWeights(stoi(argv[6]),stoi(argv[7]));
-  SKWeights *secondMoment_34 = new SKWeights(stoi(argv[6]),stoi(argv[7]));
-
-  SKLayer   *layer_4 = new SKLayer(stoi(argv[7]),argv[11]);
-  SKWeights *weights_45 = new SKWeights(stoi(argv[7]),1);
-  SKWeights *gradients_45 = new SKWeights(stoi(argv[7]),1);
-  SKWeights *firstMoment_45 = new SKWeights(stoi(argv[7]),1);
-  SKWeights *secondMoment_45 = new SKWeights(stoi(argv[7]),1);
-
-  SKLayer   *layer_5 = new SKLayer(1,argv[12]);
+  SKLayer   *layer_3 = new SKLayer(1,argv[8]);
 
 
 
@@ -373,22 +363,10 @@ int main (int argc, char** argv) {
   secondMoment_23->InitMoment();
 
 
-  weights_34->Init(seed);
-  gradients_34->InitGradients();
-  firstMoment_34->InitMoment();
-  secondMoment_34->InitMoment();
-
-  weights_45->Init(seed);
-  gradients_45->InitGradients();
-  firstMoment_45->InitMoment();
-  secondMoment_45->InitMoment();
-
-
-
   SKModel *model = new SKModel("Regression");
 
   model->SetOptimizer("Adam");
-  model->SetSummaryFile("summary_knockout_regression_",argv[14]);
+  model->SetSummaryFile("summary_knockout_regression_three_layers",argv[10]);
 
   model->AddLayer(layer_1);
   model->AddWeights(weights_12);
@@ -405,38 +383,23 @@ int main (int argc, char** argv) {
 
 
   model->AddLayer(layer_3);
-  model->AddWeights(weights_34);
-  model->AddGradients(gradients_34);
-  model->AddFirstMoments(firstMoment_34);
-  model->AddSecondMoments(secondMoment_34);
-
-
-  model->AddLayer(layer_4);
-  model->AddWeights(weights_45);
-  model->AddGradients(gradients_45);
-  model->AddFirstMoments(firstMoment_45);
-  model->AddSecondMoments(secondMoment_45);
-
-  model->AddLayer(layer_5);
 
   model->SetInputSample(&data_sample_shuffled);
   model->SetInputLabels(&input_labels_shuffled);
 
   model->Init();
   model->SetLearningRate(fLearningRate);
-  model->SetLossFunction(argv[13]);
+  model->SetLossFunction(argv[9]);
 
   /* ---- Number of processed inputs before updating gradients ---- */
   model->SetBatchSize(nMiniBatchSize);
 
-  LOG(INFO)<<"Model Training Hyper Parameters. Epochs : "<<argv[1]<<" Samples : "<<data_sample.size()<<" Learning Rate : "<<stoi(argv[3])/1000.0<<" Metric : "<<argv[13];
+  LOG(INFO)<<"Model Training Hyper Parameters. Epochs : "<<argv[1]<<" Samples : "<<data_sample.size()<<" Learning Rate : "<<stoi(argv[3])/1000.0<<" Metric : "<<argv[9];
   LOG(INFO)<<"";
   LOG(INFO)<<"/* ---------- Model Structure -----------";
-  LOG(INFO)<<"L1 : "<<argv[8]<<" "<<"14";
-  LOG(INFO)<<"H1 : "<<argv[9]<<" "<<argv[5];
-  LOG(INFO)<<"H2 : "<<argv[10]<<" "<<argv[6];
-  LOG(INFO)<<"H3 : "<<argv[11]<<" "<<argv[7];
-  LOG(INFO)<<"L5 : "<<argv[12]<<" "<<"1";
+  LOG(INFO)<<"L1 : "<<argv[6]<<" "<<"14";
+  LOG(INFO)<<"H1 : "<<argv[7]<<" "<<argv[5];
+  LOG(INFO)<<"L3 : "<<argv[8]<<" "<<"1";
 
   /* ---------- Pass Data Through Model ----------*/
    absoluteLoss = 0.0;
@@ -597,8 +560,8 @@ TGraph *loss_graph = new TGraph(epoch_vec.size(),&epoch_vec[0],&loss_vec[0]);
 TH2F* model_histo;
 model_histo = (TH2F*)model->ShowMe();
 
-string weight_filename = "model_weights_knockout_regression_";
-weight_filename = weight_filename + argv[14] + ".txt";
+string weight_filename = "model_weights_knockout_regression_three_layers_";
+weight_filename = weight_filename + argv[10] + ".txt";
 
 model->SaveWeights(weight_filename);
 
@@ -653,8 +616,8 @@ TCanvas *reso_canvas = new TCanvas("reso_canvas","Resolution Canvas");
 
 
 
- TString filename = "training_results_knockout_regression_";
-  filename = filename + argv[14] + ".root";
+ TString filename = "training_results_knockout_regression_three_layers_";
+  filename = filename + argv[10] + ".root";
 
  TFile resultsFile(filename,"RECREATE");
 
@@ -666,6 +629,7 @@ TCanvas *reso_canvas = new TCanvas("reso_canvas","Resolution Canvas");
 
   resultsFile.Close();
 
+  theApp->Run();
   return 0;
 
 

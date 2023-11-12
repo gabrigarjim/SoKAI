@@ -26,8 +26,6 @@ int main (int argc, char** argv) {
   int seed            = 2022;
   int epochs          = stoi(argv[1]);
   int nSamples        = stoi(argv[2]);
-  int nTrainingSize   = (7.0/10.0)*nSamples;
-  int nTestSize       = (3.0/10.0)*nSamples;
   int nMiniBatchSize  = stoi(argv[4]);
   float fLearningRate = stoi(argv[3])/1000.;
 
@@ -128,6 +126,9 @@ int main (int argc, char** argv) {
     if(!(j%1000))
      LOG(INFO)<<"Reading event "<<j<<" out of "<<nEvents<<" ("<<100.0*Float_t(j)/Float_t(nEvents)<<" % ) "<<endl;
 
+      if(TMath::RadToDeg()*(rPolar[0] + rPolar[1]) < 77 || TMath::RadToDeg()*(rPolar[0] + rPolar[1]) > 84)
+       continue;
+
       data_instance.push_back(rClusterEnergy[0]/fClusterEnergyMax);
       data_instance.push_back(rMotherCrystalEnergy[0]/fSingleCrystalEnergyMax);
       data_instance.push_back(rPolar[0]/fPolarMax);
@@ -161,6 +162,11 @@ int main (int argc, char** argv) {
 
 
 
+   int nTrainingSize   = (7.0/10.0)*data_sample.size();
+   int nTestSize       = (3.0/10.0)*data_sample.size();
+
+   cout<<"Training Size : "<<nTrainingSize<<" Events "<<endl;
+   cout<<"Test Size : "<<nTestSize<<" Events "<<endl;
 
   /*------- The Model Itself -------*/
 

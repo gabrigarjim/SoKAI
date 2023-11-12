@@ -33,7 +33,11 @@ add_executable(QuasifreeClassificationSmaller macros/quasifree_reconstruction/qu
 add_executable(QuasifreeClassificationCheck macros/quasifree_reconstruction/quasifree_classification_check.cc ${sources} ${headers} )
 add_executable(QuasifreeReconstructionCheck macros/quasifree_reconstruction/quasifree_reconstruction_check.cc ${sources} ${headers} )
 add_executable(QuasifreeExpReconstruction macros/quasifree_reconstruction/exp_data_full_reconstruction.cc ${sources} ${headers} )
-add_executable(KnockoutReconstruction macros/knockout_reconstruction/knockout_reconstruction.cc ${sources} ${headers} )
+
+add_executable(KnockoutReconstructionFive macros/knockout_reconstruction/knockout_reconstruction_five_layers.cc ${sources} ${headers} )
+add_executable(KnockoutReconstructionFour macros/knockout_reconstruction/knockout_reconstruction_four_layers.cc ${sources} ${headers} )
+add_executable(KnockoutReconstructionThree macros/knockout_reconstruction/knockout_reconstruction_three_layers.cc ${sources} ${headers} )
+
 add_executable(KnockoutReconstructionCheck macros/knockout_reconstruction/knockout_reconstruction_check.cc ${sources} ${headers} )
 add_executable(KnockoutClassification macros/knockout_reconstruction/knockout_classification.cc ${sources} ${headers} )
 add_executable(KnockoutExpReconstruction macros/knockout_reconstruction/exp_data_full_reconstruction.cc ${sources} ${headers} )
@@ -56,7 +60,9 @@ target_link_libraries(QuasifreeClassificationBigger ${ROOT_LIBRARIES} glog::glog
 target_link_libraries(QuasifreeClassificationSmaller ${ROOT_LIBRARIES} glog::glog)
 target_link_libraries(QuasifreeExpReconstruction ${ROOT_LIBRARIES} glog::glog)
 target_link_libraries(KnockoutClassification ${ROOT_LIBRARIES} glog::glog)
-target_link_libraries(KnockoutReconstruction ${ROOT_LIBRARIES} glog::glog)
+target_link_libraries(KnockoutReconstructionFive ${ROOT_LIBRARIES} glog::glog)
+target_link_libraries(KnockoutReconstructionFour ${ROOT_LIBRARIES} glog::glog)
+target_link_libraries(KnockoutReconstructionThree ${ROOT_LIBRARIES} glog::glog)
 target_link_libraries(KnockoutReconstructionCheck ${ROOT_LIBRARIES} glog::glog)
 target_link_libraries(KnockoutExpReconstruction ${ROOT_LIBRARIES} glog::glog)
 target_link_libraries(CrossSectionPrediction ${ROOT_LIBRARIES} glog::glog)
@@ -90,7 +96,7 @@ set_target_properties(QuasifreeExpReconstruction
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/ExpBinaries"
 )
 
-set_target_properties(KnockoutReconstruction KnockoutClassification KnockoutReconstructionCheck KnockoutExpReconstruction
+set_target_properties(KnockoutReconstructionFive KnockoutReconstructionFour KnockoutReconstructionThree KnockoutClassification KnockoutReconstructionCheck KnockoutExpReconstruction
     PROPERTIES
     ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib"
     LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib"
