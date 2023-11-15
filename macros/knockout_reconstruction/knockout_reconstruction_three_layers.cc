@@ -63,11 +63,11 @@ int main (int argc, char** argv) {
   float fAngularDeviationMax = 0.20;
   float fPrimEnergyMax = 1200;
 
-
+  gROOT->SetBatch(kTRUE);
   SKColorScheme();
 
    /* ------- Reading Root Data -------- */
-  TString fileList = "../../SoKAI/macros/knockout_reconstruction/files/U238_Fission_560AMeV_NN_train.root";
+  TString fileList = "../../SoKAI/macros/knockout_reconstruction/files/U238_Fission_560AMeV_NN_Z91_Final.root";
 
   TFile *eventFile;
   TTree* eventTree;
@@ -311,15 +311,15 @@ int main (int argc, char** argv) {
 
   LOG(INFO)<<"Shuffle events! ";
 
-  for( int i = 0 ; i < data_sample.size(); i++){
+  std::vector<int> indices(data_sample.size());
+  std::iota(indices.begin(), indices.end(), 0);
+  std::random_shuffle(indices.begin(), indices.end());
 
-    int event = data_sample.size()*gen.Rndm();
+  for( int index : indices){
 
-    data_sample_shuffled.push_back(data_sample.at(event));
-    input_labels_shuffled.push_back(input_labels.at(event));
+    data_sample_shuffled.push_back(data_sample[index]);
+    input_labels_shuffled.push_back(input_labels[index]);
 
-    data_sample.erase(data_sample.begin() + event);
-    input_labels.erase(input_labels.begin() + event);
   }
 
   cout<<"Sample sizes : "<<data_sample_shuffled.size()<<" times "<<data_sample_shuffled.at(0).size()<<endl;
@@ -575,34 +575,51 @@ summary_canvas->cd(1);
 summary_canvas->cd(2);
  loss_graph->Draw("AC");
 
-
+std::vector<Float_t> vSaveValues;
 
 TCanvas *reso_canvas = new TCanvas("reso_canvas","Resolution Canvas");
  reso_canvas->Divide(4,2);
 
  reso_canvas->cd(1);
   hResolution_250_300->Draw("");
+  vSaveValues.push_back(hResolution_250_300->GetMean());
+  vSaveValues.push_back(hResolution_250_300->GetRMS());
+
 
  reso_canvas->cd(2);
   hResolution_300_350->Draw("");
+  vSaveValues.push_back(hResolution_300_350->GetMean());
+  vSaveValues.push_back(hResolution_300_350->GetRMS());
 
  reso_canvas->cd(3);
   hResolution_350_400->Draw("");
+  vSaveValues.push_back(hResolution_350_400->GetMean());
+  vSaveValues.push_back(hResolution_350_400->GetRMS());
 
  reso_canvas->cd(4);
   hResolution_400_450->Draw("");
+  vSaveValues.push_back(hResolution_400_450->GetMean());
+  vSaveValues.push_back(hResolution_400_450->GetRMS());
 
  reso_canvas->cd(5);
   hResolution_450_500->Draw("");
+  vSaveValues.push_back(hResolution_450_500->GetMean());
+  vSaveValues.push_back(hResolution_450_500->GetRMS());
 
  reso_canvas->cd(6);
   hResolution_500_550->Draw("");
+  vSaveValues.push_back(hResolution_500_550->GetMean());
+  vSaveValues.push_back(hResolution_500_550->GetRMS());
 
  reso_canvas->cd(7);
   hResolution_550_600->Draw("");
+  vSaveValues.push_back(hResolution_550_600->GetMean());
+  vSaveValues.push_back(hResolution_550_600->GetRMS());
 
  reso_canvas->cd(8);
   hResolution_600_650->Draw("");
+  vSaveValues.push_back(hResolution_600_650->GetMean());
+  vSaveValues.push_back(hResolution_600_650->GetRMS());
 
   TCanvas *kinematics_canvas = new TCanvas("kinematics_canvas","Kinematics Canvas");
   kinematics_canvas->Divide(2,1);
@@ -614,6 +631,15 @@ TCanvas *reso_canvas = new TCanvas("reso_canvas","Resolution Canvas");
    hCorr_reconstructed_kinematics->Draw("COLZ");
 
 
+ std::ofstream outFile("results_three_layer_model.txt", std::ios::app);
+ outFile<<argv[10]<<" ";
+
+ for(int i = 0 ; i < vSaveValues.size() ; i++)
+  outFile<<vSaveValues.at(i)<<" ";
+
+ outFile<<endl;
+
+ outFile.close();
 
 
  TString filename = "training_results_knockout_regression_three_layers_";
@@ -629,9 +655,10 @@ TCanvas *reso_canvas = new TCanvas("reso_canvas","Resolution Canvas");
 
   resultsFile.Close();
 
-  theApp->Run();
+  // theApp->Run();
+
+  // theApp->Terminate();
+  exit(0);
   return 0;
-
-
 
 }
