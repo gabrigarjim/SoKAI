@@ -13,6 +13,9 @@ with open(file_path, 'r') as file:
 print("Matrix : ", matrix)
 eigenvalues, eigenvectors = np.linalg.eig(matrix)
 
+weights = [i / sum(eigenvalues) for i in eigenvalues]
+print("Weights: " , weights)
+
 print("Eigenvalues:")
 print(eigenvalues)
 

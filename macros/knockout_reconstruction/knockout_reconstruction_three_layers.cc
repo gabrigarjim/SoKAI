@@ -61,7 +61,7 @@ int main (int argc, char** argv) {
   float fNfMax = 210;
   float fNsMax = 240;
   float fAngularDeviationMax = 0.20;
-  float fPrimEnergyMax = 1200;
+  float fPrimEnergyMax = 1000;
 
   gROOT->SetBatch(kTRUE);
   SKColorScheme();
@@ -138,12 +138,9 @@ int main (int argc, char** argv) {
     fFirstSigma  = rPrimaryEnergy[0]/235;
     fSecondSigma = rPrimaryEnergy[1]/235;
 
+    bool isValid = false;
 
-    if(TMath::Abs(rClusterEnergy[0] - rPrimaryEnergy[0]) > 10.0*fFirstSigma){
-
-      bool isValid = false;
-
-      if(rPrimaryEnergy[0] > 250 && rPrimaryEnergy[0] < 300 && nSamples_6 < nSamples){
+     if(rPrimaryEnergy[0] > 250 && rPrimaryEnergy[0] < 300 && nSamples_6 < nSamples){
        nSamples_6++;
        isValid = true;
       }
@@ -195,17 +192,11 @@ int main (int argc, char** argv) {
       data_instance.push_back( rClusterEnergy[0] / fClusterEnergyMax);
       data_instance.push_back( rMotherCrystalEnergy[0] / fSingleCrystalEnergyMax);
       data_instance.push_back( rPolar[0] / fPolarMax);
-      data_instance.push_back( rAzimuthal[0] / fAzimuthalMax);
-      data_instance.push_back( rMotherNf[0] / fNfMax);
-      data_instance.push_back( rMotherNs[0] / fNsMax);
       data_instance.push_back( rAngularDeviation[0] / fAngularDeviationMax);
 
       data_instance.push_back( rClusterEnergy[1] / fClusterEnergyMax);
       data_instance.push_back( rMotherCrystalEnergy[1] / fSingleCrystalEnergyMax);
       data_instance.push_back( rPolar[1] / fPolarMax);
-      data_instance.push_back( rAzimuthal[1] / fAzimuthalMax);
-      data_instance.push_back( rMotherNf[1] / fNfMax);
-      data_instance.push_back( rMotherNs[1] / fNsMax);
       data_instance.push_back( rAngularDeviation[1] / fAngularDeviationMax);
 
 
@@ -218,13 +209,7 @@ int main (int argc, char** argv) {
       data_instance.clear();
       label_instance.clear();
 
-
-
-      }
-
-    else if(TMath::Abs(rClusterEnergy[1] - rPrimaryEnergy[1]) > 10.0*fSecondSigma){
-
-      bool isValid = false;
+      isValid = false;
 
       if(rPrimaryEnergy[1] > 250 && rPrimaryEnergy[1] < 300 && nSamples_6 < nSamples){
        nSamples_6++;
@@ -277,19 +262,12 @@ int main (int argc, char** argv) {
       data_instance.push_back( rClusterEnergy[1] / fClusterEnergyMax);
       data_instance.push_back( rMotherCrystalEnergy[1] / fSingleCrystalEnergyMax);
       data_instance.push_back( rPolar[1] / fPolarMax);
-      data_instance.push_back( rAzimuthal[1] / fAzimuthalMax);
-      data_instance.push_back( rMotherNf[1] / fNfMax);
-      data_instance.push_back( rMotherNs[1] / fNsMax);
       data_instance.push_back( rAngularDeviation[1] / fAngularDeviationMax);
 
       data_instance.push_back( rClusterEnergy[0] / fClusterEnergyMax);
       data_instance.push_back( rMotherCrystalEnergy[0] / fSingleCrystalEnergyMax);
       data_instance.push_back( rPolar[0] / fPolarMax);
-      data_instance.push_back( rAzimuthal[0] / fAzimuthalMax);
-      data_instance.push_back( rMotherNf[0] / fNfMax);
-      data_instance.push_back( rMotherNs[0] / fNsMax);
       data_instance.push_back( rAngularDeviation[0] / fAngularDeviationMax);
-
 
 
       data_sample.push_back(data_instance);
@@ -301,9 +279,6 @@ int main (int argc, char** argv) {
       data_instance.clear();
       label_instance.clear();
 
-
-
-     }
    }
 
 
@@ -333,11 +308,11 @@ int main (int argc, char** argv) {
 
   /*------- The Model Itself -------*/
 
-  SKLayer   *layer_1 = new SKLayer(14,argv[6]);
-  SKWeights *weights_12 = new SKWeights(14,stoi(argv[5]));
-  SKWeights *gradients_12 = new SKWeights(14,stoi(argv[5]));
-  SKWeights *firstMoment_12 = new SKWeights(14,stoi(argv[5]));
-  SKWeights *secondMoment_12 = new SKWeights(14,stoi(argv[5]));
+  SKLayer   *layer_1 = new SKLayer(8,argv[6]);
+  SKWeights *weights_12 = new SKWeights(8,stoi(argv[5]));
+  SKWeights *gradients_12 = new SKWeights(8,stoi(argv[5]));
+  SKWeights *firstMoment_12 = new SKWeights(8,stoi(argv[5]));
+  SKWeights *secondMoment_12 = new SKWeights(8,stoi(argv[5]));
 
 
   SKLayer   *layer_2 = new SKLayer(stoi(argv[5]),argv[7]);
@@ -397,7 +372,7 @@ int main (int argc, char** argv) {
   LOG(INFO)<<"Model Training Hyper Parameters. Epochs : "<<argv[1]<<" Samples : "<<data_sample.size()<<" Learning Rate : "<<stoi(argv[3])/1000.0<<" Metric : "<<argv[9];
   LOG(INFO)<<"";
   LOG(INFO)<<"/* ---------- Model Structure -----------";
-  LOG(INFO)<<"L1 : "<<argv[6]<<" "<<"14";
+  LOG(INFO)<<"L1 : "<<argv[6]<<" "<<"8";
   LOG(INFO)<<"H1 : "<<argv[7]<<" "<<argv[5];
   LOG(INFO)<<"L3 : "<<argv[8]<<" "<<"1";
 
