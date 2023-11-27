@@ -122,14 +122,14 @@ int main (int argc, char** argv) {
 
 
   int eventCounter = 0;
-  int nSamples_0 = 0, nSamples_1 = 0, nSamples_2 = 0, nSamples_3 = 0,nSamples_4 = 0,nSamples_5 = 0, nSamples_6 = 0 , nSamples_7 = 0;
+  int nSamples_0 = 0, nSamples_1 = 0, nSamples_2 = 0, nSamples_3 = 0,nSamples_4 = 0,nSamples_5 = 0, nSamples_6 = 0 , nSamples_7 = 0, nSamples_ext = 0;
 
 
   while (nSamples_0 < nSamples || nSamples_1 < nSamples || nSamples_2 < nSamples || nSamples_3 < nSamples || nSamples_4 < nSamples || nSamples_5 < nSamples || nSamples_6 < nSamples || nSamples_7 < nSamples){
 
     eventTree->GetEvent(eventCounter);
 
-    if(rClusterEnergy[0] < 30 || rClusterEnergy[1] < 30)
+    if(rClusterEnergy[0] < 50 || rClusterEnergy[1] < 50)
     continue;
 
     eventCounter++;
@@ -143,53 +143,54 @@ int main (int argc, char** argv) {
 
       bool isValid = false;
 
-      if(rPrimaryEnergy[0] > 250 && rPrimaryEnergy[0] < 300 && nSamples_6 < nSamples){
-       nSamples_6++;
-       isValid = true;
-      }
-
-      if(rPrimaryEnergy[0] > 300 && rPrimaryEnergy[0] < 350 && nSamples_0 < nSamples){
+      if(rPrimaryEnergy[0] > 250 && rPrimaryEnergy[0] < 300 && nSamples_0 < nSamples){
         nSamples_0++;
         isValid = true;
-      }
+       }
 
-      if(rPrimaryEnergy[0] > 350 && rPrimaryEnergy[0] < 400 && nSamples_1 < nSamples){
-        nSamples_1++;
+       if(rPrimaryEnergy[0] > 300 && rPrimaryEnergy[0] < 350 && nSamples_1 < nSamples){
+         nSamples_1++;
+         isValid = true;
+       }
+
+       if(rPrimaryEnergy[0] > 350 && rPrimaryEnergy[0] < 400 && nSamples_2 < nSamples){
+         nSamples_2++;
+         isValid = true;
+       }
+
+       if(rPrimaryEnergy[0] > 400 && rPrimaryEnergy[0] < 450 && nSamples_3 < nSamples){
+         nSamples_3++;
+         isValid = true;
+       }
+
+       if(rPrimaryEnergy[0] > 450 && rPrimaryEnergy[0] < 500 && nSamples_4 < nSamples){
+         nSamples_4++;
+         isValid = true;
+       }
+
+       if(rPrimaryEnergy[0] > 500 && rPrimaryEnergy[0] < 550 && nSamples_5 < nSamples){
+         nSamples_5++;
+         isValid = true;
+       }
+
+       if(rPrimaryEnergy[0] > 550 && rPrimaryEnergy[0] < 600 && nSamples_6 < nSamples){
+         nSamples_6++;
+         isValid = true;
+       }
+
+       if(rPrimaryEnergy[0] > 600 && rPrimaryEnergy[0] < 650 && nSamples_7 < nSamples){
+         nSamples_7++;
+         isValid = true;
+       }
+
+       if((rPrimaryEnergy[0] > 650 || rPrimaryEnergy[0] < 250) && nSamples_ext < nSamples){
         isValid = true;
-      }
-
-      if(rPrimaryEnergy[0] > 400 && rPrimaryEnergy[0] < 450 && nSamples_2 < nSamples){
-        nSamples_2++;
-        isValid = true;
-      }
-
-      if(rPrimaryEnergy[0] > 450 && rPrimaryEnergy[0] < 500 && nSamples_3 < nSamples){
-        nSamples_3++;
-        isValid = true;
-      }
-
-      if(rPrimaryEnergy[0] > 500 && rPrimaryEnergy[0] < 550 && nSamples_4 < nSamples){
-        nSamples_4++;
-        isValid = true;
-      }
-
-      if(rPrimaryEnergy[0] > 550 && rPrimaryEnergy[0] < 600 && nSamples_5 < nSamples){
-        nSamples_5++;
-        isValid = true;
-      }
-
-      if(rPrimaryEnergy[0] > 600 && rPrimaryEnergy[0] < 650 && nSamples_7 < nSamples){
-        nSamples_7++;
-        isValid = true;
-      }
-
-      if(rPrimaryEnergy[0] > 650 || rPrimaryEnergy[0] < 250 )
-       isValid = true;
+        nSamples_ext++;
+       }
 
 
 
-      if(!isValid)
-       continue;
+      if(isValid){
 
 
       data_instance.push_back( rClusterEnergy[0] / fClusterEnergyMax);
@@ -212,41 +213,42 @@ int main (int argc, char** argv) {
       data_instance.clear();
       label_instance.clear();
 
+     }
 
-       isValid = false;
+      isValid = false;
 
-      if(rPrimaryEnergy[1] > 250 && rPrimaryEnergy[1] < 300 && nSamples_6 < nSamples){
-       nSamples_6++;
+      if(rPrimaryEnergy[1] > 250 && rPrimaryEnergy[1] < 300 && nSamples_0 < nSamples){
+       nSamples_0++;
        isValid = true;
       }
 
-      if(rPrimaryEnergy[1] > 300 && rPrimaryEnergy[1] < 350 && nSamples_0 < nSamples){
-        nSamples_0++;
-        isValid = true;
-      }
-
-      if(rPrimaryEnergy[1] > 350 && rPrimaryEnergy[1] < 400 && nSamples_1 < nSamples){
+      if(rPrimaryEnergy[1] > 300 && rPrimaryEnergy[1] < 350 && nSamples_1 < nSamples){
         nSamples_1++;
         isValid = true;
       }
 
-      if(rPrimaryEnergy[1] > 400 && rPrimaryEnergy[1] < 450 && nSamples_2 < nSamples){
+      if(rPrimaryEnergy[1] > 350 && rPrimaryEnergy[1] < 400 && nSamples_2 < nSamples){
         nSamples_2++;
         isValid = true;
       }
 
-      if(rPrimaryEnergy[1] > 450 && rPrimaryEnergy[1] < 500 && nSamples_3 < nSamples){
+      if(rPrimaryEnergy[1] > 400 && rPrimaryEnergy[1] < 450 && nSamples_3 < nSamples){
         nSamples_3++;
         isValid = true;
       }
 
-      if(rPrimaryEnergy[1] > 500 && rPrimaryEnergy[1] < 550 && nSamples_4 < nSamples){
+      if(rPrimaryEnergy[1] > 450 && rPrimaryEnergy[1] < 500 && nSamples_4 < nSamples){
         nSamples_4++;
         isValid = true;
       }
 
-      if(rPrimaryEnergy[1] > 550 && rPrimaryEnergy[1] < 600 && nSamples_5 < nSamples){
+      if(rPrimaryEnergy[1] > 500 && rPrimaryEnergy[1] < 550 && nSamples_5 < nSamples){
         nSamples_5++;
+        isValid = true;
+      }
+
+      if(rPrimaryEnergy[1] > 550 && rPrimaryEnergy[1] < 600 && nSamples_6 < nSamples){
+        nSamples_6++;
         isValid = true;
       }
 
@@ -255,13 +257,13 @@ int main (int argc, char** argv) {
         isValid = true;
       }
 
-      if(rPrimaryEnergy[1] > 650 || rPrimaryEnergy[1] < 250 )
+      if((rPrimaryEnergy[1] > 650 || rPrimaryEnergy[1] < 250) && nSamples_ext < nSamples){
        isValid = true;
+       nSamples_ext++;
+      }
 
 
-
-      if(!isValid)
-       continue;
+      if(isValid){
 
       data_instance.push_back( rClusterEnergy[1] / fClusterEnergyMax);
       data_instance.push_back( rMotherCrystalEnergy[1] / fSingleCrystalEnergyMax);
@@ -283,6 +285,8 @@ int main (int argc, char** argv) {
 
       data_instance.clear();
       label_instance.clear();
+
+     }
 
 
 
